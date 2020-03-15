@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc
+                http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/util 
+        http://www.springframework.org/schema/util/spring-util.xsd
+        http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/aop
+            http://www.springframework.org/schema/aop/spring-aop.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx.xsd
+            http://www.springframework.org/schema/data/jpa
+        http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+         http://code.alibabatech.com/schema/dubbo 
+         http://code.alibabatech.com/schema/dubbo/dubbo.xsd" >
+	
+	<!--order 从-9000开始, WebMvcAutoConfiguration -->
+	<bean id="encodingAndCachedFilter" class="com.louyj.rhttptunnel.service.filter.HttpContentCachedFilter"/>
+	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
+		<property name="filter" ref="encodingAndCachedFilter"/>
+		<property name="urlPatterns" value="/*"/>
+		<property name="name" value="encodingAndCachedFilter"/>
+		<property name="order" value="-9000"/>
+	</bean>
+	
+	<bean id="loggingFilter" class="com.louyj.rhttptunnel.service.filter.LoggingFilter"/>
+	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
+		<property name="filter" ref="loggingFilter"/>
+		<property name="urlPatterns" value="/*"/>
+		<property name="name" value="loggingFilter"/>
+		<property name="order" value="-1000"/>
+	</bean>
+	
+	<bean id="exceptionCatchFilter" class="com.louyj.rhttptunnel.service.filter.ExceptionCatchFilter">
+	</bean>
+	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
+		<property name="filter" ref="exceptionCatchFilter"/>
+		<property name="urlPatterns" value="/*"/>
+		<property name="name" value="exceptionCatchFilter"/>
+		<property name="order" value="-999"/>
+	</bean>
+	
+</beans>

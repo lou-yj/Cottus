@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="rhttptunnel-model" />
+        <module name="rhttptunnel-client" />
+        <module name="rhttptunnel-worker" />
+        <module name="rhttptunnel-server" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="RHttpTunnel" target="1.8" />
+      <module name="rhttptunnel-client" target="1.8" />
+      <module name="rhttptunnel-model" target="1.8" />
+      <module name="rhttptunnel-server" target="1.8" />
+      <module name="rhttptunnel-worker" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
