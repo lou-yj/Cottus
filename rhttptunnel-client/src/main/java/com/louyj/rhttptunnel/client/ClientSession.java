@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.client;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.shell.Availability;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,27 @@ public class ClientSession {
 	private boolean workerConnected = false;
 
 	private ClientInfo clientInfo;
+
+	@Value("${java.io.tmpdir}")
+	private String workDirectory;
+
+	private String cwd;
+
+	public String getCwd() {
+		return cwd;
+	}
+
+	public void setCwd(String cwd) {
+		this.cwd = cwd;
+	}
+
+	public String getWorkDirectory() {
+		return workDirectory;
+	}
+
+	public void setWorkDirectory(String workDirectory) {
+		this.workDirectory = workDirectory;
+	}
 
 	public boolean inUnconnectedMode() {
 		return !serverConnected;

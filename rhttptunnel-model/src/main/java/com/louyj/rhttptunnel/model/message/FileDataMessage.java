@@ -19,6 +19,10 @@ public class FileDataMessage extends BaseMessage {
 
 	private String fileHash;
 
+	private long totalSize;
+
+	private long currentSize;
+
 	public FileDataMessage(ClientInfo client, String fileName, boolean start, boolean end, byte[] data,
 			String fileHash) {
 		super(client);
@@ -27,6 +31,19 @@ public class FileDataMessage extends BaseMessage {
 		this.end = end;
 		this.data = data;
 		this.fileHash = fileHash;
+	}
+
+	public void setSize(long totalSize, long currentSize) {
+		this.totalSize = totalSize;
+		this.currentSize = currentSize;
+	}
+
+	public long getTotalSize() {
+		return totalSize;
+	}
+
+	public long getCurrentSize() {
+		return currentSize;
 	}
 
 	public String getFileName() {

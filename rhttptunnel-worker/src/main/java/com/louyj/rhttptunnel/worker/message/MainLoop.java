@@ -1,8 +1,9 @@
 package com.louyj.rhttptunnel.worker.message;
 
-import static com.louyj.rhttptunnel.worker.ClientDetector.WORKER;
-import static com.louyj.rhttptunnel.worker.message.Endpoints.EXCHANGE;
+import static com.louyj.rhttptunnel.model.http.Endpoints.WORKER_EXCHANGE;
+import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -15,7 +16,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.LongPullMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
@@ -73,9 +77,9 @@ public class MainLoop extends Thread implements ApplicationContextAware, Initial
 		}
 	}
 
-	private void doRun() {
-		LongPullMessage longPullMessage = new LongPullMessage(ClientDetector.WORKER);
-		BaseMessage taskMessage = messageExchanger.jsonPost(EXCHANGE, longPullMessage);
+	private void doRun() throws JsonParseException, JsonMappingException, IOException {
+		LongPullMessage longPullMessage = new LongPullMessage(ClientDetector.CLIENT);
+		BaseMessage taskMessage = messageExchanger.jsonPost(WORKER_EXCHANGE, longPullMessage);
 		Class<? extends BaseMessage> type = taskMessage.getClass();
 		logger.info("Receive message {} content {}", type.getSimpleName(), taskMessage);
 		IMessageHandler messageHandler = messageHandlers.get(type);
@@ -88,11 +92,11 @@ public class MainLoop extends Thread implements ApplicationContextAware, Initial
 			result = messageHandler.handle(taskMessage);
 		} catch (Exception e) {
 			String reason = "Exception " + e.getClass().getName() + ":" + e.getMessage();
-			result = RejectMessage.creason(WORKER, taskMessage.getExchangeId(), IRejectReason.make(reason));
+			result = RejectMessage.creason(CLIENT, taskMessage.getExchangeId(), IRejectReason.make(reason));
 		}
 		if (result != null) {
 			result.setExchangeId(taskMessage.getExchangeId());
-			messageExchanger.jsonPost(EXCHANGE, result);
+			messageExchanger.jsonPost(WORKER_EXCHANGE, result);
 		}
 		logger.info("Process finished.");
 	}

@@ -1,8 +1,8 @@
 package com.louyj.rhttptunnel.worker.handler;
 
+import static com.louyj.rhttptunnel.model.http.Endpoints.WORKER_EXCHANGE;
 import static com.louyj.rhttptunnel.model.message.status.RejectReason.SERVER_BAD_RESPONSE;
-import static com.louyj.rhttptunnel.worker.ClientDetector.WORKER;
-import static com.louyj.rhttptunnel.worker.message.Endpoints.EXCHANGE;
+import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,12 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.FileDataMessage;
 import com.louyj.rhttptunnel.model.message.FileRequestMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.worker.message.MessageExchanger;
 
 /**
  *
@@ -49,7 +49,8 @@ public class FileRequestHandler implements IMessageHandler {
 		} else {
 			file = new File(workDirectory, fileRequestMessage.getPath());
 		}
-
+		long totalSize = file.length();
+		long currentSize = 0;
 		FileInputStream fis = new FileInputStream(file);
 		String md5Hex = DigestUtils.md5Hex(fis);
 		fis.close();
@@ -68,14 +69,16 @@ public class FileRequestHandler implements IMessageHandler {
 				data = new byte[read];
 				System.arraycopy(buffer, 0, data, 0, read);
 			}
-			FileDataMessage fileDataMessage = new FileDataMessage(WORKER, file.getName(), start, end, data, md5Hex);
+			currentSize += read;
+			FileDataMessage fileDataMessage = new FileDataMessage(CLIENT, file.getName(), start, end, data, md5Hex);
 			fileDataMessage.setExchangeId(fileRequestMessage.getExchangeId());
-			BaseMessage ackMessage = messageExchanger.jsonPost(EXCHANGE, fileDataMessage);
+			fileDataMessage.setSize(totalSize, currentSize);
+			BaseMessage ackMessage = messageExchanger.jsonPost(WORKER_EXCHANGE, fileDataMessage);
 			if ((ackMessage instanceof AckMessage) == false) {
-				return RejectMessage.creason(WORKER, message.getExchangeId(), SERVER_BAD_RESPONSE);
+				return RejectMessage.creason(CLIENT, message.getExchangeId(), SERVER_BAD_RESPONSE);
 			}
 			if (end) {
-				return null;
+				return AckMessage.cack(CLIENT, message.getExchangeId());
 			}
 			if (start) {
 				start = false;

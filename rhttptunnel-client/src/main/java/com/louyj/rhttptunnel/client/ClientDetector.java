@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.worker;
+package com.louyj.rhttptunnel.client;
 
 import java.net.InetAddress;
 

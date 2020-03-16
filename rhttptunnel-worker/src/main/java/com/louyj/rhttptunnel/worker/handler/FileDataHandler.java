@@ -1,7 +1,7 @@
 package com.louyj.rhttptunnel.worker.handler;
 
 import static com.louyj.rhttptunnel.model.message.status.RejectReason.ACCESS_FILE_FAILED;
-import static com.louyj.rhttptunnel.worker.ClientDetector.WORKER;
+import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,7 +59,7 @@ public class FileDataHandler implements IMessageHandler, InitializingBean {
 			if (parentFile.exists() == false) {
 				parentFile.mkdirs();
 			} else if (parentFile.isDirectory() == false) {
-				return RejectMessage.creason(WORKER, message.getExchangeId(), ACCESS_FILE_FAILED);
+				return RejectMessage.creason(CLIENT, message.getExchangeId(), ACCESS_FILE_FAILED);
 			}
 		}
 		FileOutputStream fos = new FileOutputStream(file, true);
@@ -70,9 +70,9 @@ public class FileDataHandler implements IMessageHandler, InitializingBean {
 			String md5Hex = DigestUtils.md5Hex(fis);
 			fis.close();
 			if (StringUtils.equals(md5Hex, partFileMessage.getFileHash())) {
-				return AckMessage.cack(WORKER, partFileMessage.getExchangeId());
+				return AckMessage.cack(CLIENT, partFileMessage.getExchangeId());
 			} else {
-				return RejectMessage.creason(WORKER, message.getExchangeId(), IRejectReason.make("md5 not matched"));
+				return RejectMessage.creason(CLIENT, message.getExchangeId(), IRejectReason.make("md5 not matched"));
 			}
 		} else {
 			return null;
