@@ -22,6 +22,10 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.louyj.rhttptunnel</groupId>
 			<artifactId>rhttptunnel-model</artifactId>
 			<version>1.0-SNAPSHOT</version>
