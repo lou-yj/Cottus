@@ -1,7 +1,5 @@
 package com.louyj.rhttptunnel.model.message;
 
-import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -24,14 +22,6 @@ public class LsMessage extends BaseMessage {
 	public LsMessage(ClientInfo client, String exchangeId) {
 		super(client);
 		setExchangeId(exchangeId);
-	}
-
-	public static LsMessage cack(ClientInfo client, String exchangeId) {
-		return new LsMessage(client, exchangeId);
-	}
-
-	public static LsMessage sack(String exchangeId) {
-		return new LsMessage(SERVER, exchangeId);
 	}
 
 	public String getPath() {

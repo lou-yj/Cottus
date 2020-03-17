@@ -46,7 +46,7 @@ import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
 @RequestMapping("exchange")
 public class ExchangeService implements ApplicationContextAware, InitializingBean {
 
-	private Logger logger = LoggerFactory.getLogger(getClass());
+	Logger logger = LoggerFactory.getLogger(getClass());
 
 	private ApplicationContext applicationContext;
 

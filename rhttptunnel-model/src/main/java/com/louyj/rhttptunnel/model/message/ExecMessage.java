@@ -14,7 +14,7 @@ public class ExecMessage extends BaseMessage {
 
 	private String path;
 
-	private String[] args;
+	private String args;
 
 	private int timeout;
 
@@ -23,7 +23,7 @@ public class ExecMessage extends BaseMessage {
 		super(client);
 	}
 
-	public ExecMessage(ClientInfo client, String path, String[] args, int timeout) {
+	public ExecMessage(ClientInfo client, String path, String args, int timeout) {
 		super(client);
 		this.path = path;
 		this.timeout = timeout;
@@ -46,11 +46,11 @@ public class ExecMessage extends BaseMessage {
 		this.path = path;
 	}
 
-	public String[] getArgs() {
+	public String getArgs() {
 		return args;
 	}
 
-	public void setArgs(String[] args) {
+	public void setArgs(String args) {
 		this.args = args;
 	}
 

@@ -26,6 +26,7 @@ import com.louyj.rhttptunnel.model.message.FileRequestMessage;
 import com.louyj.rhttptunnel.model.message.LsMessage;
 import com.louyj.rhttptunnel.model.message.PwdMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.RmMessage;
 
 /**
  *
@@ -36,7 +37,7 @@ import com.louyj.rhttptunnel.model.message.RejectMessage;
  */
 
 @ShellComponent
-public class FtpCommand {
+public class FileCommand {
 
 	@Autowired
 	private ClientSession session;
@@ -120,6 +121,24 @@ public class FtpCommand {
 		return session.workerCmdAvailability();
 	}
 
+	@ShellMethod(value = "remove files")
+	public String rm(@ShellOption(value = { "-p", "--path" }, help = "file path") String path,
+			@ShellOption(value = { "-a",
+					"--absolute" }, help = "absolute path?", defaultValue = "false") boolean absolute,
+			@ShellOption(value = { "-d",
+					"--directory" }, help = "remove directory?", defaultValue = "false") boolean directory) {
+		RmMessage message = new RmMessage(CLIENT);
+		message.setPath(path);
+		message.setAbsolute(absolute);
+		message.setDirectory(directory);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
+	public Availability rmAvailability() {
+		return session.workerCmdAvailability();
+	}
+
 	@ShellMethod(value = "print work directory")
 	public String pwd() {
 		if (session.getCwd() != null) {
@@ -149,7 +168,7 @@ public class FtpCommand {
 	}
 
 	@ShellMethod(value = "change directory")
-	public String cd(String path) {
+	public String cd(@ShellOption(value = { "-d", "--directory" }, help = "change to directory") String path) {
 		pwd();
 		if (path.startsWith("/")) {
 			session.setCwd(path);
@@ -166,7 +185,7 @@ public class FtpCommand {
 	@ShellMethod(value = "execute script file")
 	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path,
 			@ShellOption(value = { "-t", "--timeout" }, help = "timeout seconds", defaultValue = "120") int timeout,
-			@ShellOption(value = { "-p", "--args" }, help = "parameters") String[] args) {
+			@ShellOption(value = { "-p", "--args" }, help = "parameters") String args) {
 		if (path.startsWith("/") == false) {
 			path = session.getCwd() + "/" + path;
 		}

@@ -25,7 +25,7 @@ import com.louyj.rhttptunnel.model.message.SelectWorkerMessage;
  */
 
 @ShellComponent
-public class CtlCommand {
+public class ControlCommand {
 
 	@Autowired
 	private ClientSession session;

@@ -38,11 +38,7 @@ public class ExecHandler implements IMessageHandler {
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		ExecMessage execMessage = (ExecMessage) message;
-		String argLine = "";
-		for (String arg : execMessage.getArgs()) {
-			argLine = "'" + arg + "'";
-		}
-		String cmdLine = "sh \"" + execMessage.getPath() + "\" " + argLine;
+		String cmdLine = "sh \"" + execMessage.getPath() + "\" " + execMessage.getArgs();
 		logger.info("exec {}", cmdLine);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		CommandLine commandline = CommandLine.parse(cmdLine);

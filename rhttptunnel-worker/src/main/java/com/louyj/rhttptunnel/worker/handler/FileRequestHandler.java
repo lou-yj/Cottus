@@ -70,8 +70,8 @@ public class FileRequestHandler implements IMessageHandler {
 			} else if (read != buffer.length) {
 				data = new byte[read];
 				System.arraycopy(buffer, 0, data, 0, read);
+				currentSize += read;
 			}
-			currentSize += read;
 			FileDataMessage fileDataMessage = new FileDataMessage(CLIENT, file.getName(), start, end, data, md5Hex);
 			fileDataMessage.setExchangeId(fileRequestMessage.getExchangeId());
 			fileDataMessage.setSize(totalSize, currentSize);
