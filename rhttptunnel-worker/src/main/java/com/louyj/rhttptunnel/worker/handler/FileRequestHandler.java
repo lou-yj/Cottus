@@ -6,12 +6,14 @@ import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -41,7 +43,7 @@ public class FileRequestHandler implements IMessageHandler {
 	}
 
 	@Override
-	public BaseMessage handle(BaseMessage message) throws Exception {
+	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		FileRequestMessage fileRequestMessage = (FileRequestMessage) message;
 		File file = null;
 		if (fileRequestMessage.isAbsolute()) {
@@ -75,10 +77,11 @@ public class FileRequestHandler implements IMessageHandler {
 			fileDataMessage.setSize(totalSize, currentSize);
 			BaseMessage ackMessage = messageExchanger.jsonPost(WORKER_EXCHANGE, fileDataMessage);
 			if ((ackMessage instanceof AckMessage) == false) {
-				return RejectMessage.creason(CLIENT, message.getExchangeId(), SERVER_BAD_RESPONSE);
+				return Lists.newArrayList(
+						RejectMessage.creason(CLIENT, message.getExchangeId(), SERVER_BAD_RESPONSE.reason()));
 			}
 			if (end) {
-				return AckMessage.cack(CLIENT, message.getExchangeId());
+				return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId()));
 			}
 			if (start) {
 				start = false;

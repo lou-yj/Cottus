@@ -6,6 +6,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.AsyncFetchMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -21,6 +22,7 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  * @author Louyj
  *
  */
+@Component
 public class AsyncFetchHandler implements IClientMessageHandler {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
@@ -47,6 +49,11 @@ public class AsyncFetchHandler implements IClientMessageHandler {
 				return new NoContentMessage(SERVER, message.getExchangeId());
 			}
 		}
+	}
+
+	@Override
+	public boolean asyncMode() {
+		return false;
 	}
 
 }

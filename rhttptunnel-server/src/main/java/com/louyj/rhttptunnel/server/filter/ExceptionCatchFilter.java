@@ -1,7 +1,6 @@
 package com.louyj.rhttptunnel.server.filter;
 
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
-import static com.google.common.net.MediaType.JSON_UTF_8;
 import static com.louyj.rhttptunnel.model.message.status.RejectReason.INTERNEL_SERVER_ERROR;
 
 import java.io.IOException;
@@ -16,10 +15,13 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
  *
@@ -31,6 +33,8 @@ import com.louyj.rhttptunnel.model.message.RejectMessage;
 public class ExceptionCatchFilter implements Filter {
 
 	static final Logger logger = LoggerFactory.getLogger(ExceptionCatchFilter.class);
+
+	private ObjectMapper jackson = JsonUtils.jacksonWithType();
 
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
@@ -50,7 +54,8 @@ public class ExceptionCatchFilter implements Filter {
 			logger.error("Catched Exception: uri {} method {} query string {} request body {}", uri,
 					bufferedRequest.getMethod(), bufferedRequest.getQueryString(),
 					bufferedRequest.getBufferedRequestBody(), e);
-			RejectMessage ack = RejectMessage.sreason(null, INTERNEL_SERVER_ERROR);
+			BaseMessage requestMsg = jackson.readValue(bufferedRequest.getBufferedRequestBody(), BaseMessage.class);
+			RejectMessage ack = RejectMessage.sreason(requestMsg.getExchangeId(), INTERNEL_SERVER_ERROR.reason());
 			makeResponse(cachedResonse, ack);
 		}
 
@@ -59,11 +64,11 @@ public class ExceptionCatchFilter implements Filter {
 	private void makeResponse(BufferedResponseWrapper cachedResonse, Object baseResponse)
 			throws JsonProcessingException {
 		resetResponseTo(cachedResonse, baseResponse);
-		cachedResonse.setHeader(CONTENT_TYPE, JSON_UTF_8.toString());
+		cachedResonse.setHeader(CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
 	}
 
 	public void resetResponseTo(BufferedResponseWrapper cachedResonse, Object object) throws JsonProcessingException {
-		resetResponseTo(cachedResonse, new Gson().toJson(object));
+		resetResponseTo(cachedResonse, jackson.writeValueAsString(object));
 	}
 
 	public void resetResponseTo(BufferedResponseWrapper cachedResonse, String response) {

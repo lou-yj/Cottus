@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.worker.handler;
 
+import java.util.List;
+
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 
 /**
@@ -13,6 +15,6 @@ public interface IMessageHandler {
 
 	Class<? extends BaseMessage> supportType();
 
-	BaseMessage handle(BaseMessage message) throws Exception;
+	List<BaseMessage> handle(BaseMessage message) throws Exception;
 
 }

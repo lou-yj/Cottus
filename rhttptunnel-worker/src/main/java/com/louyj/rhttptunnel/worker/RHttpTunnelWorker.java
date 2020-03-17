@@ -2,8 +2,9 @@ package com.louyj.rhttptunnel.worker;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ImportResource;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.context.annotation.Import;
+
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
  *
@@ -12,9 +13,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @author Louyj
  *
  */
-@ImportResource("classpath:applicationContext.xml")
 @SpringBootApplication
-@EnableScheduling
+@Import({ MessageExchanger.class })
 public class RHttpTunnelWorker {
 
 	public static void main(String[] args) {

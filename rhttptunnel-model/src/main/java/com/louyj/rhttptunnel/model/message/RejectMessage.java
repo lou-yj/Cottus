@@ -2,7 +2,8 @@ package com.louyj.rhttptunnel.model.message;
 
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 
-import com.louyj.rhttptunnel.model.message.status.IRejectReason;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  *
@@ -13,22 +14,27 @@ import com.louyj.rhttptunnel.model.message.status.IRejectReason;
  */
 public class RejectMessage extends BaseMessage {
 
-	private IRejectReason reason;
+	private String reason;
 
-	public RejectMessage(ClientInfo client, IRejectReason reason) {
+	@JsonCreator
+	public RejectMessage(@JsonProperty("client") ClientInfo client) {
+		super(client);
+	}
+
+	public RejectMessage(ClientInfo client, String reason) {
 		super(client);
 		this.reason = reason;
 	}
 
-	public IRejectReason getReason() {
+	public String getReason() {
 		return reason;
 	}
 
-	public static RejectMessage creason(ClientInfo client, String exchangeId, IRejectReason reason) {
+	public static RejectMessage creason(ClientInfo client, String exchangeId, String reason) {
 		return new RejectMessage(client, reason);
 	}
 
-	public static RejectMessage sreason(String exchangeId, IRejectReason reason) {
+	public static RejectMessage sreason(String exchangeId, String reason) {
 		return new RejectMessage(SERVER, reason);
 	}
 

@@ -22,3 +22,128 @@
 1584268873881:connect -s 1 -u 1 -p 1
 1584268923085:connect -s 1 -p 1 -u 1
 1584268927213:exit
+1584419777697:ls
+1584419783411:help
+1584419805148:connect http://127.0.0.1 aaa aaa
+1584419810123:discover
+1584420771203:help
+1584420785424:connect -s http://127.0.0.1:18080
+1584420798415:connect -s http://127.0.0.1:18080 -u aaa -p aaa
+1584420800241:ls
+1584420803110:help
+1584420808470:discover
+1584420908811:connect http://localhost:18080 -u aaa -p aaa
+1584420912299:discover
+1584425524387:]
+1584425529052:discover
+1584425638497:connect -s http://localhost:18080 -u aaa -p aaa
+1584425644889:discover
+1584426139888:connect -s http://localhost:18080
+1584426149794:connect -s http://localhost:18080 -u aaaa -p aaa
+1584426152220:help
+1584426155875:discover
+1584427365375:connect -s http://localhost:18080 -u aaa -p aaa
+1584427390236:discover
+1584427487179:connect -s http://localhost:18080 -u aaa -p aaa
+1584427491458:discover
+1584430939329:connect -s http://localhost:18080 -u aaa -p aaa
+1584430967774:discover
+1584432015568:connect -s http://localhost:18080 -u aaa -p aaa
+1584432018840:discover
+1584433051185:connect -s http://localhost:18080 -u aaa -p aaa
+1584433055109:discover
+1584433877371:connect -s http://localhost:18080 -u aaa -p aaa
+1584433879968:discover
+1584434913238:connect -s http://localhost:18080 -u aaa -p aaa
+1584434916904:discover
+1584435711262:help
+1584439150172:connect -s http://localhost:18080 -u aaa -p aaa
+1584439152791:discover
+1584440377358:connect -s http://localhost:18080 -u aaa -p aaa
+1584440380955:discover
+1584440389270:select 1
+1584440394788:discover
+1584440667093:select 1
+1584441186256:connect -s http://localhost:18080 -u aaa -p aaa
+1584441189283:discover
+1584441206539:select 1
+1584441360056:connect -s http://localhost:18080 -u aaa -p aaa
+1584441371122:discover
+1584441375798:select 1
+1584441430327:connect -s http://localhost:18080 -u aaa -p aaa
+1584441432742:discover
+1584441434809:help
+1584441442722:stacktrace select 1
+1584441453262:help stacktrace
+1584441463086:stacktrace
+1584441466576:select 1
+1584441785510:connect -s http://localhost:18080 -u aaa -p aaa
+1584441789479:discover
+1584441793526:select 1
+1584443188107:connect -s http://localhost:18080 -u aaa -p aaa
+1584443193993:discover
+1584443239276:select 1
+1584443527658:connect -s http://localhost:18080 -u aaa -p aaa
+1584443530844:discover
+1584443927799:select 1
+1584443934918:help
+1584443940646:pwd
+1584444009348:help pwd
+1584444755164:connect -s http://localhost:18080 -u aaa -p aaa
+1584444758096:discover
+1584444770678:select 1
+1584444796276:help
+1584444798805:pwd
+1584444932697:connect -s http://localhost:18080 -u aaa -p aaa
+1584444935064:discover
+1584444949606:select 1
+1584444952384:pwd
+1584444982803:ls
+1584445257697:connect -s http://localhost:18080 -u aaa -p aaa
+1584445260321:discover
+1584445263010:select 1
+1584445266398:help
+1584445269763:pwd
+1584445281341:ls
+1584446244293:connect -s http://localhost:18080 -u aaa -p aaa
+1584446247154:discover
+1584446250639:select 1
+1584446253547:pwd
+1584446260727:ls
+1584446281438:cd /temp
+1584446308582:cd /software-sync
+1584446310452:ls
+1584446319492:help
+1584446328353:pwd
+1584446345162:cd git
+1584446346534:pwd
+1584446348305:ls
+1584446360324:help
+1584446495670:ls
+1584446512964:file-get  D:\\software-sync\\git\\git-bash.exe
+1584446566612:help filget
+1584446572344:help file-get
+1584446580254:file-get D:\\software-sync\\git\\git-bash.exe -a
+1584446631585:ls
+1584446666713:file-get /software-sync/git/git-bash.exe -a
+1584446696982:file-send  /software-sync/git/git-bash.exe
+1584446754474:connect -s http://localhost:18080 -u aaa -p aaa
+1584446759098:help
+1584446768768:help connect
+1584446781207:discover
+1584446790237:select 1
+1584446797281:pwd
+1584446802645:ls
+1584446835298:cd /software-sync
+1584446838445:pwd
+1584446840364:ls
+1584446851457:cd git
+1584446852630:ls
+1584446920257:file-send /software-sync/git/git-cmd.exe
+1584446943115:ls
+1584446997525:file-get /temp/git-cmd.exe
+1584447033849:file-get git-cmd.exe
+1584447083325:help
+1584447105493:help exec
+1584447132642:exec git-cmd.exe
+1584447303198:help

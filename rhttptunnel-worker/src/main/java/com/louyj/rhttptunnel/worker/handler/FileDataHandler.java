@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -15,11 +16,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.FileDataMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.status.IRejectReason;
 
 /**
  *
@@ -51,7 +52,7 @@ public class FileDataHandler implements IMessageHandler, InitializingBean {
 	}
 
 	@Override
-	public BaseMessage handle(BaseMessage message) throws IOException {
+	public List<BaseMessage> handle(BaseMessage message) throws IOException {
 		FileDataMessage partFileMessage = (FileDataMessage) message;
 		File file = new File(workDirectory, partFileMessage.getFileName());
 		if (partFileMessage.isStart()) {
@@ -59,7 +60,8 @@ public class FileDataHandler implements IMessageHandler, InitializingBean {
 			if (parentFile.exists() == false) {
 				parentFile.mkdirs();
 			} else if (parentFile.isDirectory() == false) {
-				return RejectMessage.creason(CLIENT, message.getExchangeId(), ACCESS_FILE_FAILED);
+				return Lists.newArrayList(
+						RejectMessage.creason(CLIENT, message.getExchangeId(), ACCESS_FILE_FAILED.reason()));
 			}
 		}
 		FileOutputStream fos = new FileOutputStream(file, true);
@@ -70,9 +72,9 @@ public class FileDataHandler implements IMessageHandler, InitializingBean {
 			String md5Hex = DigestUtils.md5Hex(fis);
 			fis.close();
 			if (StringUtils.equals(md5Hex, partFileMessage.getFileHash())) {
-				return AckMessage.cack(CLIENT, partFileMessage.getExchangeId());
+				return Lists.newArrayList(AckMessage.cack(CLIENT, partFileMessage.getExchangeId()));
 			} else {
-				return RejectMessage.creason(CLIENT, message.getExchangeId(), IRejectReason.make("md5 not matched"));
+				return Lists.newArrayList(RejectMessage.creason(CLIENT, message.getExchangeId(), "md5 not matched"));
 			}
 		} else {
 			return null;

@@ -2,6 +2,9 @@ package com.louyj.rhttptunnel.model.message;
 
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * Created on 2020年3月16日
@@ -11,7 +14,8 @@ import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
  */
 public class AsyncExecAckMessage extends BaseMessage {
 
-	public AsyncExecAckMessage(ClientInfo client) {
+	@JsonCreator
+	public AsyncExecAckMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
 	}
 

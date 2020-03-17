@@ -2,6 +2,9 @@ package com.louyj.rhttptunnel.model.message;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * Created on 2020年3月16日
@@ -13,7 +16,8 @@ public class ConfigMessage extends BaseMessage {
 
 	private Map<String, String> config;
 
-	public ConfigMessage(ClientInfo client) {
+	@JsonCreator
+	public ConfigMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
 	}
 

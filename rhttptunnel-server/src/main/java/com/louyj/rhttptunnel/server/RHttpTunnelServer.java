@@ -2,7 +2,10 @@ package com.louyj.rhttptunnel.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
+
+import com.louyj.rhttptunnel.model.bean.JsonFactory;
 
 /**
  *
@@ -13,6 +16,7 @@ import org.springframework.context.annotation.ImportResource;
  */
 @ImportResource("classpath:applicationContext.xml")
 @SpringBootApplication
+@Import({ JsonFactory.class })
 public class RHttpTunnelServer {
 
 	public static void main(String[] args) {

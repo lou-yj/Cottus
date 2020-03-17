@@ -4,6 +4,7 @@ import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.client.Status.FAILED;
 import static com.louyj.rhttptunnel.client.Status.OK;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,7 @@ import com.louyj.rhttptunnel.model.message.AsyncExecAckMessage;
 import com.louyj.rhttptunnel.model.message.AsyncFetchMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.NoContentMessage;
+import com.louyj.rhttptunnel.model.message.NotifyMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 
 /**
@@ -43,10 +45,10 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 	@Autowired
 	private MessageExchanger messageExchanger;
 
-	@Value("${client.max.wait}")
+	@Value("${client.max.wait:600}")
 	private int maxWait = 600;
 
-	@Value("${client.noconent.wait}")
+	@Value("${client.noconent.wait:1}")
 	private int noconentWait = 1;
 
 	private Map<Class<? extends BaseMessage>, IMessageHandler> messageHandlers;
@@ -68,12 +70,20 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 
 	public String pollExchangeMessage(BaseMessage response) {
 		try {
+			if (response == null) {
+				LogUtils.clientError("Null Point Exception");
+				return FAILED;
+			}
 			if (response instanceof RejectMessage) {
 				LogUtils.serverReject(response);
 				return FAILED;
 			}
 			if (response instanceof AckMessage) {
-				return OK;
+				AckMessage ackMessage = (AckMessage) response;
+				if (isNotBlank(ackMessage.getMessage())) {
+					return ackMessage.getMessage();
+				} else
+					return OK;
 			}
 			if (response instanceof AsyncExecAckMessage) {
 				return pollExchangeMessage(response.getExchangeId());
@@ -98,10 +108,14 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 			BaseMessage respMsg = messageExchanger.jsonPost(CLIENT_EXCHANGE, fetchMessage);
 			if (StringUtils.equals(respMsg.getExchangeId(), exchangeId) == false) {
 				LogUtils.serverError("bad response, exchange id not matched");
-				continue;
+				return FAILED;
 			}
 			if (respMsg instanceof AckMessage) {
-				break;
+				AckMessage ackMessage = (AckMessage) respMsg;
+				if (isNotBlank(ackMessage.getMessage())) {
+					return ackMessage.getMessage();
+				} else
+					return OK;
 			}
 			if (respMsg instanceof RejectMessage) {
 				LogUtils.serverReject(respMsg);
@@ -111,6 +125,10 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 				TimeUnit.SECONDS.sleep(noconentWait);
 				continue;
 			}
+			if (respMsg instanceof NotifyMessage) {
+				LogUtils.log(((NotifyMessage) respMsg).getMessage());
+				continue;
+			}
 			IMessageHandler handler = messageHandlers.get(respMsg.getClass());
 			if (handler == null) {
 				LogUtils.clientError("No message handler for type " + respMsg.getClass().getSimpleName());
@@ -118,7 +136,6 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 			}
 			handler.handle(respMsg);
 		}
-		return Status.OK;
 	}
 
 }

@@ -3,7 +3,11 @@ package com.louyj.rhttptunnel.client;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.util.StringUtils;
+
+import com.louyj.rhttptunnel.model.bean.JsonFactory;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
  *
@@ -13,6 +17,7 @@ import org.springframework.util.StringUtils;
  *
  */
 @SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
+@Import({ MessageExchanger.class, JsonFactory.class })
 public class RHttpTunnelClient {
 
 	public static void main(String[] args) {

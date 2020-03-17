@@ -23,7 +23,17 @@ public class ClientSession {
 
 	private ClientInfo workerInfo;
 
+	private String cwd;
+
 	private BlockingQueue<BaseMessage> messageQueue = new LinkedBlockingDeque<BaseMessage>(100);
+
+	public String getCwd() {
+		return cwd;
+	}
+
+	public void setCwd(String cwd) {
+		this.cwd = cwd;
+	}
 
 	public ClientSession(ClientInfo clientInfo) {
 		super();

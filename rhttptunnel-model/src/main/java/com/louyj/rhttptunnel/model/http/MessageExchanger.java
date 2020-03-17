@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.MediaType;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
  *
@@ -38,10 +38,9 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
-	@Autowired
-	private ObjectMapper jackson;
+	private ObjectMapper jackson = JsonUtils.jacksonWithType();
 
-	@Value("${server.address}")
+	@Value("${server.location:unknow}")
 	private String serverAddress;
 
 	private CloseableHttpClient httpclient;
@@ -50,7 +49,15 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		httpclient = HttpClients.createDefault();
-		requestConfig = RequestConfig.custom().setSocketTimeout(1000).setConnectTimeout(1000).build();
+		requestConfig = RequestConfig.custom().setSocketTimeout(600000).setConnectTimeout(5000).build();
+	}
+
+	public String getServerAddress() {
+		return serverAddress;
+	}
+
+	public void setServerAddress(String serverAddress) {
+		this.serverAddress = serverAddress;
 	}
 
 	public final BaseMessage jsonPost(String endpoint, BaseMessage message) {
@@ -59,10 +66,9 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			HttpPost httpPost = new HttpPost(serverAddress + endpoint);
 			httpPost.setConfig(requestConfig);
 			httpPost.setEntity(httpEntity);
-			httpPost.setHeader(CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
+			httpPost.setHeader(CONTENT_TYPE, MediaType.PLAIN_TEXT_UTF_8.toString());
 			CloseableHttpResponse response = httpclient.execute(httpPost);
 			try {
-				System.out.println(response.getStatusLine());
 				HttpEntity entity = response.getEntity();
 				String json = EntityUtils.toString(entity, UTF_8);
 				return jackson.readValue(json, BaseMessage.class);
@@ -71,7 +77,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			}
 		} catch (Exception e) {
 			logger.error("", e);
-			return RejectMessage.creason(message.getClient(), message.getExchangeId(), CLIENT_ERROR);
+			return RejectMessage.creason(message.getClient(), message.getExchangeId(), CLIENT_ERROR.reason());
 		}
 	}
 

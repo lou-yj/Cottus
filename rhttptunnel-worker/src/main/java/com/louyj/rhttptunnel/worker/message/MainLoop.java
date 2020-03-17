@@ -4,6 +4,7 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.WORKER_EXCHANGE;
 import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -18,12 +19,12 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.LongPullMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.status.IRejectReason;
 import com.louyj.rhttptunnel.worker.ClientDetector;
 import com.louyj.rhttptunnel.worker.handler.IMessageHandler;
 
@@ -87,16 +88,18 @@ public class MainLoop extends Thread implements ApplicationContextAware, Initial
 			logger.error("Unknow Message Type {}", type);
 			return;
 		}
-		BaseMessage result = null;
+		List<BaseMessage> messages = null;
 		try {
-			result = messageHandler.handle(taskMessage);
+			messages = messageHandler.handle(taskMessage);
 		} catch (Exception e) {
 			String reason = "Exception " + e.getClass().getName() + ":" + e.getMessage();
-			result = RejectMessage.creason(CLIENT, taskMessage.getExchangeId(), IRejectReason.make(reason));
+			messages = Lists.newArrayList(RejectMessage.creason(CLIENT, taskMessage.getExchangeId(), reason));
 		}
-		if (result != null) {
-			result.setExchangeId(taskMessage.getExchangeId());
-			messageExchanger.jsonPost(WORKER_EXCHANGE, result);
+		if (messages != null) {
+			for (BaseMessage msg : messages) {
+				msg.setExchangeId(taskMessage.getExchangeId());
+				messageExchanger.jsonPost(WORKER_EXCHANGE, msg);
+			}
 		}
 		logger.info("Process finished.");
 	}

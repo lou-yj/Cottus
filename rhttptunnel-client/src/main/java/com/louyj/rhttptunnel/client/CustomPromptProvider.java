@@ -28,8 +28,8 @@ public class CustomPromptProvider implements PromptProvider {
 		if (session.isWorkerConnected() == false) {
 			return new AttributedString("SERVER:> ");
 		}
-		ClientInfo clientInfo = session.getClientInfo();
-		return new AttributedString("WORKER[" + clientInfo.getHost() + "(" + clientInfo.getIp() + ")]:> ");
+		ClientInfo worker = session.getSelectedWorker();
+		return new AttributedString("WORKER[" + worker.getHost() + "(" + worker.getIp() + ")]:> ");
 	}
 
 }

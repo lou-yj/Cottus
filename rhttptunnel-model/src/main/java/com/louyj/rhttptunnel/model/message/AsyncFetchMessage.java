@@ -1,5 +1,8 @@
 package com.louyj.rhttptunnel.model.message;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * Created on 2020年3月16日
@@ -11,7 +14,8 @@ public class AsyncFetchMessage extends BaseMessage {
 
 	private int second = 3;
 
-	public AsyncFetchMessage(ClientInfo client) {
+	@JsonCreator
+	public AsyncFetchMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
 	}
 

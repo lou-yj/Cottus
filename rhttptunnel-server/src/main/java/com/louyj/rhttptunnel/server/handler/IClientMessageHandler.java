@@ -9,4 +9,8 @@ package com.louyj.rhttptunnel.server.handler;
  */
 public interface IClientMessageHandler extends IMessageHandler {
 
+	default boolean asyncMode() {
+		return true;
+	}
+
 }

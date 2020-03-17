@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.status.IRejectReason;
 import com.louyj.rhttptunnel.server.handler.IMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -45,7 +44,7 @@ public class ExchangeTask implements Runnable {
 		} catch (Exception e) {
 			logger.error("Exceptioned exchange id {}", message.getExchangeId(), e);
 			clientSession.getMessageQueue().add(RejectMessage.sreason(message.getExchangeId(),
-					IRejectReason.make("Exception " + e.getClass().getSimpleName() + ":" + e.getMessage())));
+					"Exception " + e.getClass().getSimpleName() + ":" + e.getMessage()));
 		}
 	}
 

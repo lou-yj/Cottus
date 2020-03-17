@@ -30,6 +30,6 @@ public class LogUtils {
 
 	public static void serverReject(BaseMessage message) {
 		RejectMessage rejectMessage = (RejectMessage) message;
-		System.out.println("[SERVER ERROR] request rejected by server, reason" + rejectMessage.getReason());
+		System.out.println("[SERVER ERROR] request rejected by server, reason " + rejectMessage.getReason());
 	}
 }

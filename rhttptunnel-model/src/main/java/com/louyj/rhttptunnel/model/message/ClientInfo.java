@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.model.message;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 
 /**
@@ -13,7 +15,8 @@ public class ClientInfo {
 
 	public static final ClientInfo SERVER = new ClientInfo("SERVER", "SERVER");
 
-	public ClientInfo(String host, String ip) {
+	@JsonCreator
+	public ClientInfo(@JsonProperty("host") String host, @JsonProperty("ip") String ip) {
 		super();
 		this.host = host;
 		this.ip = ip;

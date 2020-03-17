@@ -1,5 +1,8 @@
 package com.louyj.rhttptunnel.model.message;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * Created on 2020年3月14日
@@ -22,6 +25,11 @@ public class FileDataMessage extends BaseMessage {
 	private long totalSize;
 
 	private long currentSize;
+
+	@JsonCreator
+	public FileDataMessage(@JsonProperty("client") ClientInfo client) {
+		super(client);
+	}
 
 	public FileDataMessage(ClientInfo client, String fileName, boolean start, boolean end, byte[] data,
 			String fileHash) {

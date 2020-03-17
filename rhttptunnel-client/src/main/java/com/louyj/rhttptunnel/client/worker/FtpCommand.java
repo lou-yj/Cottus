@@ -20,8 +20,10 @@ import com.louyj.rhttptunnel.client.MessagePoller;
 import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ExecMessage;
 import com.louyj.rhttptunnel.model.message.FileDataMessage;
 import com.louyj.rhttptunnel.model.message.FileRequestMessage;
+import com.louyj.rhttptunnel.model.message.LsMessage;
 import com.louyj.rhttptunnel.model.message.PwdMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 
@@ -48,21 +50,20 @@ public class FtpCommand {
 	@Value("${transfer.data.maxsize:1048576}")
 	private int transferMaxSize;
 
-	@ShellMethod(value = "fetch file from worker")
-	public String fileGet(@ShellOption(value = { "-f", "--file" }, help = "file path") String path,
-			@ShellOption(value = { "-a",
-					"--absolute" }, help = "absolute path?", defaultValue = "false") boolean absolute) {
+	@ShellMethod(value = "get file from worker")
+	public String get(@ShellOption(value = { "-f", "--file" }, help = "file path") String path, @ShellOption(value = {
+			"-a", "--absolute" }, help = "absolute path?", defaultValue = "false") boolean absolute) {
 		FileRequestMessage message = new FileRequestMessage(CLIENT, absolute, path);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	public Availability fileGetAvailability() {
+	public Availability getAvailability() {
 		return session.workerCmdAvailability();
 	}
 
 	@ShellMethod(value = "send file to worker")
-	public String fileSend(@ShellOption(value = { "-f", "--file" }, help = "file path") String path) throws Exception {
+	public String send(@ShellOption(value = { "-f", "--file" }, help = "file path") String path) throws Exception {
 		String exchangeId = UUID.randomUUID().toString();
 		File file = new File(path);
 		if (!file.exists()) {
@@ -102,6 +103,9 @@ public class FtpCommand {
 				LogUtils.serverReject(responseMessage);
 				fis.close();
 				return "FAILED";
+			} else {
+				System.out.println("Semd package success, total size " + fileDataMessage.getTotalSize()
+						+ " current received " + fileDataMessage.getCurrentSize());
 			}
 			if (end) {
 				return messagePoller.pollExchangeMessage(exchangeId);
@@ -112,29 +116,66 @@ public class FtpCommand {
 		}
 	}
 
-	public Availability fileSendAvailability() {
+	public Availability sendAvailability() {
 		return session.workerCmdAvailability();
 	}
 
 	@ShellMethod(value = "print work directory")
 	public String pwd() {
+		if (session.getCwd() != null) {
+			return session.getCwd();
+		}
 		PwdMessage message = new PwdMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
-		return messagePoller.pollExchangeMessage(response);
+		String pwd = messagePoller.pollExchangeMessage(response);
+		session.setCwd(pwd);
+		return pwd;
 	}
 
-	public Availability pwdGetAvailability() {
+	public Availability pwdAvailability() {
 		return session.workerCmdAvailability();
 	}
 
 	@ShellMethod(value = "list files")
 	public String ls() {
-		FileRequestMessage message = new FileRequestMessage(CLIENT, absolute, path);
+		LsMessage message = new LsMessage(CLIENT);
+		message.setPath(session.getCwd());
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	public Availability lsGetAvailability() {
+	public Availability lsAvailability() {
+		return session.workerCmdAvailability();
+	}
+
+	@ShellMethod(value = "change directory")
+	public String cd(String path) {
+		pwd();
+		if (path.startsWith("/")) {
+			session.setCwd(path);
+		} else {
+			session.setCwd(session.getCwd() + "/" + path);
+		}
+		return session.getCwd();
+	}
+
+	public Availability cdAvailability() {
+		return session.workerCmdAvailability();
+	}
+
+	@ShellMethod(value = "execute script file")
+	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path,
+			@ShellOption(value = { "-t", "--timeout" }, help = "timeout seconds", defaultValue = "120") int timeout,
+			@ShellOption(value = { "-p", "--args" }, help = "parameters") String[] args) {
+		if (path.startsWith("/") == false) {
+			path = session.getCwd() + "/" + path;
+		}
+		ExecMessage message = new ExecMessage(CLIENT, path, args, timeout);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
+	public Availability execAvailability() {
 		return session.workerCmdAvailability();
 	}
 }

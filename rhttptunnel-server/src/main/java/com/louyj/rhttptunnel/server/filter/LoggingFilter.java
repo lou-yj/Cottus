@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.louyj.rhttptunnel.server.util.JsonUtils;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
  * Created on 2018年3月30日
@@ -64,19 +64,16 @@ public class LoggingFilter implements Filter {
 		String uri = httpServletRequest.getRequestURI();
 		String query = httpServletRequest.getQueryString();
 		String method = httpServletRequest.getMethod();
+		BufferedRequestWrapper bufferedRequest = HttpContentCachedFilter.getBufferedRequest(request);
+		logRequest(bufferedRequest);
 		long ss = System.currentTimeMillis();
 		chain.doFilter(request, response);
 		long ee = System.currentTimeMillis();
-
-		if (logger.isDebugEnabled()) {
-			try {
-				BufferedRequestWrapper bufferedRequest = HttpContentCachedFilter.getBufferedRequest(request);
-				logRequest(bufferedRequest);
-				BufferedResponseWrapper bufferedResponse = HttpContentCachedFilter.getBufferedResponse(response);
-				logResponse(bufferedResponse);
-			} catch (Exception e) {
-				logger.error("", e);
-			}
+		try {
+			BufferedResponseWrapper bufferedResponse = HttpContentCachedFilter.getBufferedResponse(response);
+			logResponse(bufferedResponse);
+		} catch (Exception e) {
+			logger.error("", e);
 		}
 		HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 		if (isNotBlank(uri) && StringUtils.equals(uri, "/") == false

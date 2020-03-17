@@ -23,7 +23,7 @@
          http://code.alibabatech.com/schema/dubbo/dubbo.xsd" >
 	
 	<!--order 从-9000开始, WebMvcAutoConfiguration -->
-	<bean id="encodingAndCachedFilter" class="com.louyj.rhttptunnel.service.filter.HttpContentCachedFilter"/>
+	<bean id="encodingAndCachedFilter" class="com.louyj.rhttptunnel.server.filter.HttpContentCachedFilter"/>
 	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
 		<property name="filter" ref="encodingAndCachedFilter"/>
 		<property name="urlPatterns" value="/*"/>
@@ -31,7 +31,7 @@
 		<property name="order" value="-9000"/>
 	</bean>
 	
-	<bean id="loggingFilter" class="com.louyj.rhttptunnel.service.filter.LoggingFilter"/>
+	<bean id="loggingFilter" class="com.louyj.rhttptunnel.server.filter.LoggingFilter"/>
 	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
 		<property name="filter" ref="loggingFilter"/>
 		<property name="urlPatterns" value="/*"/>
@@ -39,7 +39,7 @@
 		<property name="order" value="-1000"/>
 	</bean>
 	
-	<bean id="exceptionCatchFilter" class="com.louyj.rhttptunnel.service.filter.ExceptionCatchFilter">
+	<bean id="exceptionCatchFilter" class="com.louyj.rhttptunnel.server.filter.ExceptionCatchFilter">
 	</bean>
 	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
 		<property name="filter" ref="exceptionCatchFilter"/>

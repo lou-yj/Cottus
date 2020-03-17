@@ -7,6 +7,7 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.ClientSession;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
  *
@@ -21,11 +22,15 @@ public class ServerCommand {
 	@Autowired
 	private ClientSession session;
 
+	@Autowired
+	private MessageExchanger messageExchanger;
+
 	@ShellMethod(value = "Connect to server")
 	public String connect(@ShellOption(value = { "-s", "--server" }, help = "server address") String address,
 			@ShellOption(value = { "-u", "--user" }, help = "user name") String userName,
 			@ShellOption(value = { "-p", "--password" }, help = "password") String password) {
 		session.setServerConnected(true);
+		messageExchanger.setServerAddress(address);
 		return "OK";
 	}
 

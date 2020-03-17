@@ -39,6 +39,14 @@ public abstract class BaseMessage {
 		this.exchangeId = exchangeId;
 	}
 
+	public void setTime(long time) {
+		this.time = time;
+	}
+
+	public void setClient(ClientInfo client) {
+		this.client = client;
+	}
+
 	@Override
 	public String toString() {
 		return "[" + this.getClass().getSimpleName() + "]" + new Gson().toJson(this);

@@ -40,6 +40,9 @@ public class WorkerSessionManager {
 	}
 
 	public WorkerSession session(ClientInfo clientInfo) {
+		if (clientInfo == null) {
+			return null;
+		}
 		return clients.getIfPresent(clientInfo.identify());
 	}
 

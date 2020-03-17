@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.server.util;
+package com.louyj.rhttptunnel.model.util;
 
 import static com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_SINGLE_QUOTES;
 import static com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS;
