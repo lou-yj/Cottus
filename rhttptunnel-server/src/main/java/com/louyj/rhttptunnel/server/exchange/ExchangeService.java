@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.server.exchange;
 
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.AckMessage;
@@ -140,7 +140,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 
 	}
 
-	private BaseMessage deserializer(String data) throws JsonMappingException, JsonProcessingException {
+	private BaseMessage deserializer(String data) throws IOException {
 		return jackson.readValue(data, BaseMessage.class);
 	}
 
