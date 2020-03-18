@@ -3,6 +3,8 @@ package com.louyj.rhttptunnel.client.worker;
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
+import java.util.Scanner;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.Availability;
@@ -53,8 +55,17 @@ public class ControlCommand {
 		return session.workerCmdAvailability();
 	}
 
+	@SuppressWarnings("resource")
 	@ShellMethod(value = "Shutdown remote worker!!!")
 	public String shutdown() {
+		System.out.println("WARNNING REMOTE WORKER WILL BE SHUTDOWN!!!");
+		System.out.print("Enter yes to continue(yes/no)?");
+		Scanner sc = new Scanner(System.in);
+		String line = sc.nextLine();
+		line = StringUtils.trim(line);
+		if (StringUtils.equalsIgnoreCase(line, "yes") == false) {
+			return "CANCELED";
+		}
 		ShutdownMessage message = new ShutdownMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		String resp = messagePoller.pollExchangeMessage(response);
