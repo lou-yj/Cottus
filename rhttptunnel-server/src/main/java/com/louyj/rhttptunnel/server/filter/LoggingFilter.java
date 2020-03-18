@@ -3,10 +3,6 @@ package com.louyj.rhttptunnel.server.filter;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -22,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
  * Created on 2018年3月30日
@@ -34,7 +28,7 @@ public class LoggingFilter implements Filter {
 
 	final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	public final static String LOG_REQUEST = "Request params-->";
+	public final static String LOG_REQUEST = "Request-->";
 	public final static String LOG_RESPONSE = "Response-->";
 
 	public final static String REQUEST_HEADERS = "request_headers";
@@ -45,8 +39,6 @@ public class LoggingFilter implements Filter {
 	public final static String URI = "uri";
 	public final static String QUERY_PARAMS = "query_params";
 	public final static String METHOD = "method";
-
-	private ObjectMapper jackson = JsonUtils.jackson();
 
 	public LoggingFilter() {
 		super();
@@ -95,18 +87,7 @@ public class LoggingFilter implements Filter {
 		} else {
 			requestBody = bufferedRequest.getBufferedRequestBody();
 		}
-
-		Map<String, Object> requestInfo = new HashMap<>();
-		requestInfo.put(URI, bufferedRequest.getRequestURI());
-		requestInfo.put(QUERY_PARAMS, bufferedRequest.getQueryString());
-		requestInfo.put(METHOD, bufferedRequest.getMethod());
-
-		Map<String, Object> requestLog = new HashMap<>();
-		requestLog.put(REQUEST_BODY, tryParseJson(requestBody));
-		requestLog.put(REQUEST_HEADERS, headersMap(bufferedRequest));
-		requestLog.put(REQUEST_INFO, requestInfo);
-
-		logger.info(LOG_REQUEST + jackson.writeValueAsString(requestLog));
+		logger.info(LOG_REQUEST + requestBody);
 	}
 
 	private void logResponse(BufferedResponseWrapper bufferedResponse) throws Exception {
@@ -121,10 +102,7 @@ public class LoggingFilter implements Filter {
 		} else {
 			responseBody = bufferedResponse.getBufferedResponseBody();
 		}
-		Map<String, Object> responseLog = new HashMap<>();
-		responseLog.put(RESPONSE_BODY, tryParseJson(responseBody));
-		responseLog.put(RESPONSE_HEADERS, headersMap(bufferedResponse));
-		logger.info(LOG_RESPONSE + jackson.writeValueAsString(responseLog));
+		logger.info(LOG_RESPONSE + responseBody);
 	}
 
 	public static String getRemoteHost(javax.servlet.http.HttpServletRequest request) {
@@ -149,32 +127,4 @@ public class LoggingFilter implements Filter {
 
 	}
 
-	private Object tryParseJson(String json) {
-		try {
-			return jackson.readValue(json, Object.class);
-		} catch (IOException e) {
-			return json;
-		}
-	}
-
-	private Map<String, Object> headersMap(HttpServletRequest request) {
-		Map<String, Object> result = new HashMap<>();
-		Enumeration<String> headerNames = request.getHeaderNames();
-		while (headerNames.hasMoreElements()) {
-			String headerName = headerNames.nextElement();
-			String headerValue = request.getHeader(headerName);
-			result.put(headerName, headerValue);
-		}
-		return result;
-	}
-
-	private Map<String, Object> headersMap(HttpServletResponse response) {
-		Map<String, Object> result = new HashMap<>();
-		Collection<String> headerNames = response.getHeaderNames();
-		for (String headerName : headerNames) {
-			String headerValue = response.getHeader(headerName);
-			result.put(headerName, headerValue);
-		}
-		return result;
-	}
 }

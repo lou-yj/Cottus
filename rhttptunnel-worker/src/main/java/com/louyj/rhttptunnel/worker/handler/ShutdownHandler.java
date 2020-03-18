@@ -7,9 +7,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.http.Endpoints;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ShutdownMessage;
@@ -26,6 +29,9 @@ public class ShutdownHandler implements IMessageHandler {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
+	@Autowired
+	private MessageExchanger messageExchanger;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
 		return ShutdownMessage.class;
@@ -33,7 +39,6 @@ public class ShutdownHandler implements IMessageHandler {
 
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
-		logger.info("Exchange acked by server, message {}", message);
 		new Thread() {
 
 			@Override
@@ -43,6 +48,8 @@ public class ShutdownHandler implements IMessageHandler {
 				} catch (InterruptedException e) {
 					logger.error("", e);
 				}
+				ShutdownMessage shutdownMessage = new ShutdownMessage(CLIENT);
+				messageExchanger.jsonPost(Endpoints.WORKER_EXCHANGE, shutdownMessage);
 				logger.info("Shutdown VM");
 				System.exit(0);
 			}

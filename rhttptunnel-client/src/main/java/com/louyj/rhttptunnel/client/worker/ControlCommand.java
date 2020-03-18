@@ -69,7 +69,6 @@ public class ControlCommand {
 		ShutdownMessage message = new ShutdownMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		String resp = messagePoller.pollExchangeMessage(response);
-		session.setDiscoverWorkerText(resp);
 		return resp;
 	}
 

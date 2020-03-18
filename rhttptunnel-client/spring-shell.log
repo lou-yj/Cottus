@@ -180,3 +180,14 @@
 1584455888116:get git-cmd.exe
 1584455969073:C:\\Users\\Louyj\\AppData\\Local\\Temp\\
 1584455971416:get git-cmd.exe
+1584502594389:connect -s http://localhost:18080 -u aaa -p aaa
+1584502606369:discover
+1584502614236:select 1
+1584502619860:shutdown
+1584503626624:connect -s http://localhost:18080 -u aaa -p aaa
+1584503629636:discover
+1584503636232:select 1
+1584503638096:ls
+1584503654233:pwd
+1584503660207:shutdown
+1584503679926:ls

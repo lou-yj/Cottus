@@ -3,12 +3,21 @@ package com.louyj.rhttptunnel.model.http;
 import static com.google.common.base.Charsets.UTF_8;
 import static com.louyj.rhttptunnel.model.message.status.RejectReason.CLIENT_ERROR;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
+
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.SSLContext;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -33,6 +42,7 @@ import com.louyj.rhttptunnel.model.util.JsonUtils;
  * @author Louyj
  *
  */
+@SuppressWarnings("deprecation")
 @Component
 public class MessageExchanger implements InitializingBean, DisposableBean {
 
@@ -48,7 +58,13 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		httpclient = HttpClients.createDefault();
+		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+			public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+				return true;
+			}
+		}).build();
+		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER);
+		httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
 		requestConfig = RequestConfig.custom().setSocketTimeout(600000).setConnectTimeout(5000).build();
 	}
 

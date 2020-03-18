@@ -46,4 +46,8 @@ public class WorkerSessionManager {
 		return clients.getIfPresent(clientInfo.identify());
 	}
 
+	public void remove(ClientInfo clientInfo) {
+		clients.invalidate(clientInfo.identify());
+	}
+
 }
