@@ -1,5 +1,9 @@
 package com.louyj.rhttptunnel.model.message;
 
+import java.util.UUID;
+
+import org.joda.time.DateTime;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
@@ -22,9 +26,25 @@ public class ClientInfo {
 		this.ip = ip;
 	}
 
+	private String uuid = UUID.randomUUID().toString();
+
+	private String uptime = DateTime.now().toString("yyyy-MM-dd HH:mm:ss");
+
 	private String host;
 
 	private String ip;
+
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
+	}
+
+	public String getUptime() {
+		return uptime;
+	}
+
+	public String getUuid() {
+		return uuid;
+	}
 
 	public String getHost() {
 		return host;
@@ -43,7 +63,7 @@ public class ClientInfo {
 	}
 
 	public String identify() {
-		return this.host + ":" + this.ip;
+		return this.uuid;
 	}
 
 	@Override

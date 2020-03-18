@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.server;
 
+import org.apache.sshd.server.shell.ProcessShellFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
@@ -21,6 +22,8 @@ public class RHttpTunnelServer {
 
 	public static void main(String[] args) {
 		SpringApplication.run(RHttpTunnelServer.class, args);
+
+		ProcessShellFactory ss;
 	}
 
 }

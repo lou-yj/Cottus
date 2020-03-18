@@ -15,6 +15,7 @@ import com.louyj.rhttptunnel.client.Status;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.SelectWorkerMessage;
+import com.louyj.rhttptunnel.model.message.ShutdownMessage;
 
 /**
  *
@@ -49,6 +50,19 @@ public class ControlCommand {
 	}
 
 	public Availability unselectAvailability() {
+		return session.workerCmdAvailability();
+	}
+
+	@ShellMethod(value = "Shutdown remote worker!!!")
+	public String shutdown() {
+		ShutdownMessage message = new ShutdownMessage(CLIENT);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		String resp = messagePoller.pollExchangeMessage(response);
+		session.setDiscoverWorkerText(resp);
+		return resp;
+	}
+
+	public Availability shutdownAvailability() {
 		return session.workerCmdAvailability();
 	}
 

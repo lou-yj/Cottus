@@ -4,8 +4,7 @@ import java.net.InetAddress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.ClientInfo;
@@ -18,14 +17,14 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
  *
  */
 @Component
-public class ClientDetector implements ApplicationRunner {
+public class ClientDetector implements InitializingBean {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public static final ClientInfo CLIENT = new ClientInfo("UNINITED", "UNINITED");
 
 	@Override
-	public void run(ApplicationArguments args) throws Exception {
+	public void afterPropertiesSet() throws Exception {
 		InetAddress localHost = InetAddress.getLocalHost();
 		String ip = localHost.getHostAddress();
 		String hostName = localHost.getHostName();

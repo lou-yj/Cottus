@@ -49,9 +49,12 @@ public class ClientSession {
 		List<ClientInfo> workers = Lists.newArrayList();
 		for (int i = 1; i < lines.length - 1; i++) {
 			String[] split = lines[i].split("\t");
-			String host = split[1];
-			String ip = split[2];
-			workers.add(new ClientInfo(host, ip));
+			String uuid = split[1];
+			String host = split[2];
+			String ip = split[3];
+			ClientInfo clientInfo = new ClientInfo(host, ip);
+			clientInfo.setUuid(uuid);
+			workers.add(clientInfo);
 		}
 		this.discoverWorkers = workers;
 		this.discoverWorkerText = discoverWorkerText;

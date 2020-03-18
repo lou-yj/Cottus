@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -40,12 +39,12 @@ public class DiscoverHandler implements IClientMessageHandler {
 			throws Exception {
 		List<String> list = Lists.newArrayList();
 		Collection<WorkerSession> workers = workerSessionManager.workers();
-		list.add("INDEX\tHOST\tIP\tHEARTBEAT");
+		list.add("INDEX\tUUID\tHOST\tIP\tUPTIME");
 		int index = 1;
 		for (WorkerSession worker : workers) {
-			list.add(String.format("%s\t%s\t%s", index++, worker.getClientInfo().getHost(),
-					worker.getClientInfo().getIp(),
-					new DateTime(worker.getLastTime()).toString("yyyy-MM-dd HH:mm:ss")));
+			list.add(String.format("%s\t%s\t%s\t%s", index++, worker.getClientInfo().getUuid(),
+					worker.getClientInfo().getHost(), worker.getClientInfo().getIp(),
+					worker.getClientInfo().getUptime()));
 		}
 		list.add("Found " + (index - 1) + " workes");
 		AckMessage ackMessage = AckMessage.sack(message.getExchangeId()).withMessage(StringUtils.join(list, "\n"));
