@@ -1,4 +1,5 @@
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\exception\CustomException.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ShellEndMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\bean\JsonFactory.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\FileDataMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\BaseMessage.java
@@ -10,6 +11,7 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttp
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\status\RejectReason.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\FileRequestMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ConfigMessage.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ShutdownMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\status\IRejectReason.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\MessageType.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\AckMessage.java
@@ -19,6 +21,7 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttp
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\AsyncFetchMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ClientInfo.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\LsMessage.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ShellStartMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\NotifyMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\PwdMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\SleepMessage.java
@@ -26,6 +29,7 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttp
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\http\Endpoints.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\AsyncExecAckMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\RejectMessage.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ShellMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\http\HttpRequestRetryHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\DiscoverMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\util\JsonUtils.java

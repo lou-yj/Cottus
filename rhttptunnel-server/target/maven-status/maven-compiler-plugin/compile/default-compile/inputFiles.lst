@@ -4,6 +4,7 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhtt
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\client\handler\UnSelectWorkerHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\handler\worker\LongPullHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\handler\IWorkerMessageHandler.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\handler\worker\ShutdownHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\filter\HttpContentCachedFilter.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\handler\IMessageHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\session\WorkerSessionManager.java

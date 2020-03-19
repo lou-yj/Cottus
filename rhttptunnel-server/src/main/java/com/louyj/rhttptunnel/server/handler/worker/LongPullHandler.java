@@ -45,7 +45,7 @@ public class LongPullHandler implements IWorkerMessageHandler {
 			if (poll != null) {
 				return poll;
 			}
-			return new SleepMessage(ClientInfo.SERVER, 10);
+			return new SleepMessage(ClientInfo.SERVER, 3);
 		} catch (InterruptedException e) {
 			logger.error("", e);
 			return RejectMessage.sreason(message.getExchangeId(), INTERRUPT.reason());

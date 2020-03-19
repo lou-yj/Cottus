@@ -29,6 +29,7 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.NoContentMessage;
 import com.louyj.rhttptunnel.model.message.NotifyMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.ShellMessage;
 
 /**
  *
@@ -116,6 +117,16 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 					return ackMessage.getMessage();
 				} else
 					return OK;
+			}
+			if (respMsg instanceof ShellMessage) {
+				ShellMessage shellMessage = (ShellMessage) respMsg;
+				String message = shellMessage.getMessage();
+				System.out.println("msg:" + message + ":msg");
+				if (message == null) {
+					return "";
+				} else {
+					return message;
+				}
 			}
 			if (respMsg instanceof RejectMessage) {
 				LogUtils.serverReject(respMsg);

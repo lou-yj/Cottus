@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+
+	<include
+		resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+	<springProperty scope="context" name="logging.pattern"
+		source="logging.pattern" />
+	<springProperty scope="context"
+		name="logging.file.max-size" source="logging.file.max-size"
+		defaultValue="100MB" />
+	<springProperty scope="context"
+		name="logging.file.max-history" source="logging.file.max-history"
+		defaultValue="5" />
+
+
+	<appender name="FILE"
+		class="ch.qos.logback.classic.sift.SiftingAppender">
+		<discriminator>
+			<key>task-name</key>
+			<defaultValue>main</defaultValue>
+		</discriminator>
+		<sift>
+			<appender name="FILE-${task-name}"
+				class="ch.qos.logback.core.rolling.RollingFileAppender">
+				<rollingPolicy
+					class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+					<FileNamePattern>../logs/service-${task-name}-%d{yyyyMMddHH}.log
+					</FileNamePattern>
+					<maxHistory>${logging.file.max-history}</maxHistory>
+				</rollingPolicy>
+				<encoder>
+					<pattern>${logging.pattern}%n</pattern>
+					<charset>UTF-8</charset>
+				</encoder>
+			</appender>
+		</sift>
+	</appender>
+
+	<appender name="STDOUT"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>${logging.pattern}%n</pattern>
+		</encoder>
+	</appender>
+
+	<root level="INFO">
+		<!-- <appender-ref ref="FILE"/> -->
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
+

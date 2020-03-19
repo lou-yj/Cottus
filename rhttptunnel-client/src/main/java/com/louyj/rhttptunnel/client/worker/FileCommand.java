@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.client.worker;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,7 +65,9 @@ public class FileCommand {
 	}
 
 	@ShellMethod(value = "send file to worker")
-	public String send(@ShellOption(value = { "-f", "--file" }, help = "file path") String path) throws Exception {
+	public String send(@ShellOption(value = { "-f", "-s", "--file", "--source" }, help = "file path") String path,
+			@ShellOption(value = { "-t", "--target" }, help = "file path", defaultValue = "") String target)
+			throws Exception {
 		String exchangeId = UUID.randomUUID().toString();
 		File file = new File(path);
 		if (!file.exists()) {
@@ -75,6 +78,7 @@ public class FileCommand {
 			LogUtils.clientError("directory transfer current not support");
 			return "FAILED";
 		}
+		String targetName = isBlank(target) ? file.getName() : target;
 		long totalSize = file.length();
 		long currentSize = 0;
 		FileInputStream fis = new FileInputStream(file);
@@ -94,9 +98,9 @@ public class FileCommand {
 			} else if (read != buffer.length) {
 				data = new byte[read];
 				System.arraycopy(buffer, 0, data, 0, read);
+				currentSize += read;
 			}
-			currentSize += read;
-			FileDataMessage fileDataMessage = new FileDataMessage(CLIENT, file.getName(), start, end, data, md5Hex);
+			FileDataMessage fileDataMessage = new FileDataMessage(CLIENT, targetName, start, end, data, md5Hex);
 			fileDataMessage.setExchangeId(exchangeId);
 			fileDataMessage.setSize(totalSize, currentSize);
 			BaseMessage responseMessage = messageExchanger.jsonPost(CLIENT_EXCHANGE, fileDataMessage);
@@ -156,9 +160,9 @@ public class FileCommand {
 	}
 
 	@ShellMethod(value = "list files")
-	public String ls() {
+	public String ls(@ShellOption(value = { "-f", "--file" }, help = "file path", defaultValue = "") String path) {
 		LsMessage message = new LsMessage(CLIENT);
-		message.setPath(session.getCwd());
+		message.setPath(isBlank(path) ? session.getCwd() : path);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}
@@ -184,8 +188,8 @@ public class FileCommand {
 
 	@ShellMethod(value = "execute script file")
 	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path,
-			@ShellOption(value = { "-t", "--timeout" }, help = "timeout seconds", defaultValue = "120") int timeout,
-			@ShellOption(value = { "-p", "--args" }, help = "parameters") String args) {
+			@ShellOption(value = { "-p", "--args" }, help = "parameters", defaultValue = "") String args,
+			@ShellOption(value = { "-t", "--timeout" }, help = "timeout seconds", defaultValue = "120") int timeout) {
 		if (path.startsWith("/") == false) {
 			path = session.getCwd() + "/" + path;
 		}
