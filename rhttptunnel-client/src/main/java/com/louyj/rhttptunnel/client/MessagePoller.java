@@ -121,7 +121,6 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 			if (respMsg instanceof ShellMessage) {
 				ShellMessage shellMessage = (ShellMessage) respMsg;
 				String message = shellMessage.getMessage();
-				System.out.println("msg:" + message + ":msg");
 				if (message == null) {
 					return "";
 				} else {

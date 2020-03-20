@@ -42,7 +42,7 @@ public class DiscoverHandler implements IClientMessageHandler {
 		list.add("INDEX\tUUID\tHOST\tIP\tUPTIME");
 		int index = 1;
 		for (WorkerSession worker : workers) {
-			list.add(String.format("%s\t%s\t%s\t%s", index++, worker.getClientInfo().getUuid(),
+			list.add(String.format("%s\t%s\t%s\t%s\t%s", index++, worker.getClientInfo().getUuid(),
 					worker.getClientInfo().getHost(), worker.getClientInfo().getIp(),
 					worker.getClientInfo().getUptime()));
 		}

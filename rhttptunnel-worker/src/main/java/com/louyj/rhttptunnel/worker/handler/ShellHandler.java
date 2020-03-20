@@ -1,13 +1,18 @@
 package com.louyj.rhttptunnel.worker.handler;
 
-import java.util.List;
+import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.louyj.rhttptunnel.model.http.MessageExchanger;
+import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ShellMessage;
 
@@ -21,12 +26,8 @@ import com.louyj.rhttptunnel.model.message.ShellMessage;
 @Component
 public class ShellHandler implements IMessageHandler {
 
-	private static Logger logger = LoggerFactory.getLogger(ShellHandler.class);
-
-	@Autowired
-	private MessageExchanger messageExchanger;
-
-//	private Map<String, ExchangeThread> threads = Maps.newConcurrentMap();
+	@Value("${work.directory}")
+	private String workDirectory;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -35,151 +36,47 @@ public class ShellHandler implements IMessageHandler {
 
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
-//		ExchangeThread workerThread = threads.get(message.getClient().identify());
-//		if (workerThread == null) {
-//			return Lists.newArrayList(RejectMessage.creason(CLIENT, message.getExchangeId(), "Sesson not found"));
-//		}
-//		workerThread.queue.put((ShellMessage) message);
-//		return null;
-	}
+		ShellMessage shellMessage = (ShellMessage) message;
+		File infile = new File(workDirectory, "temp/" + message.getExchangeId() + ".in");
+		File outfile = new File(workDirectory, "temp/" + message.getExchangeId() + ".out");
+		File resfile = new File(workDirectory, "temp/" + message.getExchangeId() + ".res");
+		File errFile = new File(workDirectory, "temp/" + message.getExchangeId() + ".err");
+		File scriptfile = new File(workDirectory, "temp/" + message.getExchangeId() + ".sc");
 
-	public BaseMessage startShell(BaseMessage message) {
-//		ExchangeThread exchangeThread = new ExchangeThread();
-//		exchangeThread.identify = message.getClient().identify();
-//		exchangeThread.exchangeId = message.getExchangeId();
-//		threads.put(message.getClient().identify(), exchangeThread);
-//		WorkerThread worker = new WorkerThread();
-//		worker.exchangeThread = exchangeThread;
-//		worker.start();
-//		return null;
-	}
+		long reslast = resfile.lastModified();
+		long errlast = errFile.lastModified();
+		long outlast = outfile.lastModified();
+		FileUtils.writeStringToFile(infile, shellMessage.getMessage() + "\n", true);
+		if (StringUtils.equals(shellMessage.getMessage(), "exit")) {
+			return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId()));
+		}
+		while (true) {
+			long reslast2 = resfile.lastModified();
+			String content = null;
+			if (reslast2 > reslast) {
+				if (outfile.lastModified() > outlast) {
+					content = FileUtils.readFileToString(outfile, "utf8");
+				}
+				if (errFile.lastModified() > errlast) {
+					String content1 = FileUtils.readFileToString(errFile, "utf8");
+					if (StringUtils.isNotBlank(content1)) {
+						content1 = content1.replace(scriptfile.getAbsolutePath() + ":", "");
+						content1 = content1.replaceFirst("\\s*\\d:\\s*eval:\\s*", "");
+						if (StringUtils.isBlank(content)) {
+							content = "[ERROR] " + content1;
+						} else {
+							content += "\n[ERROR] " + content1;
+						}
+					}
+				}
+				ShellMessage response = new ShellMessage(CLIENT, message.getExchangeId());
+				response.setMessage(content);
+				return Lists.newArrayList(response);
+			} else {
+				TimeUnit.MILLISECONDS.sleep(100);
+			}
+		}
 
-	public BaseMessage endShell(BaseMessage message) {
-//		String identify = message.getClient().identify();
-//		ExchangeThread thread = threads.get(identify);
-//		if (thread != null) {
-//			thread.shouldBreak = true;
-//		}
-//		return AckMessage.cack(CLIENT, message.getExchangeId());
 	}
-
-//	public class ExchangeThread extends Thread {
-//
-//		private OutputStream shellIn;
-//		private InputStream shellOut;
-//		private InputStream shellErr;
-//		private ClientChannel channel;
-//		private String identify;
-//		private String exchangeId;
-//
-//		private BlockingDeque<ShellMessage> queue = new LinkedBlockingDeque<>(100);
-//
-//		private boolean shouldBreak = false;
-//
-//		@Override
-//		public void run() {
-//			while (!shouldBreak) {
-//				try {
-//					ShellMessage shellMessage = queue.poll(1, TimeUnit.SECONDS);
-//					if (shellMessage == null) {
-//						continue;
-//					}
-////					pumpInput(shellMessage);
-////					if (!pumpOutput(shellMessage, shellOut)) {
-////						if (!pumpOutput(shellMessage, shellErr)) {
-////							System.out.println("Send empty resp");
-////							ShellMessage resp = new ShellMessage(CLIENT, shellMessage.getExchangeId());
-////							resp.setMessage("");
-////							messageExchanger.jsonPost(WORKER_EXCHANGE, resp);
-////						}
-////					}
-//					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//					ByteArrayInputStream bais = new ByteArrayInputStream(shellMessage.getMessage().getBytes("utf8"));
-//					channel.setOut(baos);
-//					channel.setErr(baos);
-//					channel.setIn(bais);
-//					System.out.println("xxx" + baos.toString("utf8"));
-//				} catch (Exception e) {
-//					logger.error("", e);
-//				}
-//			}
-//			IOUtils.closeQuietly(channel);
-//			threads.remove(identify);
-//		}
-//
-//		private void pumpInput(ShellMessage message) throws IOException {
-//			String content = message.getMessage();
-//			shellIn.write(content.getBytes(UTF_8));
-//			shellIn.flush();
-//		}
-//
-//		private boolean pumpOutput(ShellMessage message, InputStream in) throws IOException {
-//			int available = in.available();
-//			System.out.println("available " + available);
-//			if (available > 0) {
-//				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//				byte[] bs = new byte[1024];
-//				while (available > 0) {
-//					int len = in.read(bs);
-//					System.out.println("Read " + len);
-//					if (len > 0) {
-//						baos.write(bs, 0, len);
-//					} else {
-//						break;
-//					}
-//					available = in.available();
-//				}
-//				String output = new String(baos.toByteArray(), "utf8");
-//				System.out.println("Send shell resp: " + output);
-//				ShellMessage shellMessage = new ShellMessage(CLIENT, message.getExchangeId());
-//				shellMessage.setMessage(output);
-//				messageExchanger.jsonPost(WORKER_EXCHANGE, shellMessage);
-//				return true;
-//			} else {
-//				return false;
-//			}
-//		}
-//	}
-//
-//	public class WorkerThread extends Thread {
-//
-//		private ExchangeThread exchangeThread;
-//
-//		@Override
-//		public void run() {
-//			try {
-//				doRun();
-//			} catch (Exception e) {
-//				logger.error("", e);
-//				messageExchanger.jsonPost(WORKER_EXCHANGE,
-//						RejectMessage.creason(CLIENT, exchangeThread.exchangeId, "Start Shell Failed."));
-//			}
-//		}
-//
-//		private void doRun() throws InterruptedException, IOException {
-//			SshClient client = SshClient.setUpDefaultClient();
-//			client.start();
-//			try (ClientSession session = client.connect("aaa", "localhost", 14567).verify(10000).getSession()) {
-//				session.addPasswordIdentity("xx");
-//				session.auth().verify(10000);
-//				try (ClientChannel channel = session.createShellChannel()) {
-//					try {
-//						channel.open().verify(10000);
-//						exchangeThread.shellIn = channel.getInvertedIn();
-//						exchangeThread.shellOut = channel.getInvertedOut();
-//						exchangeThread.shellErr = channel.getInvertedErr();
-//						exchangeThread.channel = channel;
-//						messageExchanger.jsonPost(WORKER_EXCHANGE,
-//								AckMessage.cack(CLIENT, exchangeThread.exchangeId).withMessage("Worker ready"));
-//						System.out.println("-----");
-//						exchangeThread.start();
-//						channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 0L);
-//					} finally {
-//					}
-//				}
-//			}
-//		}
-//
-//	}
 
 }

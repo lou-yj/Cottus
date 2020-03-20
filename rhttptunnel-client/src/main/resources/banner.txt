@@ -1,6 +1,7 @@
 Welcome To Reverse HTTP Tunnel Client
 
-Please connect server using `connect` command, then `select` a worker to operate.
+Please connect server using `connect` command, then using `discover/select` a worker to communicate.
 
-Press help to list available command. 
+Type `help` to list available command. 
+Type `help command` to see command detail.
 

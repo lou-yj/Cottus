@@ -121,7 +121,7 @@ public class ControlCommand {
 			System.out.print(echo);
 			System.out.print("shell:> ");
 		}
-		return "Exit interactive shell mode";
+		return "\nExit interactive shell mode";
 	}
 
 	public Availability shellAvailability() {
