@@ -3,6 +3,7 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttp
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\bean\JsonFactory.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\FileDataMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\BaseMessage.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ClientIdLongPullMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\exception\BadTypeException.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\RmMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\SelectWorkerMessage.java
@@ -22,6 +23,7 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttp
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\RoleMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ClientInfo.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\bean\RoleType.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ClientIdMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\LsMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ShellStartMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\NotifyMessage.java

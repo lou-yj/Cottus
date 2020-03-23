@@ -1,9 +1,8 @@
-com\louyj\rhttptunnel\worker\ClientDetector.class
 com\louyj\rhttptunnel\worker\handler\FileDataHandler.class
-com\louyj\rhttptunnel\worker\handler\RejectHandler.class
 com\louyj\rhttptunnel\worker\RHttpTunnelWorker.class
 com\louyj\rhttptunnel\worker\handler\IMessageHandler.class
-com\louyj\rhttptunnel\worker\message\MainLoop.class
-com\louyj\rhttptunnel\worker\handler\SleepHandler.class
 com\louyj\rhttptunnel\worker\handler\AckHandler.class
+com\louyj\rhttptunnel\worker\ClientDetector.class
+com\louyj\rhttptunnel\worker\handler\RejectHandler.class
+com\louyj\rhttptunnel\worker\handler\SleepHandler.class
 com\louyj\rhttptunnel\worker\handler\FileRequestHandler.class

@@ -13,6 +13,7 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhtt
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\TokenIssuer.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\client\handler\SelectWorkerHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\exchange\ExchangeTask.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\handler\worker\ClientIdLongPullHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\session\WorkerSession.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\user\UserManager.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-server\src\main\java\com\louyj\rhttptunnel\server\client\handler\UnSelectWorkerHandler.java
