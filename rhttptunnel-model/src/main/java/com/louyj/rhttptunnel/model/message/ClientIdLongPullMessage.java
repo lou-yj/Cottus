@@ -10,30 +10,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
-public class LongPullMessage extends BaseMessage {
-
-	private String clientId;
+public class ClientIdLongPullMessage extends BaseMessage {
 
 	private int second = 10;
 
 	@JsonCreator
-	public LongPullMessage(@JsonProperty("client") ClientInfo client, @JsonProperty("clientId") String clientId) {
+	public ClientIdLongPullMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
-		this.clientId = clientId;
 	}
 
-	public LongPullMessage(ClientInfo client, String clientId, int second) {
+	public ClientIdLongPullMessage(ClientInfo client, int second) {
 		super(client);
 		this.second = second;
-		this.clientId = clientId;
 	}
 
 	public int getSecond() {
 		return second;
-	}
-
-	public String getClientId() {
-		return clientId;
 	}
 
 }

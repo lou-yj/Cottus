@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.server.handler.worker;
 
 import static com.louyj.rhttptunnel.model.message.status.RejectReason.INTERRUPT;
 
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -10,8 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientIdLongPullMessage;
+import com.louyj.rhttptunnel.model.message.ClientIdMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
-import com.louyj.rhttptunnel.model.message.LongPullMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.message.SleepMessage;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
@@ -26,24 +28,26 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  *
  */
 @Component
-public class LongPullHandler implements IWorkerMessageHandler {
+public class ClientIdLongPullHandler implements IWorkerMessageHandler {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return LongPullMessage.class;
+		return ClientIdLongPullMessage.class;
 	}
 
 	@Override
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		LongPullMessage longPullMessage = (LongPullMessage) message;
-		BlockingQueue<BaseMessage> messageQueue = workerSession.getMessageQueue(longPullMessage.getClientId());
+		ClientIdLongPullMessage longPullMessage = (ClientIdLongPullMessage) message;
+		BlockingQueue<Set<String>> clientIdQueue = workerSession.getClientIdQueue();
 		try {
-			BaseMessage poll = messageQueue.poll(longPullMessage.getSecond(), TimeUnit.SECONDS);
+			Set<String> poll = clientIdQueue.poll(longPullMessage.getSecond(), TimeUnit.SECONDS);
 			if (poll != null) {
-				return poll;
+				ClientIdMessage clientIdMessage = new ClientIdMessage(ClientInfo.SERVER, message.getExchangeId());
+				clientIdMessage.setClientIds(poll);
+				return clientIdMessage;
 			}
 			return new SleepMessage(ClientInfo.SERVER, 3);
 		} catch (InterruptedException e) {

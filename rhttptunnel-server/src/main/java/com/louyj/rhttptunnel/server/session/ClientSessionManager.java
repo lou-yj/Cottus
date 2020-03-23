@@ -19,31 +19,31 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
 @Component
 public class ClientSessionManager {
 
-	private Cache<String, ClientSession> workers = CacheBuilder.newBuilder().softValues()
+	private Cache<String, ClientSession> clients = CacheBuilder.newBuilder().softValues()
 			.expireAfterWrite(10, TimeUnit.HOURS).build();
 
 	private Cache<String, String> exchanges = CacheBuilder.newBuilder().softValues()
 			.expireAfterWrite(10, TimeUnit.HOURS).build();
 
 	public void update(ClientInfo client, String exchangeId) {
-		ClientSession session = workers.getIfPresent(client.identify());
+		ClientSession session = clients.getIfPresent(client.identify());
 		if (session == null) {
 			session = new ClientSession(client);
 		}
 		session.setLastTime(System.currentTimeMillis());
-		workers.put(client.identify(), session);
+		clients.put(client.identify(), session);
 		exchanges.put(exchangeId, client.identify());
 	}
 
 	public Collection<ClientSession> workers() {
-		return workers.asMap().values();
+		return clients.asMap().values();
 	}
 
 	public ClientSession session(ClientInfo clientInfo) {
 		if (clientInfo == null) {
 			return null;
 		}
-		return workers.getIfPresent(clientInfo.identify());
+		return clients.getIfPresent(clientInfo.identify());
 	}
 
 	public ClientSession session(String exchangeId) {
@@ -51,7 +51,7 @@ public class ClientSessionManager {
 		if (identiry == null) {
 			return null;
 		}
-		return workers.getIfPresent(identiry);
+		return clients.getIfPresent(identiry);
 	}
 
 }

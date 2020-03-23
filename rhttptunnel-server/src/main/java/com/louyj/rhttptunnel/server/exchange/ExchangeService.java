@@ -106,7 +106,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			if (workerSession == null) {
 				return RejectMessage.sreason(message.getExchangeId(), "Current worker offline.");
 			}
-			workerSession.putMessage(message);
+			workerSession.putMessage(client.getUuid(), message);
 			return AsyncExecAckMessage.sack(message.getExchangeId());
 		} else {
 			if (handler.asyncMode()) {

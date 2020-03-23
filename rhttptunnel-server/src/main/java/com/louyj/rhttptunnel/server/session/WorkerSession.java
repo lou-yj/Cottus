@@ -1,8 +1,12 @@
 package com.louyj.rhttptunnel.server.session;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
@@ -21,7 +25,9 @@ public class WorkerSession {
 
 	private ClientInfo clientInfo;
 
-	private BlockingQueue<BaseMessage> messageQueue = new LinkedBlockingDeque<BaseMessage>(100);
+	private Map<String, BlockingQueue<BaseMessage>> queues = Maps.newConcurrentMap();
+
+	private BlockingQueue<Set<String>> clientIdQueue = new LinkedBlockingQueue<>();
 
 	public WorkerSession(ClientInfo clientInfo) {
 		super();
@@ -52,12 +58,26 @@ public class WorkerSession {
 		this.clientInfo = clientInfo;
 	}
 
-	public BlockingQueue<BaseMessage> getMessageQueue() {
-		return messageQueue;
+	public BlockingQueue<BaseMessage> getMessageQueue(String clientId) throws InterruptedException {
+		return getQueue(clientId);
 	}
 
-	public void putMessage(BaseMessage message) throws InterruptedException {
-		this.messageQueue.put(message);
+	public void putMessage(String clientId, BaseMessage message) throws InterruptedException {
+		getQueue(clientId).put(message);
+	}
+
+	public BlockingQueue<Set<String>> getClientIdQueue() {
+		return clientIdQueue;
+	}
+
+	private synchronized BlockingQueue<BaseMessage> getQueue(String clientId) throws InterruptedException {
+		BlockingQueue<BaseMessage> messageQueue = queues.get(clientId);
+		if (messageQueue == null) {
+			messageQueue = new LinkedBlockingDeque<BaseMessage>(50);
+			queues.put(clientId, messageQueue);
+			clientIdQueue.put(queues.keySet());
+		}
+		return messageQueue;
 	}
 
 }
