@@ -29,6 +29,7 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.NoContentMessage;
 import com.louyj.rhttptunnel.model.message.NotifyMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.RoleMessage;
 import com.louyj.rhttptunnel.model.message.ShellMessage;
 
 /**
@@ -45,6 +46,9 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 
 	@Autowired
 	private MessageExchanger messageExchanger;
+
+	@Autowired
+	private ClientSession session;
 
 	@Value("${client.max.wait:600}")
 	private int maxWait = 600;
@@ -85,6 +89,10 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 					return ackMessage.getMessage();
 				} else
 					return OK;
+			}
+			if (response instanceof RoleMessage) {
+				session.setRole(((RoleMessage) response).getRole());
+				return OK;
 			}
 			if (response instanceof AsyncExecAckMessage) {
 				return pollExchangeMessage(response.getExchangeId());

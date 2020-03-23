@@ -19,7 +19,9 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttp
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\http\MessageExchanger.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\LongPullMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\AsyncFetchMessage.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\RoleMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ClientInfo.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\bean\RoleType.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\LsMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ShellStartMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\NotifyMessage.java
@@ -33,4 +35,5 @@ D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttp
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\http\HttpRequestRetryHandler.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\DiscoverMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\util\JsonUtils.java
+D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\ConnectMessage.java
 D:\workspaces\others\RHttpTunnel\rhttptunnel-model\src\main\java\com\louyj\rhttptunnel\model\message\NoContentMessage.java

@@ -34,6 +34,16 @@ public class ClientInfo {
 
 	private String ip;
 
+	private String user;
+
+	public String getUser() {
+		return user;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}

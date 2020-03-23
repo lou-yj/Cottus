@@ -99,6 +99,8 @@ public class FileCommand {
 				data = new byte[read];
 				System.arraycopy(buffer, 0, data, 0, read);
 				currentSize += read;
+			} else {
+				currentSize += read;
 			}
 			FileDataMessage fileDataMessage = new FileDataMessage(CLIENT, targetName, start, end, data, md5Hex);
 			fileDataMessage.setExchangeId(exchangeId);
@@ -109,7 +111,7 @@ public class FileCommand {
 				fis.close();
 				return "FAILED";
 			} else {
-				System.out.println("Semd package success, total size " + fileDataMessage.getTotalSize()
+				System.out.println("Send package success, total size " + fileDataMessage.getTotalSize()
 						+ " current received " + fileDataMessage.getCurrentSize());
 			}
 			if (end) {

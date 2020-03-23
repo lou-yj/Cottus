@@ -20,7 +20,7 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
 public class ClientSessionManager {
 
 	private Cache<String, ClientSession> workers = CacheBuilder.newBuilder().softValues()
-			.expireAfterWrite(10, TimeUnit.MINUTES).build();
+			.expireAfterWrite(10, TimeUnit.HOURS).build();
 
 	private Cache<String, String> exchanges = CacheBuilder.newBuilder().softValues()
 			.expireAfterWrite(10, TimeUnit.HOURS).build();
