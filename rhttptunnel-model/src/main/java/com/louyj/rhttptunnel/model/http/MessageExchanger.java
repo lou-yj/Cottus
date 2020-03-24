@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.model.http;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static com.louyj.rhttptunnel.model.message.status.RejectReason.CLIENT_ERROR;
+import static com.louyj.rhttptunnel.model.util.AESEncryptUtils.defaultKey;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 
@@ -33,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.MediaType;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.util.AESEncryptUtils;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
@@ -78,7 +80,9 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 
 	public final BaseMessage jsonPost(String endpoint, BaseMessage message) {
 		try {
-			HttpEntity httpEntity = new StringEntity(jackson.writeValueAsString(message), UTF_8);
+			String data = jackson.writeValueAsString(message);
+			data = AESEncryptUtils.encrypt(data, defaultKey);
+			HttpEntity httpEntity = new StringEntity(data, UTF_8);
 			HttpPost httpPost = new HttpPost(serverAddress + endpoint);
 			httpPost.setConfig(requestConfig);
 			httpPost.setEntity(httpEntity);
@@ -87,6 +91,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			try {
 				HttpEntity entity = response.getEntity();
 				String json = EntityUtils.toString(entity, UTF_8);
+				json = AESEncryptUtils.decrypt(json, defaultKey);
 				return jackson.readValue(json, BaseMessage.class);
 			} finally {
 				response.close();

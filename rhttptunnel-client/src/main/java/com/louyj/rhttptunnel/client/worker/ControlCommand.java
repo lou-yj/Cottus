@@ -115,11 +115,15 @@ public class ControlCommand {
 				System.out.print(echo);
 				break;
 			}
-			ShellMessage shellMessage = new ShellMessage(CLIENT, exchangeId);
-			shellMessage.setMessage(line);
-			BaseMessage post = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellMessage);
-			String echo = messagePoller.pollExchangeMessage(post);
-			System.out.print(echo);
+			if (StringUtils.endsWith(line, "\\")) {
+				System.out.println("Multi line command current not support!");
+			} else if (StringUtils.isNotBlank(line)) {
+				ShellMessage shellMessage = new ShellMessage(CLIENT, exchangeId);
+				shellMessage.setMessage(line);
+				BaseMessage post = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellMessage);
+				String echo = messagePoller.pollExchangeMessage(post);
+				System.out.print(echo);
+			}
 			System.out.print("shell:> ");
 		}
 		return "\nExit interactive shell mode";

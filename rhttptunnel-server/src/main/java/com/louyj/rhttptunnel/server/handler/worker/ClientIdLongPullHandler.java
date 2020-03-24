@@ -49,7 +49,7 @@ public class ClientIdLongPullHandler implements IWorkerMessageHandler {
 				clientIdMessage.setClientIds(poll);
 				return clientIdMessage;
 			}
-			return new SleepMessage(ClientInfo.SERVER, 3);
+			return new SleepMessage(ClientInfo.SERVER, 1);
 		} catch (InterruptedException e) {
 			logger.error("", e);
 			return RejectMessage.sreason(message.getExchangeId(), INTERRUPT.reason());

@@ -24,6 +24,7 @@ public class AESEncryptUtils {
 
 	static final String KEY_ALGORITHM = "AES";
 	static final String CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding";
+	public static final String defaultKey = "^&*() {}:LJHGFFTUIHFUT";
 
 	public static Key toKey(byte[] key) throws Exception {
 		SecretKey secretKey = new SecretKeySpec(key, KEY_ALGORITHM);

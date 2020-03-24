@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.server.filter;
 
+import static com.louyj.rhttptunnel.model.util.AESEncryptUtils.defaultKey;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.io.IOException;
@@ -11,13 +12,13 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.louyj.rhttptunnel.model.util.AESEncryptUtils;
 
 /**
  * Created on 2018年3月30日
@@ -51,28 +52,43 @@ public class LoggingFilter implements Filter {
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
-		HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-		String host = getRemoteHost(httpServletRequest);
-		String uri = httpServletRequest.getRequestURI();
-		String query = httpServletRequest.getQueryString();
-		String method = httpServletRequest.getMethod();
-		BufferedRequestWrapper bufferedRequest = HttpContentCachedFilter.getBufferedRequest(request);
-		logRequest(bufferedRequest);
-		long ss = System.currentTimeMillis();
-		chain.doFilter(request, response);
-		long ee = System.currentTimeMillis();
 		try {
+			HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+			String host = getRemoteHost(httpServletRequest);
+			String uri = httpServletRequest.getRequestURI();
+			String query = httpServletRequest.getQueryString();
+			String method = httpServletRequest.getMethod();
+			BufferedRequestWrapper bufferedRequest = HttpContentCachedFilter.getBufferedRequest(request);
+			String bufferedRequestBody = bufferedRequest.getBufferedRequestBody();
+			bufferedRequestBody = AESEncryptUtils.decrypt(bufferedRequestBody, defaultKey);
+			bufferedRequest.setBuffer(bufferedRequestBody);
+			logRequest(bufferedRequest);
+			long ss = System.currentTimeMillis();
+			chain.doFilter(request, response);
+			long ee = System.currentTimeMillis();
+
 			BufferedResponseWrapper bufferedResponse = HttpContentCachedFilter.getBufferedResponse(response);
 			logResponse(bufferedResponse);
+			String bufferedResponseBody = bufferedResponse.getBufferedResponseBody();
+			bufferedResponseBody = AESEncryptUtils.encrypt(bufferedResponseBody, defaultKey);
+			resetResponseTo(bufferedResponse, bufferedResponseBody);
+
+			if (isNotBlank(uri) && StringUtils.equals(uri, "/") == false
+					&& StringUtils.endsWith(uri, "/service-registry/instance-status") == false)
+				logger.info("用户{},访问{},方式:{},参数:{},用时{}毫秒,返回状态{}.", host, uri, method, query, ee - ss,
+						bufferedResponse.getStatus());
 		} catch (Exception e) {
 			logger.error("", e);
 		}
-		HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-		if (isNotBlank(uri) && StringUtils.equals(uri, "/") == false
-				&& StringUtils.endsWith(uri, "/service-registry/instance-status") == false)
-			logger.info("用户{},访问{},方式:{},参数:{},用时{}毫秒,返回状态{}.", host, uri, method, query, ee - ss,
-					httpServletResponse.getStatus());
+	}
 
+	public void resetResponseTo(BufferedResponseWrapper cachedResonse, String response) {
+		try {
+			cachedResonse.resetBuffer();
+			cachedResonse.getWriter().write(response);
+		} catch (Exception e) {
+			logger.error("", e);
+		}
 	}
 
 	private void logRequest(BufferedRequestWrapper bufferedRequest) throws JsonProcessingException {
