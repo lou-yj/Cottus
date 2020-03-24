@@ -7,6 +7,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
@@ -32,6 +33,10 @@ public class WorkerSession {
 	public WorkerSession(ClientInfo clientInfo) {
 		super();
 		this.clientInfo = clientInfo;
+	}
+
+	public Set<String> allClientIds() {
+		return Sets.newHashSet(queues.keySet());
 	}
 
 	public long getStartTime() {
@@ -78,6 +83,11 @@ public class WorkerSession {
 			clientIdQueue.put(queues.keySet());
 		}
 		return messageQueue;
+	}
+
+	public void onClientRemove(String clientId) throws InterruptedException {
+		queues.remove(clientId);
+		clientIdQueue.put(queues.keySet());
 	}
 
 }

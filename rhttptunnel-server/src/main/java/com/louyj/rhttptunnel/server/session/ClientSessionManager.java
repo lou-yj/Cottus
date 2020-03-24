@@ -3,10 +3,14 @@ package com.louyj.rhttptunnel.server.session;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalCause;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
@@ -17,13 +21,16 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
  *
  */
 @Component
-public class ClientSessionManager {
+public class ClientSessionManager implements RemovalListener<String, ClientSession> {
+
+	@Autowired
+	private WorkerSessionManager workerSessionManager;
 
 	private Cache<String, ClientSession> clients = CacheBuilder.newBuilder().softValues()
-			.expireAfterWrite(10, TimeUnit.HOURS).build();
+			.expireAfterWrite(1, TimeUnit.HOURS).removalListener(this).build();
 
-	private Cache<String, String> exchanges = CacheBuilder.newBuilder().softValues()
-			.expireAfterWrite(10, TimeUnit.HOURS).build();
+	private Cache<String, String> exchanges = CacheBuilder.newBuilder().softValues().expireAfterWrite(1, TimeUnit.HOURS)
+			.build();
 
 	public void update(ClientInfo client, String exchangeId) {
 		ClientSession session = clients.getIfPresent(client.identify());
@@ -52,6 +59,14 @@ public class ClientSessionManager {
 			return null;
 		}
 		return clients.getIfPresent(identiry);
+	}
+
+	@Override
+	public void onRemoval(RemovalNotification<String, ClientSession> notification) {
+		RemovalCause removalCause = notification.getCause();
+		if (RemovalCause.EXPIRED.equals(removalCause)) {
+			workerSessionManager.onClientRemove(notification.getKey());
+		}
 	}
 
 }

@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.worker.message;
 import static com.louyj.rhttptunnel.model.http.Endpoints.WORKER_EXCHANGE;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -14,6 +15,8 @@ import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.LongPullMessage;
 import com.louyj.rhttptunnel.worker.ClientDetector;
+import com.louyj.rhttptunnel.worker.handler.IClientCloseable;
+import com.louyj.rhttptunnel.worker.handler.IMessageHandler;
 
 /**
  *
@@ -52,6 +55,18 @@ public class ThreadWorker extends Thread {
 			}
 		}
 		logger.info("Stop worker thread response for client {}", clientId);
+		Map<Class<? extends BaseMessage>, IMessageHandler> messageHandlers = MessageUtils.getMessageHandlers();
+		for (IMessageHandler handler : messageHandlers.values()) {
+			if (handler instanceof IClientCloseable) {
+				try {
+					logger.info("Close client resource using {} handler.", handler.getClass().getName());
+					((IClientCloseable) handler).close(clientId);
+				} catch (Exception e) {
+					logger.error("", e);
+				}
+			}
+		}
+		logger.info("Client resource closed");
 	}
 
 	public boolean isShouldBreak() {

@@ -48,11 +48,11 @@ public class ShellStartHandler implements IMessageHandler {
 
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
-		File infile = new File(workDirectory, "temp/" + message.getExchangeId() + ".in");
-		File outfile = new File(workDirectory, "temp/" + message.getExchangeId() + ".out");
-		File resfile = new File(workDirectory, "temp/" + message.getExchangeId() + ".res");
-		File scriptfile = new File(workDirectory, "temp/" + message.getExchangeId() + ".sc");
-		File errFile = new File(workDirectory, "temp/" + message.getExchangeId() + ".err");
+		File infile = new File(workDirectory, "temp/" + message.getClient().identify() + ".in");
+		File outfile = new File(workDirectory, "temp/" + message.getClient().identify() + ".out");
+		File resfile = new File(workDirectory, "temp/" + message.getClient().identify() + ".res");
+		File scriptfile = new File(workDirectory, "temp/" + message.getClient().identify() + ".sc");
+		File errFile = new File(workDirectory, "temp/" + message.getClient().identify() + ".err");
 
 		infile.getParentFile().mkdirs();
 		infile.createNewFile();

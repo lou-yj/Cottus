@@ -102,9 +102,9 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		IClientMessageHandler handler = clientHandlers.get(type);
 		if (handler == null) {
 			if (workerSession == null) {
-				return RejectMessage.sreason(message.getExchangeId(), "Current worker offline.");
+				return RejectMessage.sreason(message.getExchangeId(), "Current worker offline or session expired.");
 			}
-			workerSession.putMessage(client.getUuid(), message);
+			workerSession.putMessage(client.identify(), message);
 			return AsyncExecAckMessage.sack(message.getExchangeId());
 		} else {
 			if (handler.asyncMode()) {
@@ -128,7 +128,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		IMessageHandler handler = workerHandlers.get(type);
 		if (handler == null) {
 			if (clientSession == null) {
-				return RejectMessage.sreason(message.getExchangeId(), "Current client offline.");
+				return RejectMessage.sreason(message.getExchangeId(), "Current client offline or session expired.");
 			}
 			clientSession.putMessage(message);
 			return AckMessage.sack(message.getExchangeId());

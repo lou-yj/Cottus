@@ -15,7 +15,6 @@ import com.louyj.rhttptunnel.model.message.ClientIdLongPullMessage;
 import com.louyj.rhttptunnel.model.message.ClientIdMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.SleepMessage;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -44,12 +43,12 @@ public class ClientIdLongPullHandler implements IWorkerMessageHandler {
 		BlockingQueue<Set<String>> clientIdQueue = workerSession.getClientIdQueue();
 		try {
 			Set<String> poll = clientIdQueue.poll(longPullMessage.getSecond(), TimeUnit.SECONDS);
-			if (poll != null) {
-				ClientIdMessage clientIdMessage = new ClientIdMessage(ClientInfo.SERVER, message.getExchangeId());
-				clientIdMessage.setClientIds(poll);
-				return clientIdMessage;
+			if (poll == null) {
+				poll = workerSession.allClientIds();
 			}
-			return new SleepMessage(ClientInfo.SERVER, 1);
+			ClientIdMessage clientIdMessage = new ClientIdMessage(ClientInfo.SERVER, message.getExchangeId());
+			clientIdMessage.setClientIds(poll);
+			return clientIdMessage;
 		} catch (InterruptedException e) {
 			logger.error("", e);
 			return RejectMessage.sreason(message.getExchangeId(), INTERRUPT.reason());

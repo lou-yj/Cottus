@@ -3,6 +3,8 @@ package com.louyj.rhttptunnel.server.session;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.google.common.cache.Cache;
@@ -18,6 +20,8 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
  */
 @Component
 public class WorkerSessionManager {
+
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	private Cache<String, WorkerSession> workers = CacheBuilder.newBuilder().softValues()
 			.expireAfterWrite(1, TimeUnit.MINUTES).build();
@@ -48,6 +52,20 @@ public class WorkerSessionManager {
 
 	public void remove(ClientInfo clientInfo) {
 		workers.invalidate(clientInfo.identify());
+	}
+
+	public void onClientRemove(String clientId) {
+		for (String workerId : workers.asMap().keySet()) {
+			WorkerSession workerSession = workers.getIfPresent(workerId);
+			if (workerSession == null) {
+				continue;
+			}
+			try {
+				workerSession.onClientRemove(clientId);
+			} catch (InterruptedException e) {
+				logger.error("", e);
+			}
+		}
 	}
 
 }

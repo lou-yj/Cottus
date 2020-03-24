@@ -40,6 +40,10 @@ public class MessageUtils implements ApplicationContextAware, InitializingBean {
 
 	private static Map<Class<? extends BaseMessage>, IMessageHandler> messageHandlers;
 
+	public static Map<Class<? extends BaseMessage>, IMessageHandler> getMessageHandlers() {
+		return messageHandlers;
+	}
+
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
