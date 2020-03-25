@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -30,6 +31,9 @@ public class LongPullHandler implements IWorkerMessageHandler {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
+	@Value("${worker.sleep:1}")
+	private int workerSleep;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
 		return LongPullMessage.class;
@@ -45,7 +49,7 @@ public class LongPullHandler implements IWorkerMessageHandler {
 			if (poll != null) {
 				return poll;
 			}
-			return new SleepMessage(ClientInfo.SERVER, 1);
+			return new SleepMessage(ClientInfo.SERVER, workerSleep);
 		} catch (InterruptedException e) {
 			logger.error("", e);
 			return RejectMessage.sreason(message.getExchangeId(), INTERRUPT.reason());
