@@ -14,22 +14,10 @@ public class LongPullMessage extends BaseMessage {
 
 	private String clientId;
 
-	private int second = 10;
-
 	@JsonCreator
 	public LongPullMessage(@JsonProperty("client") ClientInfo client, @JsonProperty("clientId") String clientId) {
 		super(client);
 		this.clientId = clientId;
-	}
-
-	public LongPullMessage(ClientInfo client, String clientId, int second) {
-		super(client);
-		this.second = second;
-		this.clientId = clientId;
-	}
-
-	public int getSecond() {
-		return second;
 	}
 
 	public String getClientId() {

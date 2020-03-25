@@ -7,7 +7,6 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
@@ -52,9 +51,6 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 
 	@Value("${client.max.wait:600}")
 	private int maxWait = 600;
-
-	@Value("${client.noconent.wait:1}")
-	private int noconentWait = 1;
 
 	private Map<Class<? extends BaseMessage>, IMessageHandler> messageHandlers;
 
@@ -112,7 +108,7 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 				LogUtils.clientError("Wait Timeout wait over " + maxWait + " second");
 				return FAILED;
 			}
-			AsyncFetchMessage fetchMessage = new AsyncFetchMessage(CLIENT, 3);
+			AsyncFetchMessage fetchMessage = new AsyncFetchMessage(CLIENT);
 			fetchMessage.setExchangeId(exchangeId);
 			BaseMessage respMsg = messageExchanger.jsonPost(CLIENT_EXCHANGE, fetchMessage);
 			if (StringUtils.equals(respMsg.getExchangeId(), exchangeId) == false) {
@@ -140,7 +136,6 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 				return FAILED;
 			}
 			if (respMsg instanceof NoContentMessage) {
-				TimeUnit.SECONDS.sleep(noconentWait);
 				continue;
 			}
 			if (respMsg instanceof NotifyMessage) {

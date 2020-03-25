@@ -34,6 +34,9 @@ public class LongPullHandler implements IWorkerMessageHandler {
 	@Value("${worker.sleep:1}")
 	private int workerSleep;
 
+	@Value("${worker.wait:60}")
+	private int workerWait;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
 		return LongPullMessage.class;
@@ -45,7 +48,7 @@ public class LongPullHandler implements IWorkerMessageHandler {
 		LongPullMessage longPullMessage = (LongPullMessage) message;
 		BlockingQueue<BaseMessage> messageQueue = workerSession.getMessageQueue(longPullMessage.getClientId());
 		try {
-			BaseMessage poll = messageQueue.poll(longPullMessage.getSecond(), TimeUnit.SECONDS);
+			BaseMessage poll = messageQueue.poll(workerWait, TimeUnit.SECONDS);
 			if (poll != null) {
 				return poll;
 			}

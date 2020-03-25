@@ -6,6 +6,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.AsyncFetchMessage;
@@ -27,6 +28,9 @@ public class AsyncFetchHandler implements IClientMessageHandler {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
+	@Value("${client.wait:60}")
+	private int clientWait;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
 		return AsyncFetchMessage.class;
@@ -35,9 +39,8 @@ public class AsyncFetchHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		AsyncFetchMessage asyncFetchMessage = (AsyncFetchMessage) message;
 		while (true) {
-			BaseMessage poll = clientSession.getMessageQueue().poll(asyncFetchMessage.getSecond(), SECONDS);
+			BaseMessage poll = clientSession.getMessageQueue().poll(clientWait, SECONDS);
 			if (poll != null) {
 				if (StringUtils.equals(message.getExchangeId(), poll.getExchangeId())) {
 					return poll;
