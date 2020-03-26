@@ -1,8 +1,8 @@
 package com.louyj.rhttptunnel.client;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
-import static com.louyj.rhttptunnel.client.Status.FAILED;
-import static com.louyj.rhttptunnel.client.Status.OK;
+import static com.louyj.rhttptunnel.client.consts.Status.FAILED;
+import static com.louyj.rhttptunnel.client.consts.Status.OK;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 

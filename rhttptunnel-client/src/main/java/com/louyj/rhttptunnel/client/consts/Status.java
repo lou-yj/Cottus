@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.client;
+package com.louyj.rhttptunnel.client.consts;
 
 /**
  *

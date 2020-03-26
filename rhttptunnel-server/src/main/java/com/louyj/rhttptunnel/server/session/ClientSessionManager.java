@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.server.session;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalCause;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.ImmutableSet;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
@@ -27,7 +29,7 @@ public class ClientSessionManager implements RemovalListener<String, ClientSessi
 	private WorkerSessionManager workerSessionManager;
 
 	private Cache<String, ClientSession> clients = CacheBuilder.newBuilder().softValues()
-			.expireAfterWrite(1, TimeUnit.HOURS).removalListener(this).build();
+			.expireAfterWrite(1, TimeUnit.MINUTES).removalListener(this).build();
 
 	private Cache<String, String> exchanges = CacheBuilder.newBuilder().softValues().expireAfterWrite(1, TimeUnit.HOURS)
 			.build();
@@ -66,6 +68,12 @@ public class ClientSessionManager implements RemovalListener<String, ClientSessi
 		RemovalCause removalCause = notification.getCause();
 		if (RemovalCause.EXPIRED.equals(removalCause)) {
 			workerSessionManager.onClientRemove(notification.getKey());
+			for (String exchangeId : ImmutableSet.copyOf(exchanges.asMap().keySet())) {
+				String clientId = exchanges.getIfPresent(exchangeId);
+				if (StringUtils.equals(clientId, notification.getKey())) {
+					exchanges.invalidate(exchangeId);
+				}
+			}
 		}
 	}
 

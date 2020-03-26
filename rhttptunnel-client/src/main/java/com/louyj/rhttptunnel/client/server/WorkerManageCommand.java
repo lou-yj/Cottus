@@ -14,7 +14,7 @@ import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.MessagePoller;
-import com.louyj.rhttptunnel.client.Status;
+import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
