@@ -222,7 +222,7 @@ public class FileCommand {
 			System.out.print(echo);
 			num++;
 		}
-		return "";
+		return null;
 	}
 
 	public Availability execAvailability() {

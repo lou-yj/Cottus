@@ -63,17 +63,21 @@ public class ClientSessionManager implements RemovalListener<String, ClientSessi
 		return clients.getIfPresent(identiry);
 	}
 
+	public void clientExit(String identify) {
+		workerSessionManager.onClientRemove(identify);
+		for (String exchangeId : ImmutableSet.copyOf(exchanges.asMap().keySet())) {
+			String clientId = exchanges.getIfPresent(exchangeId);
+			if (StringUtils.equals(clientId, identify)) {
+				exchanges.invalidate(exchangeId);
+			}
+		}
+	}
+
 	@Override
 	public void onRemoval(RemovalNotification<String, ClientSession> notification) {
 		RemovalCause removalCause = notification.getCause();
 		if (RemovalCause.EXPIRED.equals(removalCause)) {
-			workerSessionManager.onClientRemove(notification.getKey());
-			for (String exchangeId : ImmutableSet.copyOf(exchanges.asMap().keySet())) {
-				String clientId = exchanges.getIfPresent(exchangeId);
-				if (StringUtils.equals(clientId, notification.getKey())) {
-					exchanges.invalidate(exchangeId);
-				}
-			}
+			clientExit(notification.getKey());
 		}
 	}
 
