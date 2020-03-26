@@ -14,6 +14,8 @@ public class ShellMessage extends BaseMessage {
 
 	private String message;
 
+	private int timeout = 300;
+
 	@JsonCreator
 	public ShellMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
@@ -22,6 +24,14 @@ public class ShellMessage extends BaseMessage {
 	public ShellMessage(ClientInfo client, String exchangeId) {
 		super(client);
 		setExchangeId(exchangeId);
+	}
+
+	public int getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(int timeout) {
+		this.timeout = timeout;
 	}
 
 	public String getMessage() {

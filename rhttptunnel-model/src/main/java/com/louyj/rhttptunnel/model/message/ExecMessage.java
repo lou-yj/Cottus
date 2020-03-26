@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ExecMessage extends BaseMessage {
 
+	private String workdir;
+
 	private String path;
 
 	private String args;
@@ -28,6 +30,14 @@ public class ExecMessage extends BaseMessage {
 		this.path = path;
 		this.timeout = timeout;
 		this.args = args;
+	}
+
+	public String getWorkdir() {
+		return workdir;
+	}
+
+	public void setWorkdir(String workdir) {
+		this.workdir = workdir;
 	}
 
 	public int getTimeout() {

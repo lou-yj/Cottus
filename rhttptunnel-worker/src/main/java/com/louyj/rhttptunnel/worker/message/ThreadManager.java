@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
+import com.louyj.rhttptunnel.worker.shell.ShellManager;
 
 /**
  *
@@ -24,13 +25,16 @@ public class ThreadManager {
 	@Autowired
 	private MessageExchanger messageExchanger;
 
+	@Autowired
+	private ShellManager shellManager;
+
 	private Map<String, ThreadWorker> workers = Maps.newConcurrentMap();
 
 	public void ensureThreads(Collection<String> ids) {
 		Set<String> clientIds = Sets.newHashSet(ids);
 		for (String clientId : clientIds) {
 			if (workers.containsKey(clientId) == false) {
-				ThreadWorker worker = new ThreadWorker(clientId, messageExchanger);
+				ThreadWorker worker = new ThreadWorker(clientId, messageExchanger, shellManager);
 				worker.start();
 				workers.put(clientId, worker);
 			}

@@ -21,8 +21,8 @@ import com.louyj.rhttptunnel.model.http.MessageExchanger;
 public class RHttpTunnelClient {
 
 	public static void main(String[] args) {
-		String[] disabledCommands = { "--spring.shell.command.script.enabled=false",
-				"--spring.shell.command.stacktrace.enabled=false" };
+		// "--spring.shell.command.script.enabled=false",
+		String[] disabledCommands = { "--spring.shell.command.stacktrace.enabled=false" };
 		String[] fullArgs = StringUtils.concatenateStringArrays(args, disabledCommands);
 		SpringApplication.run(RHttpTunnelClient.class, fullArgs);
 	}

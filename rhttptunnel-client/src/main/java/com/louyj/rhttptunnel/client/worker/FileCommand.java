@@ -6,9 +6,15 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.shell.Availability;
@@ -189,15 +195,34 @@ public class FileCommand {
 	}
 
 	@ShellMethod(value = "execute script file")
-	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path,
-			@ShellOption(value = { "-p", "--args" }, help = "parameters", defaultValue = "") String args,
-			@ShellOption(value = { "-t", "--timeout" }, help = "timeout seconds", defaultValue = "120") int timeout) {
-		if (path.startsWith("/") == false) {
-			path = session.getCwd() + "/" + path;
+	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path, @ShellOption(value = {
+			"-p", "--args",
+			"--parameters" }, help = "parameters, when '-' input parameters in seperate line", defaultValue = "") String args,
+			@ShellOption(value = { "-t", "--timeout" }, help = "timeout seconds", defaultValue = "120") int timeout,
+			@ShellOption(value = { "-r", "--repeat" }, help = "repeat number", defaultValue = "1") int repeat)
+			throws IOException {
+		if (StringUtils.equals(args, "-")) {
+			Terminal terminal = TerminalBuilder.builder().system(true).build();
+			LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).build();
+			String prompt = "parameters:> ";
+			args = lineReader.readLine(prompt);
+			terminal.close();
 		}
-		ExecMessage message = new ExecMessage(CLIENT, path, args, timeout);
-		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
-		return messagePoller.pollExchangeMessage(response);
+		if (repeat == -1) {
+			repeat = Integer.MAX_VALUE;
+		} else if (repeat <= 0) {
+			repeat = 1;
+		}
+		int num = 0;
+		while (num < repeat) {
+			ExecMessage message = new ExecMessage(CLIENT, path, args, timeout);
+			message.setWorkdir(session.getCwd());
+			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+			String echo = messagePoller.pollExchangeMessage(response);
+			System.out.print(echo);
+			num++;
+		}
+		return "";
 	}
 
 	public Availability execAvailability() {

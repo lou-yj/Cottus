@@ -3,7 +3,6 @@ package com.louyj.rhttptunnel.worker.message;
 import static com.louyj.rhttptunnel.model.http.Endpoints.WORKER_EXCHANGE;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -15,8 +14,7 @@ import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.LongPullMessage;
 import com.louyj.rhttptunnel.worker.ClientDetector;
-import com.louyj.rhttptunnel.worker.handler.IClientCloseable;
-import com.louyj.rhttptunnel.worker.handler.IMessageHandler;
+import com.louyj.rhttptunnel.worker.shell.ShellManager;
 
 /**
  *
@@ -31,18 +29,26 @@ public class ThreadWorker extends Thread {
 
 	private String clientId;
 	private MessageExchanger messageExchanger;
+	private ShellManager shellManager;
 
 	private boolean shouldBreak = false;
 
-	public ThreadWorker(String clientId, MessageExchanger messageExchanger) {
+	public ThreadWorker(String clientId, MessageExchanger messageExchanger, ShellManager shellManager) {
 		super();
 		this.clientId = clientId;
 		this.messageExchanger = messageExchanger;
+		this.shellManager = shellManager;
 	}
 
 	@Override
 	public void run() {
 		logger.info("Start worker thread response for client {}", clientId);
+		try {
+			shellManager.activeShell(clientId);
+			logger.info("Shell actived.");
+		} catch (IOException e2) {
+			logger.error("Active shell failed.", e2);
+		}
 		while (!shouldBreak) {
 			try {
 				doRun();
@@ -54,19 +60,9 @@ public class ThreadWorker extends Thread {
 				}
 			}
 		}
+		shellManager.destoryShell(clientId);
+		logger.info("Shell destoried.");
 		logger.info("Stop worker thread response for client {}", clientId);
-		Map<Class<? extends BaseMessage>, IMessageHandler> messageHandlers = MessageUtils.getMessageHandlers();
-		for (IMessageHandler handler : messageHandlers.values()) {
-			if (handler instanceof IClientCloseable) {
-				try {
-					logger.info("Close client resource using {} handler.", handler.getClass().getName());
-					((IClientCloseable) handler).close(clientId);
-				} catch (Exception e) {
-					logger.error("", e);
-				}
-			}
-		}
-		logger.info("Client resource closed");
 	}
 
 	public boolean isShouldBreak() {
