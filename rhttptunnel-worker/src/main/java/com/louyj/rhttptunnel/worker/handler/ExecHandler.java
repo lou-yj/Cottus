@@ -4,9 +4,11 @@ import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
@@ -28,6 +30,9 @@ public class ExecHandler implements IMessageHandler {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
+	@Value("${work.directory}")
+	private String workDirectory;
+
 	@Autowired
 	private ShellManager shellManager;
 
@@ -39,8 +44,11 @@ public class ExecHandler implements IMessageHandler {
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		ExecMessage execMessage = (ExecMessage) message;
-		String cmdLine = "cd '" + execMessage.getWorkdir() + "' && bash '" + execMessage.getPath() + "' "
-				+ execMessage.getArgs();
+		String dir = execMessage.getWorkdir();
+		if (StringUtils.isBlank(dir)) {
+			dir = workDirectory;
+		}
+		String cmdLine = "cd '" + dir + "' && bash '" + execMessage.getPath() + "' " + execMessage.getArgs();
 		logger.info("exec {}", cmdLine);
 		ShellHolder shellHolder = shellManager.activeShell(message.getClient().identify());
 		shellHolder.ensureRunning();
