@@ -56,6 +56,9 @@ public class ShellHolder {
 		scriptfile = new File(workDirectory, ".temp/." + clientId + ".sc");
 		errFile = new File(workDirectory, ".temp/." + clientId + ".err");
 		killFile = new File(workDirectory, ".temp/.stop.sc");
+	}
+
+	public void start() throws IOException {
 		infile.getParentFile().mkdirs();
 		try {
 			infile.createNewFile();
@@ -66,9 +69,6 @@ public class ShellHolder {
 		} catch (Exception e) {
 			logger.error("", e);
 		}
-	}
-
-	public void start() throws IOException {
 		InputStream openStream = this.getClass().getClassLoader().getResource("shell.txt").openStream();
 		String shell = IOUtils.toString(openStream, Charsets.UTF_8);
 		String inpath = infile.getAbsolutePath();
@@ -89,12 +89,12 @@ public class ShellHolder {
 		executor.execute(commandline, handler);
 	}
 
-	public void close() throws IOException, InterruptedException {
-		if (infile.exists()) {
-			exec("exit");
-			TimeUnit.SECONDS.sleep(1);
-		}
+	public void close() {
 		try {
+			if (infile.exists()) {
+				exec("exit");
+				TimeUnit.SECONDS.sleep(1);
+			}
 			InputStream openStream = this.getClass().getClassLoader().getResource("kill.txt").openStream();
 			String shell = IOUtils.toString(openStream, Charsets.UTF_8);
 			shell = shell.replace("\r\n", "\n");
@@ -113,7 +113,6 @@ public class ShellHolder {
 			executor.setWatchdog(watchdog);
 			executor.execute(commandline);
 		} catch (Exception e) {
-			logger.error("", e);
 		}
 		FileUtils.deleteQuietly(infile);
 		FileUtils.deleteQuietly(outfile);
@@ -143,22 +142,21 @@ public class ShellHolder {
 	}
 
 	public String exec(String cmd) throws IOException, InterruptedException {
-		long reslast = resfile.lastModified();
-		long errlast = errFile.lastModified();
-		long outlast = outfile.lastModified();
+		FileUtils.writeStringToFile(resfile, "");
+		FileUtils.writeStringToFile(outfile, "");
+		FileUtils.writeStringToFile(errFile, "");
+		long reslen = resfile.length();
 		FileUtils.writeStringToFile(infile, cmd + "\n", true);
 		if (StringUtils.equals(cmd, "exit")) {
 			return "";
 		}
 		long start = System.currentTimeMillis();
 		while (true) {
-			long reslast2 = resfile.lastModified();
+			long reslen2 = resfile.length();
 			String content = null;
-			if (reslast2 > reslast) {
-				if (outfile.lastModified() > outlast) {
-					content = FileUtils.readFileToString(outfile, "utf8");
-				}
-				if (errFile.lastModified() > errlast) {
+			if (reslen2 != reslen) {
+				content = FileUtils.readFileToString(outfile, "utf8");
+				{
 					String content1 = FileUtils.readFileToString(errFile, "utf8");
 					if (StringUtils.isNotBlank(content1)) {
 						content1 = content1.replace(scriptfile.getAbsolutePath() + ":", "");

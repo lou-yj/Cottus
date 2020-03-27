@@ -3,8 +3,6 @@ package com.louyj.rhttptunnel.worker.shell;
 import java.io.IOException;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +17,6 @@ import com.google.common.collect.Maps;
  */
 @Component
 public class ShellManager {
-
-	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Value("${work.directory}")
 	private String workDirectory;
@@ -46,11 +42,7 @@ public class ShellManager {
 		if (shellHolder == null) {
 			return;
 		}
-		try {
-			shellHolder.close();
-		} catch (IOException | InterruptedException e) {
-			logger.warn("Destory shell failed", e);
-		}
+		shellHolder.close();
 	}
 
 }
