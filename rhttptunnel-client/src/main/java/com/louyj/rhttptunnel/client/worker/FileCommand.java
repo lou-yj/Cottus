@@ -198,7 +198,6 @@ public class FileCommand {
 	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path, @ShellOption(value = {
 			"-p", "--args",
 			"--parameters" }, help = "parameters, when '-' input parameters in seperate line", defaultValue = "") String args,
-			@ShellOption(value = { "-t", "--timeout" }, help = "timeout seconds", defaultValue = "120") int timeout,
 			@ShellOption(value = { "-r", "--repeat" }, help = "repeat number", defaultValue = "1") int repeat)
 			throws IOException {
 		if (StringUtils.equals(args, "-")) {
@@ -213,10 +212,10 @@ public class FileCommand {
 		} else if (repeat <= 0) {
 			repeat = 1;
 		}
+		ExecMessage message = new ExecMessage(CLIENT, path, args);
+		message.setWorkdir(session.getCwd());
 		int num = 0;
 		while (num < repeat) {
-			ExecMessage message = new ExecMessage(CLIENT, path, args, timeout);
-			message.setWorkdir(session.getCwd());
 			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 			String echo = messagePoller.pollExchangeMessage(response);
 			System.out.print(echo);

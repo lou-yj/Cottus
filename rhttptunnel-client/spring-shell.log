@@ -233,3 +233,11 @@
 1584631870279:discover
 1584631874062:select 1
 1584631876456:shell
+1585210927346:connect -s http://localhost:18080 -u admin -p 'admin!23$'
+1585210933507:discover
+1585210951745:select 1
+1585210954372:ls
+1585211084465:exec test.sh
+1585211107652:exec test.sh -p -
+1585211159717:exec tail.sh -p -
+1585211202672:exec tail.sh -r 10 -p -

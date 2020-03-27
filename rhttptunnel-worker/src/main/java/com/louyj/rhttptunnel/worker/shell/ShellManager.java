@@ -37,6 +37,10 @@ public class ShellManager {
 		return shellHolder;
 	}
 
+	public ShellHolder getShell(String clientId) {
+		return shellHolders.get(clientId);
+	}
+
 	public synchronized void destoryShell(String clientId) {
 		ShellHolder shellHolder = shellHolders.remove(clientId);
 		if (shellHolder == null) {

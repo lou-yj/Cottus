@@ -39,11 +39,12 @@ public class ExecHandler implements IMessageHandler {
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		ExecMessage execMessage = (ExecMessage) message;
-		String cmdLine = "cd '" + execMessage.getWorkdir() + "' && sh '" + execMessage.getPath() + "' "
+		String cmdLine = "cd '" + execMessage.getWorkdir() + "' && bash '" + execMessage.getPath() + "' "
 				+ execMessage.getArgs();
 		logger.info("exec {}", cmdLine);
 		ShellHolder shellHolder = shellManager.activeShell(message.getClient().identify());
-		String output = shellHolder.exec(cmdLine, execMessage.getTimeout());
+		shellHolder.ensureRunning();
+		String output = shellHolder.exec(cmdLine);
 		return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId()).withMessage(output));
 	}
 

@@ -18,17 +18,14 @@ public class ExecMessage extends BaseMessage {
 
 	private String args;
 
-	private int timeout;
-
 	@JsonCreator
 	public ExecMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
 	}
 
-	public ExecMessage(ClientInfo client, String path, String args, int timeout) {
+	public ExecMessage(ClientInfo client, String path, String args) {
 		super(client);
 		this.path = path;
-		this.timeout = timeout;
 		this.args = args;
 	}
 
@@ -38,14 +35,6 @@ public class ExecMessage extends BaseMessage {
 
 	public void setWorkdir(String workdir) {
 		this.workdir = workdir;
-	}
-
-	public int getTimeout() {
-		return timeout;
-	}
-
-	public void setTimeout(int timeout) {
-		this.timeout = timeout;
 	}
 
 	public String getPath() {

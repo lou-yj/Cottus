@@ -23,8 +23,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,8 +45,6 @@ import com.louyj.rhttptunnel.model.util.JsonUtils;
 @SuppressWarnings("deprecation")
 @Component
 public class MessageExchanger implements InitializingBean, DisposableBean {
-
-	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	private ObjectMapper jackson = JsonUtils.jacksonWithType();
 
@@ -97,8 +93,9 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 				response.close();
 			}
 		} catch (Exception e) {
-			logger.error("", e);
-			return RejectMessage.creason(message.getClient(), message.getExchangeId(), CLIENT_ERROR.reason());
+//			logger.error("", e);
+			return RejectMessage.creason(message.getClient(), message.getExchangeId(),
+					"[" + CLIENT_ERROR.reason() + "]" + e.getClass().getSimpleName() + ":" + e.getMessage());
 		}
 	}
 

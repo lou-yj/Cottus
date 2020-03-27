@@ -14,6 +14,8 @@ import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 
@@ -26,21 +28,44 @@ import com.google.common.base.Charsets;
  */
 public class ShellHolder {
 
+	private Logger logger = LoggerFactory.getLogger(getClass());
+
 	private String clientId;
 	private File infile;
 	private File outfile;
 	private File resfile;
 	private File scriptfile;
 	private File errFile;
+	private File killFile;
+
+	private int timeout = 60;
+
+	public int getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(int timeout) {
+		this.timeout = timeout;
+	}
 
 	public ShellHolder(String workDirectory, String clientId) {
 		this.clientId = clientId;
-		infile = new File(workDirectory, ".temp/" + clientId + ".in");
-		outfile = new File(workDirectory, ".temp/" + clientId + ".out");
-		resfile = new File(workDirectory, ".temp/" + clientId + ".res");
-		scriptfile = new File(workDirectory, ".temp/" + clientId + ".sc");
-		errFile = new File(workDirectory, ".temp/" + clientId + ".err");
+		infile = new File(workDirectory, ".temp/." + clientId + ".in");
+		outfile = new File(workDirectory, ".temp/." + clientId + ".out");
+		resfile = new File(workDirectory, ".temp/." + clientId + ".res");
+		scriptfile = new File(workDirectory, ".temp/." + clientId + ".sc");
+		errFile = new File(workDirectory, ".temp/." + clientId + ".err");
+		killFile = new File(workDirectory, ".temp/.stop.sc");
 		infile.getParentFile().mkdirs();
+		try {
+			infile.createNewFile();
+			outfile.createNewFile();
+			resfile.createNewFile();
+			scriptfile.createNewFile();
+			errFile.createNewFile();
+		} catch (Exception e) {
+			logger.error("", e);
+		}
 	}
 
 	public void start() throws IOException {
@@ -66,8 +91,29 @@ public class ShellHolder {
 
 	public void close() throws IOException, InterruptedException {
 		if (infile.exists()) {
-			exec("exit", -1);
+			exec("exit");
 			TimeUnit.SECONDS.sleep(1);
+		}
+		try {
+			InputStream openStream = this.getClass().getClassLoader().getResource("kill.txt").openStream();
+			String shell = IOUtils.toString(openStream, Charsets.UTF_8);
+			shell = shell.replace("\r\n", "\n");
+			if (killFile.exists() == false) {
+				IOUtils.write(shell, new FileOutputStream(killFile));
+			} else {
+				String killShell = FileUtils.readFileToString(killFile, Charsets.UTF_8);
+				if (StringUtils.equals(shell, killShell) == false) {
+					IOUtils.write(shell, new FileOutputStream(killFile));
+				}
+			}
+			String cmdLine = "sh " + killFile.getAbsolutePath() + " " + clientId;
+			ExecuteWatchdog watchdog = new ExecuteWatchdog(TimeUnit.SECONDS.toMillis(10));
+			CommandLine commandline = CommandLine.parse(cmdLine);
+			DefaultExecutor executor = new DefaultExecutor();
+			executor.setWatchdog(watchdog);
+			executor.execute(commandline);
+		} catch (Exception e) {
+			logger.error("", e);
 		}
 		FileUtils.deleteQuietly(infile);
 		FileUtils.deleteQuietly(outfile);
@@ -81,7 +127,7 @@ public class ShellHolder {
 			return false;
 		}
 		try {
-			String result = exec(clientId, 5);
+			String result = exec(clientId);
 			return StringUtils.equals(result, clientId);
 		} catch (IOException | InterruptedException e) {
 			return false;
@@ -96,7 +142,7 @@ public class ShellHolder {
 		start();
 	}
 
-	public String exec(String cmd, int timeout) throws IOException, InterruptedException {
+	public String exec(String cmd) throws IOException, InterruptedException {
 		long reslast = resfile.lastModified();
 		long errlast = errFile.lastModified();
 		long outlast = outfile.lastModified();
@@ -104,14 +150,8 @@ public class ShellHolder {
 		if (StringUtils.equals(cmd, "exit")) {
 			return "";
 		}
-		if (timeout == -1) {
-			timeout = Integer.MAX_VALUE;
-		}
-		long startms = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 		while (true) {
-			if (System.currentTimeMillis() - startms > timeout * 1000) {
-				return null;
-			}
 			long reslast2 = resfile.lastModified();
 			String content = null;
 			if (reslast2 > reslast) {
@@ -133,6 +173,9 @@ public class ShellHolder {
 				return content;
 			} else {
 				TimeUnit.MILLISECONDS.sleep(100);
+			}
+			if (System.currentTimeMillis() - start > timeout * 1000) {
+				return "Timeout after " + timeout + " seconds\n";
 			}
 		}
 	}
