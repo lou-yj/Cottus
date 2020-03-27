@@ -4,7 +4,6 @@ import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.client.consts.Status.FAILED;
 import static com.louyj.rhttptunnel.client.consts.Status.OK;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.Map;
 
@@ -81,7 +80,7 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 			}
 			if (response instanceof AckMessage) {
 				AckMessage ackMessage = (AckMessage) response;
-				if (isNotBlank(ackMessage.getMessage())) {
+				if (ackMessage.getMessage() != null) {
 					return ackMessage.getMessage();
 				} else
 					return OK;
@@ -117,7 +116,7 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 			}
 			if (respMsg instanceof AckMessage) {
 				AckMessage ackMessage = (AckMessage) respMsg;
-				if (isNotBlank(ackMessage.getMessage())) {
+				if (ackMessage.getMessage() != null) {
 					return ackMessage.getMessage();
 				} else
 					return OK;
