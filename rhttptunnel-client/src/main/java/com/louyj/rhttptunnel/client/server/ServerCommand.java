@@ -37,7 +37,9 @@ public class ServerCommand {
 	private MessageExchanger messageExchanger;
 
 	@ShellMethod(value = "Connect to server")
-	public String connect(@ShellOption(value = { "-s", "--server" }, help = "server address") String address,
+	public String connect(
+			@ShellOption(value = { "-s",
+					"--server" }, help = "server address", defaultValue = "http://localhost:18080") String address,
 			@ShellOption(value = { "-u", "--user" }, help = "user name") String userName,
 			@ShellOption(value = { "-p", "--password" }, help = "password") String password) {
 		messageExchanger.setServerAddress(address);
