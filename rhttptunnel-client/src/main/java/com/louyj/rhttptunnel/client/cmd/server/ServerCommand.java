@@ -3,17 +3,14 @@ package com.louyj.rhttptunnel.client.cmd.server;
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.Availability;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.ClientDetector;
-import com.louyj.rhttptunnel.client.ClientSession;
-import com.louyj.rhttptunnel.client.MessagePoller;
+import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
-import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
 
@@ -25,18 +22,10 @@ import com.louyj.rhttptunnel.model.message.ConnectMessage;
  *
  */
 @ShellComponent
-public class ServerCommand {
-
-	@Autowired
-	private ClientSession session;
-
-	@Autowired
-	private MessagePoller messagePoller;
-
-	@Autowired
-	private MessageExchanger messageExchanger;
+public class ServerCommand extends BaseCommand {
 
 	@ShellMethod(value = "Connect to server")
+	@ShellMethodAvailability("clientContext")
 	public String connect(
 			@ShellOption(value = { "-s",
 					"--server" }, help = "server address", defaultValue = "http://localhost:18080") String address,
@@ -53,10 +42,6 @@ public class ServerCommand {
 			ClientDetector.CLIENT.setUser(userName);
 		}
 		return resp;
-	}
-
-	public Availability connectAvailability() {
-		return session.clientCmdAvailability();
 	}
 
 }

@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.Availability;
 
 import com.louyj.rhttptunnel.client.ClientSession;
+import com.louyj.rhttptunnel.client.MessagePoller;
 import com.louyj.rhttptunnel.model.bean.RoleType;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
  *
@@ -16,7 +18,13 @@ import com.louyj.rhttptunnel.model.bean.RoleType;
 public abstract class BaseCommand {
 
 	@Autowired
-	private ClientSession session;
+	protected ClientSession session;
+
+	@Autowired
+	protected MessagePoller messagePoller;
+
+	@Autowired
+	protected MessageExchanger messageExchanger;
 
 	public Availability workerAdminContext() {
 		if (checkPermission(RoleType.ADMIN) && session.inWorkerMode()) {
@@ -74,11 +82,11 @@ public abstract class BaseCommand {
 		return Availability.unavailable("of bad context");
 	}
 
-	private boolean checkPermission(RoleType roleType) {
+	protected boolean checkPermission(RoleType roleType) {
 		if (session.getRole().getLevel() < roleType.getLevel()) {
 			return false;
 		}
-		return false;
+		return true;
 	}
 
 }

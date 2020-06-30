@@ -14,16 +14,12 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.Availability;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellMethodAvailability;
 
-import com.louyj.rhttptunnel.client.ClientSession;
-import com.louyj.rhttptunnel.client.MessagePoller;
+import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
-import com.louyj.rhttptunnel.model.bean.RoleType;
-import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ShellEndMessage;
 import com.louyj.rhttptunnel.model.message.ShellMessage;
@@ -38,19 +34,11 @@ import com.louyj.rhttptunnel.model.message.ShellStartMessage;
  */
 
 @ShellComponent
-public class ShellCommand {
-
-	@Autowired
-	private ClientSession session;
-
-	@Autowired
-	private MessagePoller messagePoller;
-
-	@Autowired
-	private MessageExchanger messageExchanger;
+public class ShellCommand extends BaseCommand {
 
 	@SuppressWarnings("resource")
-	@ShellMethod(value = "Enter into interactive shell mode(Need Admin Privilege)")
+	@ShellMethod(value = "Enter into interactive shell mode")
+	@ShellMethodAvailability("workerAdminContext")
 	public String shell() throws Exception {
 		System.out.println("OPERATION WILL NOT CONTROLED BY SERVER!!!");
 		System.out.println("ANYTHING AT YOUR OWN RISK!!!");
@@ -106,10 +94,6 @@ public class ShellCommand {
 		}
 		IOUtils.closeQuietly(terminal);
 		return "\nExit interactive shell mode";
-	}
-
-	public Availability shellAvailability() {
-		return session.workerCmdAvailability(RoleType.ADMIN);
 	}
 
 }

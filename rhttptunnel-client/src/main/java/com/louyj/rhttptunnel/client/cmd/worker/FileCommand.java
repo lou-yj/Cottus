@@ -15,17 +15,15 @@ import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.shell.Availability;
+import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
-import com.louyj.rhttptunnel.client.ClientSession;
-import com.louyj.rhttptunnel.client.MessagePoller;
+import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.util.LogUtils;
-import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ExecMessage;
 import com.louyj.rhttptunnel.model.message.FileDataMessage;
@@ -44,21 +42,14 @@ import com.louyj.rhttptunnel.model.message.RmMessage;
  */
 
 @ShellComponent
-public class FileCommand {
-
-	@Autowired
-	private ClientSession session;
-
-	@Autowired
-	private MessagePoller messagePoller;
-
-	@Autowired
-	private MessageExchanger messageExchanger;
+@ShellCommandGroup("Worker FileSystem Commands")
+public class FileCommand extends BaseCommand {
 
 	@Value("${transfer.data.maxsize:1048576}")
 	private int transferMaxSize;
 
 	@ShellMethod(value = "get file from worker")
+	@ShellMethodAvailability("workerContext")
 	public String get(@ShellOption(value = { "-f", "--file" }, help = "file path") String path, @ShellOption(value = {
 			"-a", "--absolute" }, help = "absolute path?", defaultValue = "false") boolean absolute) {
 		FileRequestMessage message = new FileRequestMessage(CLIENT, absolute, path);
@@ -66,11 +57,8 @@ public class FileCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	public Availability getAvailability() {
-		return session.workerCmdAvailability();
-	}
-
 	@ShellMethod(value = "send file to worker")
+	@ShellMethodAvailability("workerContext")
 	public String send(@ShellOption(value = { "-f", "-s", "--file", "--source" }, help = "file path") String path,
 			@ShellOption(value = { "-t", "--target" }, help = "file path", defaultValue = "") String target)
 			throws Exception {
@@ -129,11 +117,8 @@ public class FileCommand {
 		}
 	}
 
-	public Availability sendAvailability() {
-		return session.workerCmdAvailability();
-	}
-
 	@ShellMethod(value = "remove files")
+	@ShellMethodAvailability("workerContext")
 	public String rm(@ShellOption(value = { "-p", "--path" }, help = "file path") String path,
 			@ShellOption(value = { "-a",
 					"--absolute" }, help = "absolute path?", defaultValue = "false") boolean absolute,
@@ -147,11 +132,8 @@ public class FileCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	public Availability rmAvailability() {
-		return session.workerCmdAvailability();
-	}
-
 	@ShellMethod(value = "print work directory")
+	@ShellMethodAvailability("workerContext")
 	public String pwd() {
 		if (session.getCwd() != null) {
 			return session.getCwd();
@@ -163,11 +145,8 @@ public class FileCommand {
 		return pwd;
 	}
 
-	public Availability pwdAvailability() {
-		return session.workerCmdAvailability();
-	}
-
 	@ShellMethod(value = "list files")
+	@ShellMethodAvailability("workerContext")
 	public String ls(@ShellOption(value = { "-f", "--file" }, help = "file path", defaultValue = "") String path) {
 		LsMessage message = new LsMessage(CLIENT);
 		message.setPath(isBlank(path) ? session.getCwd() : path);
@@ -175,11 +154,8 @@ public class FileCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	public Availability lsAvailability() {
-		return session.workerCmdAvailability();
-	}
-
 	@ShellMethod(value = "change directory")
+	@ShellMethodAvailability("workerContext")
 	public String cd(@ShellOption(value = { "-d", "--directory" }, help = "change to directory") String path) {
 		pwd();
 		if (path.startsWith("/")) {
@@ -190,11 +166,8 @@ public class FileCommand {
 		return session.getCwd();
 	}
 
-	public Availability cdAvailability() {
-		return session.workerCmdAvailability();
-	}
-
 	@ShellMethod(value = "execute script file")
+	@ShellMethodAvailability("workerContext")
 	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path, @ShellOption(value = {
 			"-p", "--args",
 			"--parameters" }, help = "parameters, when '-' input parameters in seperate line", defaultValue = "") String args,
@@ -224,7 +197,4 @@ public class FileCommand {
 		return null;
 	}
 
-	public Availability execAvailability() {
-		return session.workerCmdAvailability();
-	}
 }

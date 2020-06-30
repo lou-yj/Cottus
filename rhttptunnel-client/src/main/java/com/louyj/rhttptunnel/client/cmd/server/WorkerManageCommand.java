@@ -6,16 +6,13 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.Availability;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
-import com.louyj.rhttptunnel.client.ClientSession;
-import com.louyj.rhttptunnel.client.MessagePoller;
+import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
-import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.DiscoverMessage;
@@ -29,19 +26,10 @@ import com.louyj.rhttptunnel.model.message.SelectWorkerMessage;
  *
  */
 @ShellComponent
-public class WorkerManageCommand {
-
-	@Autowired
-
-	private ClientSession session;
-
-	@Autowired
-	private MessagePoller messagePoller;
-
-	@Autowired
-	private MessageExchanger messageExchanger;
+public class WorkerManageCommand extends BaseCommand {
 
 	@ShellMethod(value = "Discover workers")
+	@ShellMethodAvailability("serverContext")
 	public String discover() {
 		DiscoverMessage message = new DiscoverMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
@@ -50,11 +38,8 @@ public class WorkerManageCommand {
 		return resp;
 	}
 
-	public Availability discoverAvailability() {
-		return session.serverCmdAvailability();
-	}
-
 	@ShellMethod(value = "Select worker")
+	@ShellMethodAvailability("serverContext")
 	public String select(@ShellOption(value = { "-i", "--index" }, help = "worker index") int index) {
 		List<ClientInfo> discoverWorkers = session.getDiscoverWorkers();
 		index = index - 1;
@@ -70,10 +55,6 @@ public class WorkerManageCommand {
 			session.setWorkerConnected(true);
 		}
 		return status;
-	}
-
-	public Availability selectAvailability() {
-		return session.serverCmdAvailability();
 	}
 
 }
