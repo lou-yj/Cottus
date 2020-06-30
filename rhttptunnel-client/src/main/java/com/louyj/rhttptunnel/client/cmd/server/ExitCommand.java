@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.client.server;
+package com.louyj.rhttptunnel.client.cmd.server;
 
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
@@ -9,6 +9,7 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.commands.Quit;
 
 import com.louyj.rhttptunnel.client.ClientDetector;
+import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.ExitMessage;
 
@@ -20,7 +21,7 @@ import com.louyj.rhttptunnel.model.message.ExitMessage;
  *
  */
 @ShellComponent
-public class ExitCommand implements Quit.Command {
+public class ExitCommand extends BaseCommand implements Quit.Command {
 
 	@Autowired
 	private MessageExchanger messageExchanger;

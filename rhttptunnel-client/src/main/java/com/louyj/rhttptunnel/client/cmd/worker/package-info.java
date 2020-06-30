@@ -7,6 +7,6 @@
  */
 
 @ShellCommandGroup("Worker Command")
-package com.louyj.rhttptunnel.client.worker;
+package com.louyj.rhttptunnel.client.cmd.worker;
 
 import org.springframework.shell.standard.ShellCommandGroup;

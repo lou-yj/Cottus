@@ -117,10 +117,24 @@ public class ClientSession {
 			return Availability.unavailable("Permission deny.");
 		}
 		if (inUnconnectedMode()) {
-			return Availability.unavailable("Server command not available when unconnected mode.");
+			return Availability.unavailable("Current command not available when unconnected mode.");
 		}
 		if (inWorkerMode()) {
-			return Availability.unavailable("Server command not available when connected to worker");
+			return Availability.unavailable("Current command not available when connected to worker");
+		}
+		return Availability.available();
+	}
+
+	public Availability notWorkerCmdAvailability() {
+		return notWorkerCmdAvailability(NORMAL);
+	}
+
+	public Availability notWorkerCmdAvailability(RoleType roleType) {
+		if (role.getLevel() < roleType.getLevel()) {
+			return Availability.unavailable("Permission deny.");
+		}
+		if (inWorkerMode()) {
+			return Availability.unavailable("Current command not available when connected to worker");
 		}
 		return Availability.available();
 	}
@@ -134,10 +148,10 @@ public class ClientSession {
 			return Availability.unavailable("Permission deny.");
 		}
 		if (inUnconnectedMode()) {
-			return Availability.unavailable("Worker command not available when unconnected mode.");
+			return Availability.unavailable("Current command not available when unconnected mode.");
 		}
 		if (inServerMode()) {
-			return Availability.unavailable("Worker command not available when not connected to worker");
+			return Availability.unavailable("Current command not available when not connected to worker");
 		}
 		return Availability.available();
 	}
@@ -151,10 +165,10 @@ public class ClientSession {
 			return Availability.unavailable("Permission deny.");
 		}
 		if (inWorkerMode()) {
-			return Availability.unavailable("Client command not available when connected to worker.");
+			return Availability.unavailable("Current command not available when connected to worker.");
 		}
 		if (inServerMode()) {
-			return Availability.unavailable("Client command not available when connect to server");
+			return Availability.unavailable("Current command not available when connect to server");
 		}
 		return Availability.available();
 	}

@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.client.server;
+package com.louyj.rhttptunnel.client.cmd.server;
 
 import java.io.File;
 import java.io.FileReader;
@@ -42,7 +42,7 @@ public class ScriptCommand implements Script.Command {
 		}
 	}
 
-	public Availability shellAvailability() {
+	public Availability scriptAvailability() {
 		return session.workerCmdAvailability(RoleType.ADMIN);
 	}
 
