@@ -6,12 +6,10 @@ import org.jline.reader.UserInterruptException;
 import org.jline.utils.AttributedString;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.shell.ExitRequest;
 import org.springframework.shell.Input;
 import org.springframework.shell.InputProvider;
-import org.springframework.shell.jline.InteractiveShellApplicationRunner;
 import org.springframework.shell.jline.PromptProvider;
 
 /**
@@ -22,7 +20,7 @@ import org.springframework.shell.jline.PromptProvider;
  *
  */
 @SuppressWarnings("unused")
-@Order(InteractiveShellApplicationRunner.PRECEDENCE - 50)
+//@Order(InteractiveShellApplicationRunner.PRECEDENCE - 50)
 public class CustomShellApplicationRunner implements ApplicationRunner {
 
 	private final LineReader lineReader;

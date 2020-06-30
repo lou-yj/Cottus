@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.shell.ExitRequest;
-import org.springframework.shell.Input;
 import org.springframework.shell.InputProvider;
 import org.springframework.shell.ResultHandler;
 import org.springframework.shell.Shell;
@@ -32,25 +30,26 @@ public class CustomShell extends Shell {
 		this.asyncShellResultHanlder = asyncShellResultHanlder;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void run(InputProvider inputProvider) throws IOException {
-		while (!(asyncShellResultHanlder.getResult() instanceof ExitRequest)) {
-			Input input;
-			try {
-				input = inputProvider.readInput();
-			} catch (Exception e) {
-				if (e instanceof ExitRequest) {
-				} else {
-					syncHandler.handleResult(e);
-				}
-				continue;
-			}
-			if (input == null) {
-				break;
-			}
-			asyncShellResultHanlder.evaluate(input);
-		}
+//		while (!(asyncShellResultHanlder.getResult() instanceof ExitRequest)) {
+//			Input input;
+//			try {
+//				input = inputProvider.readInput();
+//			} catch (Exception e) {
+//				if (e instanceof ExitRequest) {
+//				} else {
+//					asyncShellResultHanlder.handleResult(e);
+//				}
+//				continue;
+//			}
+//			if (input == null) {
+//				break;
+//			}
+//			asyncShellResultHanlder.evaluate(input);
+//		}
+		System.out.println("-----");
+		super.run(inputProvider);
 	}
 
 }

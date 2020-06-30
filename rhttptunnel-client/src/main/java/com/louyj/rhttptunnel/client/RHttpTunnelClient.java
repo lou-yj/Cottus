@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.shell.SpringShellAutoConfiguration;
+import org.springframework.shell.jline.JLineShellAutoConfiguration;
 import org.springframework.util.StringUtils;
 
 import com.louyj.rhttptunnel.model.bean.JsonFactory;
@@ -17,7 +18,8 @@ import com.louyj.rhttptunnel.model.http.MessageExchanger;
  * @author Louyj
  *
  */
-@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class, SpringShellAutoConfiguration.class })
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class, JLineShellAutoConfiguration.class,
+		SpringShellAutoConfiguration.class })
 @Import({ MessageExchanger.class, JsonFactory.class })
 public class RHttpTunnelClient {
 
