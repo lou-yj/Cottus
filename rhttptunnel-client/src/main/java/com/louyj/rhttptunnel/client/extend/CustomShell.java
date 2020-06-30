@@ -2,8 +2,8 @@ package com.louyj.rhttptunnel.client.extend;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.shell.ExitRequest;
+import org.springframework.shell.Input;
 import org.springframework.shell.InputProvider;
 import org.springframework.shell.ResultHandler;
 import org.springframework.shell.Shell;
@@ -18,38 +18,40 @@ import org.springframework.shell.Shell;
 @SuppressWarnings("rawtypes")
 public class CustomShell extends Shell {
 
-	@Qualifier("main")
-	@Autowired
 	private final ResultHandler syncHandler;
-	@Autowired
-	private AsyncShellResultHanlder asyncShellResultHanlder;
 
-	public CustomShell(ResultHandler resultHandler, AsyncShellResultHanlder asyncShellResultHanlder) {
+	public CustomShell(ResultHandler resultHandler) {
 		super(resultHandler);
 		this.syncHandler = resultHandler;
-		this.asyncShellResultHanlder = asyncShellResultHanlder;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run(InputProvider inputProvider) throws IOException {
-//		while (!(asyncShellResultHanlder.getResult() instanceof ExitRequest)) {
-//			Input input;
-//			try {
-//				input = inputProvider.readInput();
-//			} catch (Exception e) {
-//				if (e instanceof ExitRequest) {
-//				} else {
-//					asyncShellResultHanlder.handleResult(e);
-//				}
-//				continue;
-//			}
-//			if (input == null) {
-//				break;
-//			}
-//			asyncShellResultHanlder.evaluate(input);
-//		}
-		System.out.println("-----");
-		super.run(inputProvider);
+		Object result = null;
+		while (!(result instanceof ExitRequest)) {
+			Input input;
+			try {
+				input = inputProvider.readInput();
+			} catch (ExitRequest e) {
+				continue;
+			} catch (Exception e) {
+				syncHandler.handleResult(e);
+				continue;
+			}
+			if (input == null) {
+				break;
+			}
+			checkPermission(input);
+			result = evaluate(input);
+			if (result != NO_INPUT && !(result instanceof ExitRequest)) {
+				syncHandler.handleResult(result);
+			}
+		}
+	}
+
+	public void checkPermission(Input input) {
+		// todo
 	}
 
 }
