@@ -160,6 +160,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		return jackson.writeValueAsString(message);
 	}
 
+	@SuppressWarnings("rawtypes")
 	private String logMessage(BaseMessage msg) throws JsonProcessingException {
 		Map map = normalJackson.convertValue(msg, Map.class);
 		map.remove("client");

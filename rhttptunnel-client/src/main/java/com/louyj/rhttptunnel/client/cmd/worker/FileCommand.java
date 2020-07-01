@@ -191,7 +191,7 @@ public class FileCommand extends BaseCommand {
 		while (num < repeat) {
 			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 			String echo = messagePoller.pollExchangeMessage(response);
-			System.out.print(echo);
+			LogUtils.printMessage(echo);
 			num++;
 		}
 		return null;

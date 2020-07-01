@@ -76,6 +76,7 @@ public class MessageUtils implements ApplicationContextAware, InitializingBean {
 		try {
 			messages = messageHandler.handle(taskMessage);
 		} catch (Exception e) {
+			logger.error("", e);
 			String reason = "Exception " + e.getClass().getName() + ":" + e.getMessage();
 			messages = Lists.newArrayList(RejectMessage.creason(CLIENT, taskMessage.getExchangeId(), reason));
 		}

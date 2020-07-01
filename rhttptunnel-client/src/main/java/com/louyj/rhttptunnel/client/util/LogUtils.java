@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 
@@ -31,5 +33,15 @@ public class LogUtils {
 	public static void serverReject(BaseMessage message) {
 		RejectMessage rejectMessage = (RejectMessage) message;
 		System.out.println("[SERVER ERROR] request rejected by server, reason " + rejectMessage.getReason());
+	}
+
+	public static void printMessage(String echo) {
+		if (StringUtils.isNotBlank(echo)) {
+			if (echo.endsWith("\n")) {
+				System.out.print(echo);
+			} else {
+				System.out.println(echo);
+			}
+		}
 	}
 }

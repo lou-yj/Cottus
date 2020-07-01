@@ -1,6 +1,7 @@
 package com.louyj.rhttptunnel.client.cmd.worker;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
+import static com.louyj.rhttptunnel.client.util.LogUtils.printMessage;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
 import java.util.Scanner;
@@ -57,14 +58,11 @@ public class ShellCommand extends BaseCommand {
 			System.out.println(resp);
 			return Status.FAILED;
 		}
-//		Terminal terminal = TerminalBuilder.builder().system(true).build();
-//		LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).build();
 		String prompt = "shell:> ";
 		try {
 			while (true) {
 				System.out.print(prompt);
 				line = sc.nextLine();
-//				line = lineReader.readLine(prompt);
 				if (StringUtils.equals(StringUtils.trim(line), "exit")) {
 					ShellEndMessage shellEndMessage = new ShellEndMessage(CLIENT, exchangeId);
 					BaseMessage endMessage = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellEndMessage);
@@ -98,16 +96,6 @@ public class ShellCommand extends BaseCommand {
 		}
 		IOUtils.closeQuietly(sc);
 		return "\nExit interactive shell mode";
-	}
-
-	private void printMessage(String echo) {
-		if (StringUtils.isNotBlank(echo)) {
-			if (echo.endsWith("\n")) {
-				System.out.print(echo);
-			} else {
-				System.out.println(echo);
-			}
-		}
 	}
 
 }

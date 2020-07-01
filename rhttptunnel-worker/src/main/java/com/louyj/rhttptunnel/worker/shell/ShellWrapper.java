@@ -9,7 +9,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,8 +51,8 @@ public class ShellWrapper implements Closeable {
 
 	public static class ShellOutput {
 		public boolean finished = false;
-		public List<String> out = Collections.emptyList();
-		public List<String> err = Collections.emptyList();
+		public List<String> out = Lists.newArrayList();
+		public List<String> err = Lists.newArrayList();
 	}
 
 	public int getTimeout() {
