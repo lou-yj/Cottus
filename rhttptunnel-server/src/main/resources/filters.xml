@@ -31,11 +31,11 @@
 		<property name="order" value="-9000"/>
 	</bean>
 	
-	<bean id="loggingFilter" class="com.louyj.rhttptunnel.server.filter.LoggingFilter"/>
+	<bean id="encryptFilter" class="com.louyj.rhttptunnel.server.filter.EncryptFilter"/>
 	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
-		<property name="filter" ref="loggingFilter"/>
+		<property name="filter" ref="encryptFilter"/>
 		<property name="urlPatterns" value="/*"/>
-		<property name="name" value="loggingFilter"/>
+		<property name="name" value="encryptFilter"/>
 		<property name="order" value="-1000"/>
 	</bean>
 	

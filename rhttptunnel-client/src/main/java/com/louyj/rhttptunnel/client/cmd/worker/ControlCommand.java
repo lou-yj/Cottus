@@ -12,7 +12,6 @@ import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
-import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConfigGetMessage;
 import com.louyj.rhttptunnel.model.message.ConfigSetMessage;
@@ -36,10 +35,8 @@ public class ControlCommand extends BaseCommand {
 		SelectWorkerMessage message = new SelectWorkerMessage(CLIENT, session.getSelectedWorker());
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		String status = messagePoller.pollExchangeMessage(response);
-		if (StringUtils.equals(Status.OK, status)) {
-			session.setWorkerConnected(false);
-			session.setSelectedWorker(null);
-		}
+		session.setWorkerConnected(false);
+		session.setSelectedWorker(null);
 		return status;
 	}
 

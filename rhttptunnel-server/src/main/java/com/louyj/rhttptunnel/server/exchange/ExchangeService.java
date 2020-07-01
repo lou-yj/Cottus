@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.AckMessage;
@@ -25,6 +26,7 @@ import com.louyj.rhttptunnel.model.message.AsyncExecAckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.handler.IMessageHandler;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
@@ -55,6 +57,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	@Autowired
 	private ObjectMapper jackson;
 
+	private ObjectMapper normalJackson = JsonUtils.jackson();
+
 	private ExecutorService executorService;
 
 	private Map<Class<? extends BaseMessage>, IClientMessageHandler> clientHandlers;
@@ -84,12 +88,22 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 
 	@PostMapping(value = "client", consumes = TEXT_PLAIN_VALUE, produces = TEXT_PLAIN_VALUE)
 	public String client(@RequestBody String data) throws Exception {
-		return serializer(client(deserializer(data)));
+		BaseMessage request = deserializer(data);
+		BaseMessage response = client(request);
+		ClientInfo client = request.getClient();
+		logger.info("ClientExchange-->host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(),
+				request.getExchangeId(), logMessage(request), logMessage(response));
+		return serializer(response);
 	}
 
 	@PostMapping(value = "worker", consumes = TEXT_PLAIN_VALUE, produces = TEXT_PLAIN_VALUE)
 	public String worker(@RequestBody String data) throws Exception {
-		return serializer(worker(deserializer(data)));
+		BaseMessage request = deserializer(data);
+		BaseMessage response = worker(request);
+		ClientInfo client = request.getClient();
+		logger.info("WorkerExchange-->host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(),
+				request.getExchangeId(), logMessage(request), logMessage(response));
+		return serializer(response);
 	}
 
 	public BaseMessage client(BaseMessage message) throws Exception {
@@ -144,6 +158,13 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 
 	private String serializer(BaseMessage message) throws Exception {
 		return jackson.writeValueAsString(message);
+	}
+
+	private String logMessage(BaseMessage msg) throws JsonProcessingException {
+		Map map = normalJackson.convertValue(msg, Map.class);
+		map.remove("client");
+		map.remove("exchangeId");
+		return String.format("[%s] %s", msg.getClass().getSimpleName(), normalJackson.writeValueAsString(map));
 	}
 
 }

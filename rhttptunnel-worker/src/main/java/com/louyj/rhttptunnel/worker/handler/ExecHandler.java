@@ -74,7 +74,7 @@ public class ExecHandler implements IMessageHandler {
 				TimeUnit.MILLISECONDS.sleep(10);
 				continue;
 			}
-			ShellResultMessage shellResultMessage = new ShellResultMessage(CLIENT);
+			ShellResultMessage shellResultMessage = new ShellResultMessage(CLIENT, message.getExchangeId());
 			shellResultMessage.setOut(fetchResult.out);
 			shellResultMessage.setErr(fetchResult.err);
 			BaseMessage ackMessage = messageExchanger.jsonPost(WORKER_EXCHANGE, shellResultMessage);
