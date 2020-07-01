@@ -81,7 +81,13 @@ public class ShellCommand extends BaseCommand {
 					shellMessage.setMessage(line);
 					BaseMessage post = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellMessage);
 					String echo = messagePoller.pollExchangeMessage(post);
-					System.out.print(echo);
+					if (StringUtils.isNotBlank(echo)) {
+						if (echo.endsWith("\n")) {
+							System.out.print(echo);
+						} else {
+							System.out.println(echo);
+						}
+					}
 				}
 			}
 		} catch (UserInterruptException e) {

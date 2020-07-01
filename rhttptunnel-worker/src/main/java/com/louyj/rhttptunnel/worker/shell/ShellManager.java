@@ -3,7 +3,7 @@ package com.louyj.rhttptunnel.worker.shell;
 import java.io.IOException;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Maps;
@@ -18,27 +18,25 @@ import com.google.common.collect.Maps;
 @Component
 public class ShellManager {
 
-	@Value("${work.directory}")
-	private String workDirectory;
+	private Map<String, ShellWrapper> shellHolders = Maps.newConcurrentMap();
 
-	private Map<String, ShellHolder> shellHolders = Maps.newConcurrentMap();
-
-	public synchronized ShellHolder activeShell(String clientId) throws IOException {
-		ShellHolder shellHolder = shellHolders.get(clientId);
-		if (shellHolder == null) {
-			shellHolder = new ShellHolder(workDirectory, clientId);
-			shellHolder.start();
+	public synchronized ShellWrapper activeShell(String clientId) throws IOException, InterruptedException {
+		ShellWrapper shellHolder = shellHolders.get(clientId);
+		if (shellHolder == null || shellHolder.isAlive() == false) {
+			IOUtils.closeQuietly(shellHolder);
+			shellHolder = new ShellWrapper();
+			shellHolder.setup();
 			shellHolders.put(clientId, shellHolder);
 		}
 		return shellHolder;
 	}
 
-	public ShellHolder getShell(String clientId) {
+	public ShellWrapper getShell(String clientId) {
 		return shellHolders.get(clientId);
 	}
 
 	public synchronized void destoryShell(String clientId) {
-		ShellHolder shellHolder = shellHolders.remove(clientId);
+		ShellWrapper shellHolder = shellHolders.remove(clientId);
 		if (shellHolder == null) {
 			return;
 		}

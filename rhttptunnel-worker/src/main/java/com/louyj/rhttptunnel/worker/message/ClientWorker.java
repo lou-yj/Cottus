@@ -23,7 +23,7 @@ import com.louyj.rhttptunnel.worker.shell.ShellManager;
  * @author Louyj
  *
  */
-public class ThreadWorker extends Thread {
+public class ClientWorker extends Thread {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -33,7 +33,7 @@ public class ThreadWorker extends Thread {
 
 	private boolean shouldBreak = false;
 
-	public ThreadWorker(String clientId, MessageExchanger messageExchanger, ShellManager shellManager) {
+	public ClientWorker(String clientId, MessageExchanger messageExchanger, ShellManager shellManager) {
 		super();
 		this.clientId = clientId;
 		this.messageExchanger = messageExchanger;
@@ -46,7 +46,7 @@ public class ThreadWorker extends Thread {
 		try {
 			shellManager.activeShell(clientId);
 			logger.info("Shell actived.");
-		} catch (IOException e2) {
+		} catch (Exception e2) {
 			logger.error("Active shell failed.", e2);
 		}
 		while (!shouldBreak) {

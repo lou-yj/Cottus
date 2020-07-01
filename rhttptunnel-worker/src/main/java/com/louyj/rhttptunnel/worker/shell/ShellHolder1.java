@@ -26,7 +26,7 @@ import com.google.common.base.Charsets;
  * @author Louyj
  *
  */
-public class ShellHolder {
+public class ShellHolder1 {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -48,7 +48,7 @@ public class ShellHolder {
 		this.timeout = timeout;
 	}
 
-	public ShellHolder(String workDirectory, String clientId) {
+	public ShellHolder1(String workDirectory, String clientId) {
 		this.clientId = clientId;
 		infile = new File(workDirectory, ".temp/." + clientId + ".in");
 		outfile = new File(workDirectory, ".temp/." + clientId + ".out");

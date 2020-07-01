@@ -1,9 +1,11 @@
 package com.louyj.rhttptunnel.worker.shell;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,29 +31,37 @@ import com.google.common.collect.Maps;
  * @author Louyj
  *
  */
-public class ShellWrapper {
+public class ShellWrapper implements Closeable {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
-
-	private long pumpSleepTime = 1l;
-	private int bufferSize = 8192;
 
 	private Process shell;
 	private InputStream shellOut;
 	private InputStream shellErr;
 	private OutputStream shellIn;
 	private String currentCommandId;
+	private long currentStartTime;
 	private ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
 	private ByteArrayOutputStream errBuffer = new ByteArrayOutputStream();
 
-	static enum SubmitStatus {
+	private int timeout = 60;
+
+	public static enum SubmitStatus {
 		SUCCESS, BUSY, NOTALIVE
 	}
 
-	static class ShellOutput {
-		boolean finished = false;
-		List<String> out = Collections.emptyList();
-		List<String> err = Collections.emptyList();
+	public static class ShellOutput {
+		public boolean finished = false;
+		public List<String> out = Collections.emptyList();
+		public List<String> err = Collections.emptyList();
+	}
+
+	public int getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(int timeout) {
+		this.timeout = timeout;
 	}
 
 	public void setup() throws IOException, InterruptedException {
@@ -79,28 +89,92 @@ public class ShellWrapper {
 		if (shell.isAlive() == false) {
 			return Pair.of(SubmitStatus.NOTALIVE, EMPTY);
 		}
+		if (StringUtils.equals(StringUtils.trim(cmd), "exit")) {
+			this.close();
+			return Pair.of(SubmitStatus.NOTALIVE, EMPTY);
+		}
 		currentCommandId = UUID.randomUUID().toString();
+		currentStartTime = System.currentTimeMillis();
 		shellIn.write(encodeWithNewLine(cmd));
 		shellIn.write(encodeWithNewLine(String.format("echo '%s'", currentCommandId)));
+		shellIn.flush();
 		return Pair.of(SubmitStatus.SUCCESS, currentCommandId);
 	}
 
 	public ShellOutput fetchResult(String cmdId) throws IOException {
+		return fetchResult(cmdId, timeout);
+	}
+
+	public ShellOutput fetchResult(String cmdId, int timeout) throws IOException {
+		while (true) {
+			ShellOutput shellOutput = fetchResultOnce(cmdId);
+			if (shellOutput.finished) {
+				return shellOutput;
+			}
+			if (isNotEmpty(shellOutput.out) || isNotEmpty(shellOutput.err)) {
+				return shellOutput;
+			}
+			if (System.currentTimeMillis() - currentStartTime > timeout * 1000) {
+				shellOutput = new ShellOutput();
+				shellOutput.finished = true;
+				shellOutput.err.add("Timeout after " + timeout + " seconds");
+				this.close();
+				return shellOutput;
+			}
+		}
+	}
+
+	private ShellOutput fetchResultOnce(String cmdId) throws IOException {
+		if (currentCommandId == null) {
+			throw new RuntimeException("Current no command submited.");
+		}
 		if (cmdId != currentCommandId) {
 			throw new RuntimeException("Command id not matched");
 		}
 		ShellOutput shellOutput = new ShellOutput();
-		shellOutput.err = readlines(shellErr);
-		shellOutput.out = readlines(shellOut);
-		if (CollectionUtils.isNotEmpty(shellOutput.out)) {
-			String lastLine = shellOutput.out.get(shellOutput.out.size() - 1);
+		shellOutput.err = readlines(shellErr, errBuffer);
+		shellOutput.out = readlines(shellOut, outBuffer);
+		if (outBuffer.size() > 0) {
+			String lastLine = encode(outBuffer.toByteArray());
 			if (StringUtils.equals(lastLine, cmdId)) {
 				currentCommandId = null;
 				shellOutput.finished = true;
+				outBuffer.reset();
+				cleanBuffer(shellOutput);
+			} else if (StringUtils.endsWith(lastLine, cmdId)) {
+				shellOutput.out.add(lastLine.substring(0, lastLine.length() - cmdId.length()));
+				currentCommandId = null;
+				shellOutput.finished = true;
+				outBuffer.reset();
+				cleanBuffer(shellOutput);
+			}
+		} else if (CollectionUtils.isNotEmpty(shellOutput.out)) {
+			String lastLine = shellOutput.out.get(shellOutput.out.size() - 1);
+			if (StringUtils.equals(lastLine, cmdId)) {
 				shellOutput.out.remove(shellOutput.out.size() - 1);
+				currentCommandId = null;
+				shellOutput.finished = true;
+				cleanBuffer(shellOutput);
+			} else if (StringUtils.endsWith(lastLine, cmdId)) {
+				shellOutput.out.remove(shellOutput.out.size() - 1);
+				shellOutput.out.add(lastLine.substring(0, lastLine.length() - cmdId.length()));
+				currentCommandId = null;
+				shellOutput.finished = true;
+				cleanBuffer(shellOutput);
 			}
 		}
 		return shellOutput;
+	}
+
+	private void cleanBuffer(ShellOutput shellOutput) {
+		if (outBuffer.size() > 0) {
+			shellOutput.out.add(encode(outBuffer.toByteArray()));
+			outBuffer.reset();
+		}
+		if (errBuffer.size() > 0) {
+			shellOutput.err.add(encode(errBuffer.toByteArray()));
+			errBuffer.reset();
+		}
 	}
 
 	public void close() {
@@ -120,15 +194,15 @@ public class ShellWrapper {
 		return new String(cnt, UTF_8);
 	}
 
-	private List<String> readlines(InputStream in) throws IOException {
+	private List<String> readlines(InputStream in, ByteArrayOutputStream baos) throws IOException {
 		List<String> result = Lists.newArrayList();
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		while (in.available() > 0) {
 			int read = in.read();
-			baos.write(read);
 			if (read == '\n') {
 				result.add(encode(baos.toByteArray()));
-				baos = new ByteArrayOutputStream();
+				baos.reset();
+			} else {
+				baos.write(read);
 			}
 		}
 		return result;
@@ -147,37 +221,6 @@ public class ShellWrapper {
 			out.close();
 		}
 		return false;
-	}
-
-	protected void pumpStreams() {
-		try {
-			for (byte[] buffer = new byte[bufferSize];;) {
-				if (pumpStream(in, shellIn, buffer)) {
-					continue;
-				}
-				if (pumpStream(shellOut, out, buffer)) {
-					continue;
-				}
-				if (pumpStream(shellErr, err, buffer)) {
-					continue;
-				}
-				if ((!shell.isAlive()) && (in.available() <= 0) && (shellOut.available() <= 0)
-						&& (shellErr.available() <= 0)) {
-					return;
-				}
-				Thread.sleep(pumpSleepTime);
-			}
-		} catch (Exception e) {
-			try {
-				shell.destroy();
-				shell.waitFor();
-			} catch (Exception e2) {
-				e2.printStackTrace();
-			}
-//			int exitValue = shell.exitValue();
-			e.printStackTrace();
-		}
-
 	}
 
 }

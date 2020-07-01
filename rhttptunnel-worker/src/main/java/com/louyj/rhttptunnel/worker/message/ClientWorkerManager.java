@@ -20,7 +20,7 @@ import com.louyj.rhttptunnel.worker.shell.ShellManager;
  *
  */
 @Component
-public class ThreadManager {
+public class ClientWorkerManager {
 
 	@Autowired
 	private MessageExchanger messageExchanger;
@@ -28,20 +28,20 @@ public class ThreadManager {
 	@Autowired
 	private ShellManager shellManager;
 
-	private Map<String, ThreadWorker> workers = Maps.newConcurrentMap();
+	private Map<String, ClientWorker> workers = Maps.newConcurrentMap();
 
 	public void ensureThreads(Collection<String> ids) {
 		Set<String> clientIds = Sets.newHashSet(ids);
 		for (String clientId : clientIds) {
 			if (workers.containsKey(clientId) == false) {
-				ThreadWorker worker = new ThreadWorker(clientId, messageExchanger, shellManager);
+				ClientWorker worker = new ClientWorker(clientId, messageExchanger, shellManager);
 				worker.start();
 				workers.put(clientId, worker);
 			}
 		}
 		for (String clientId : workers.keySet()) {
 			if (clientIds.contains(clientId) == false) {
-				ThreadWorker threadWorker = workers.get(clientId);
+				ClientWorker threadWorker = workers.get(clientId);
 				threadWorker.setShouldBreak(true);
 				workers.remove(clientId);
 			}

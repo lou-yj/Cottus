@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientIdMessage;
-import com.louyj.rhttptunnel.worker.message.ThreadManager;
+import com.louyj.rhttptunnel.worker.message.ClientWorkerManager;
 
 /**
  *
@@ -21,7 +21,7 @@ import com.louyj.rhttptunnel.worker.message.ThreadManager;
 public class ClientIdHandler implements IMessageHandler {
 
 	@Autowired
-	private ThreadManager threadManager;
+	private ClientWorkerManager threadManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {

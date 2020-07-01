@@ -11,7 +11,6 @@ import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ShellStartMessage;
-import com.louyj.rhttptunnel.worker.shell.ShellHolder;
 import com.louyj.rhttptunnel.worker.shell.ShellManager;
 
 /**
@@ -34,8 +33,7 @@ public class ShellStartHandler implements IMessageHandler {
 
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
-		ShellHolder activeShell = shellManager.activeShell(message.getClient().identify());
-		activeShell.ensureRunning();
+		shellManager.activeShell(message.getClient().identify());
 		return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId()).withMessage("Worker ready"));
 	}
 
