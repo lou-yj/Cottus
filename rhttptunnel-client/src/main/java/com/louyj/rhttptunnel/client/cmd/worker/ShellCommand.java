@@ -7,7 +7,6 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import java.util.Scanner;
 import java.util.UUID;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
@@ -94,7 +93,6 @@ public class ShellCommand extends BaseCommand {
 			printMessage(echo);
 		} catch (EndOfFileException e) {
 		}
-		IOUtils.closeQuietly(sc);
 		return "\nExit interactive shell mode";
 	}
 
