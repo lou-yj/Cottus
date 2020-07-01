@@ -15,6 +15,7 @@ import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
+import com.louyj.rhttptunnel.model.bean.WorkerInfo;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.DiscoverMessage;
@@ -37,20 +38,18 @@ public class WorkerManageCommand extends BaseCommand {
 	public String discover() {
 		DiscoverMessage message = new DiscoverMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
-		String resp = messagePoller.pollExchangeMessage(response);
-		session.setDiscoverWorkerText(resp);
-		return resp;
+		return messagePoller.pollExchangeMessage(response);
 	}
 
 	@ShellMethod(value = "Select worker")
 	@ShellMethodAvailability("serverContext")
 	public String select(@ShellOption(value = { "-i", "--index" }, help = "worker index") int index) {
-		List<ClientInfo> discoverWorkers = session.getDiscoverWorkers();
+		List<WorkerInfo> discoverWorkers = session.getDiscoverWorkers();
 		index = index - 1;
 		if (index < 0 || index >= discoverWorkers.size()) {
 			return "Bad index, you can refresh workers using discover command.";
 		}
-		ClientInfo worker = discoverWorkers.get(index);
+		ClientInfo worker = discoverWorkers.get(index).getClientInfo();
 		session.setSelectedWorker(worker);
 		SelectWorkerMessage message = new SelectWorkerMessage(CLIENT, worker);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);

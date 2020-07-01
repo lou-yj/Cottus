@@ -3,14 +3,15 @@ package com.louyj.rhttptunnel.server.client.handler;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
-import com.louyj.rhttptunnel.model.message.AckMessage;
+import com.louyj.rhttptunnel.model.bean.WorkerInfo;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.DiscoverMessage;
+import com.louyj.rhttptunnel.model.message.WorkerListMessage;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -37,18 +38,16 @@ public class DiscoverHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		List<String> list = Lists.newArrayList();
+		List<WorkerInfo> result = Lists.newArrayList();
 		Collection<WorkerSession> workers = workerSessionManager.workers();
-		list.add("INDEX\tUUID\tHOST\tIP\tUPTIME");
-		int index = 1;
 		for (WorkerSession worker : workers) {
-			list.add(String.format("%s\t%s\t%s\t%s\t%s", index++, worker.getClientInfo().getUuid(),
-					worker.getClientInfo().getHost(), worker.getClientInfo().getIp(),
-					worker.getClientInfo().getUptime()));
+			WorkerInfo info = new WorkerInfo();
+			info.setClientInfo(worker.getClientInfo());
+			result.add(info);
 		}
-		list.add("Found " + (index - 1) + " workes");
-		AckMessage ackMessage = AckMessage.sack(message.getExchangeId()).withMessage(StringUtils.join(list, "\n"));
-		return ackMessage;
+		WorkerListMessage workersMessage = new WorkerListMessage(ClientInfo.SERVER, message.getExchangeId());
+		workersMessage.setWorkers(result);
+		return workersMessage;
 	}
 
 	@Override
