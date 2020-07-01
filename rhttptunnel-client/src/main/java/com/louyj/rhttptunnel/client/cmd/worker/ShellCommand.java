@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
+import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
@@ -30,6 +31,7 @@ import com.louyj.rhttptunnel.model.message.ShellStartMessage;
  */
 
 @ShellComponent
+@ShellCommandGroup("Worker FileSystem Commands")
 public class ShellCommand extends BaseCommand {
 
 	@SuppressWarnings("resource")
