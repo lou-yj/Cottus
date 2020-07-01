@@ -91,8 +91,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		BaseMessage request = deserializer(data);
 		BaseMessage response = client(request);
 		ClientInfo client = request.getClient();
-		logger.info("ClientExchange-->host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(),
-				request.getExchangeId(), logMessage(request), logMessage(response));
+		logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
+				logMessage(request), logMessage(response));
 		return serializer(response);
 	}
 
@@ -101,8 +101,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		BaseMessage request = deserializer(data);
 		BaseMessage response = worker(request);
 		ClientInfo client = request.getClient();
-		logger.info("WorkerExchange-->host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(),
-				request.getExchangeId(), logMessage(request), logMessage(response));
+		logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
+				logMessage(request), logMessage(response));
 		return serializer(response);
 	}
 
