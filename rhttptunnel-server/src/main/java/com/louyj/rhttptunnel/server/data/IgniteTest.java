@@ -40,6 +40,12 @@ public class IgniteTest {
 		IgniteCache<Object, Object> cache = ignite.getOrCreateCache(
 				new CacheConfiguration<>().setName("Person").setIndexedTypes(Long.class, Person.class));
 
+		Person person = new Person();
+		person.id = 1;
+		person.name = "xxx";
+		person.salary = 987;
+		cache.put(person.id, person);
+
 		System.out.println(">> Created the cache and add the values.");
 
 		SqlFieldsQuery sql = new SqlFieldsQuery("SELECT id, name FROM Person");
@@ -53,7 +59,7 @@ public class IgniteTest {
 		ignite.close();
 	}
 
-	public class Person implements Serializable {
+	public static class Person implements Serializable {
 		/** Indexed field. Will be visible for SQL engine. */
 		@QuerySqlField(index = true)
 		private long id;
