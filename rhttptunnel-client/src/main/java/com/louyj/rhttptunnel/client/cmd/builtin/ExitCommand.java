@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.client.cmd.server;
+package com.louyj.rhttptunnel.client.cmd.builtin;
 
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
