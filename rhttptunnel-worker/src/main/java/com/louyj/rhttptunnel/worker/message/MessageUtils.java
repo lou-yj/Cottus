@@ -66,7 +66,7 @@ public class MessageUtils implements ApplicationContextAware, InitializingBean {
 
 	public static void handle(BaseMessage taskMessage) {
 		Class<? extends BaseMessage> type = taskMessage.getClass();
-		logger.info("Receive message {} content {}", type.getSimpleName(), taskMessage);
+		logger.debug("Receive message {} content {}", type.getSimpleName(), taskMessage);
 		IMessageHandler messageHandler = messageHandlers.get(type);
 		if (messageHandler == null) {
 			logger.error("Unknow Message Type {}", type);
@@ -86,7 +86,7 @@ public class MessageUtils implements ApplicationContextAware, InitializingBean {
 				messageExchanger.jsonPost(WORKER_EXCHANGE, msg);
 			}
 		}
-		logger.info("Process finished.");
+		logger.debug("Process finished.");
 
 	}
 
