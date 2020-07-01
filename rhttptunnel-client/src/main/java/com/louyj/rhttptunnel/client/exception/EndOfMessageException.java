@@ -1,7 +1,5 @@
 package com.louyj.rhttptunnel.client.exception;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  *
  * Create at 2020年7月1日
@@ -22,7 +20,6 @@ public class EndOfMessageException extends Exception {
 
 	public EndOfMessageException() {
 		super();
-		this.message = StringUtils.EMPTY;
 	}
 
 	public String getMessage() {
