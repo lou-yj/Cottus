@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.client.cmd.server;
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
@@ -10,7 +11,9 @@ import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.ClientDetector;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
+import com.louyj.rhttptunnel.client.cmd.worker.WorkerManageCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
+import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
 
@@ -23,6 +26,9 @@ import com.louyj.rhttptunnel.model.message.ConnectMessage;
  */
 @ShellComponent
 public class ServerCommand extends BaseCommand {
+
+	@Autowired
+	private WorkerManageCommand workerManageCommand;
 
 	@ShellMethod(value = "Connect to server")
 	@ShellMethodAvailability("clientContext")
@@ -40,6 +46,8 @@ public class ServerCommand extends BaseCommand {
 		if (Status.OK.equals(resp)) {
 			session.setServerConnected(true);
 			ClientDetector.CLIENT.setUser(userName);
+			LogUtils.printMessage(resp);
+			resp = workerManageCommand.discover();
 		}
 		return resp;
 	}
