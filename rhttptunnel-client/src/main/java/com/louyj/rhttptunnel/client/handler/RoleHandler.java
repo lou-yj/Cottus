@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
+import java.io.PrintStream;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +28,7 @@ public class RoleHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		RoleMessage roleMessage = (RoleMessage) message;
 		clientSession.setRole(roleMessage.getRole());
 	}

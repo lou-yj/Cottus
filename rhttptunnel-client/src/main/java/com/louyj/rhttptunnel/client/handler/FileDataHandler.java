@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.client.handler;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.PrintStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -33,21 +34,21 @@ public class FileDataHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		FileDataMessage fileDataMessage = (FileDataMessage) message;
 		File file = new File(clientSession.getWorkDirectory(), fileDataMessage.getFileName());
 		if (fileDataMessage.isStart()) {
-			System.out.println("Using " + clientSession.getWorkDirectory() + " as current work directory.");
-			System.out.println("Saving file at " + file.getAbsolutePath());
+			writer.println("Using " + clientSession.getWorkDirectory() + " as current work directory.");
+			writer.println("Saving file at " + file.getAbsolutePath());
 			File parentFile = file.getParentFile();
 			if (parentFile.exists() == false) {
 				parentFile.mkdirs();
 			} else if (parentFile.isDirectory() == false) {
-				System.out.println("ERROR: cannot write file at " + file.getAbsolutePath());
+				writer.println("ERROR: cannot write file at " + file.getAbsolutePath());
 				return;
 			}
 		}
-		System.out.println("Receive package, total size " + fileDataMessage.getTotalSize() + " current received "
+		writer.println("Receive package, total size " + fileDataMessage.getTotalSize() + " current received "
 				+ fileDataMessage.getCurrentSize());
 		FileOutputStream fos = new FileOutputStream(file, true);
 		IOUtils.write(fileDataMessage.getData(), fos);
@@ -57,9 +58,9 @@ public class FileDataHandler implements IMessageHandler {
 			String md5Hex = DigestUtils.md5Hex(fis);
 			fis.close();
 			if (StringUtils.equals(md5Hex, fileDataMessage.getFileHash())) {
-				System.out.println("File transfer finished, md5 hash " + md5Hex + " matched.");
+				writer.println("File transfer finished, md5 hash " + md5Hex + " matched.");
 			} else {
-				System.out.println("NETWORK ERROR: File transfer finished with wrong md5 hash.");
+				writer.println("NETWORK ERROR: File transfer finished with wrong md5 hash.");
 			}
 		}
 	}

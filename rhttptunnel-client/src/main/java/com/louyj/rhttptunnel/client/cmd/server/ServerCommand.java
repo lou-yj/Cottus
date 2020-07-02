@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.client.cmd.server;
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -12,8 +13,6 @@ import org.springframework.shell.standard.ShellOption;
 import com.louyj.rhttptunnel.client.ClientDetector;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.cmd.worker.WorkerManageCommand;
-import com.louyj.rhttptunnel.client.consts.Status;
-import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
 
@@ -43,10 +42,9 @@ public class ServerCommand extends BaseCommand {
 		connectMessage.setPassword(password);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, connectMessage);
 		String resp = messagePoller.pollExchangeMessage(response);
-		if (Status.OK.equals(resp)) {
+		if (StringUtils.isBlank(resp)) {
 			session.setServerConnected(true);
 			ClientDetector.CLIENT.setUser(userName);
-			LogUtils.printMessage(resp);
 			resp = workerManageCommand.discover();
 		}
 		return resp;

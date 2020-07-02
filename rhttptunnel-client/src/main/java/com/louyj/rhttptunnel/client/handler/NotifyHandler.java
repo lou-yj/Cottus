@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
+import java.io.PrintStream;
+
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.util.LogUtils;
@@ -22,8 +24,8 @@ public class NotifyHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
-		LogUtils.log(((NotifyMessage) message).getMessage());
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
+		LogUtils.log(((NotifyMessage) message).getMessage(), writer);
 	}
 
 }

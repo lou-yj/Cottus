@@ -17,7 +17,6 @@ import org.springframework.shell.standard.ShellOption;
 
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
-import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.model.bean.WorkerInfo;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
@@ -68,7 +67,7 @@ public class WorkerManageCommand extends BaseCommand {
 		SelectWorkerMessage message = new SelectWorkerMessage(CLIENT, selectedWorkers);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		String status = messagePoller.pollExchangeMessage(response);
-		if (StringUtils.equals(Status.OK, status)) {
+		if (StringUtils.isBlank(status)) {
 			session.setWorkerConnected(true);
 		}
 		return status;

@@ -52,7 +52,7 @@ public class ShellCommand extends BaseCommand {
 		ShellStartMessage shellStartMessage = new ShellStartMessage(CLIENT, exchangeId);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellStartMessage);
 		String resp = messagePoller.pollExchangeMessage(response);
-		if (StringUtils.equals(resp, "Worker ready")) {
+		if (StringUtils.isBlank(resp)) {
 			System.out.println("OK, Worker ready");
 			System.out.println("WARNNING YOU NOW IN INTERACTIVE SHELL MODE!!!");
 		} else {
@@ -68,31 +68,25 @@ public class ShellCommand extends BaseCommand {
 					ShellEndMessage shellEndMessage = new ShellEndMessage(CLIENT, exchangeId);
 					BaseMessage endMessage = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellEndMessage);
 					String echo = messagePoller.pollExchangeMessage(endMessage);
-					printMessage(echo);
+					printMessage(echo, System.out);
 					break;
 				}
 				if (StringUtils.endsWith(line, "\\")) {
-					printMessage("Multi line command current not support!");
+					printMessage("Multi line command current not support!", System.out);
 				} else if (StringUtils.isNotBlank(line)) {
 					ShellMessage shellMessage = new ShellMessage(CLIENT, exchangeId);
 					shellMessage.setMessage(line);
 					BaseMessage post = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellMessage);
 					String echo = messagePoller.pollExchangeMessage(post);
-					if (StringUtils.isNotBlank(echo)) {
-						if (echo.endsWith("\n")) {
-							printMessage(echo);
-						} else {
-							printMessage(echo);
-						}
-					}
+					printMessage(echo, System.out);
 				}
 			}
 		} catch (UserInterruptException e) {
-			printMessage("Try to ask worker work exit interactive shell mode");
+			printMessage("Try to ask worker work exit interactive shell mode", System.out);
 			ShellEndMessage shellEndMessage = new ShellEndMessage(CLIENT, exchangeId);
 			BaseMessage endMessage = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellEndMessage);
 			String echo = messagePoller.pollExchangeMessage(endMessage);
-			printMessage(echo);
+			printMessage(echo, System.out);
 		} catch (EndOfFileException e) {
 		}
 		return "\nExit interactive shell mode";

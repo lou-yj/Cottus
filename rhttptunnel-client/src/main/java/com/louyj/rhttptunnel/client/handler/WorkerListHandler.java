@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
+import java.io.PrintStream;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +33,7 @@ public class WorkerListHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		WorkerListMessage listMessage = (WorkerListMessage) message;
 		AsciiTable at = new AsciiTable();
 		at.addRule();
@@ -44,8 +46,8 @@ public class WorkerListHandler implements IMessageHandler {
 		}
 		at.addRule();
 		String rend = at.render();
-		System.out.println(rend);
-		System.out.println("Found " + (index - 1) + " workes");
+		writer.println(rend);
+		writer.println("Found " + (index - 1) + " workes");
 		session.setDiscoverWorkers(listMessage.getWorkers());
 		throw new EndOfMessageException();
 	}

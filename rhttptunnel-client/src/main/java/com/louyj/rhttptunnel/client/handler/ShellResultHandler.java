@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
+import java.io.PrintStream;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
@@ -22,16 +24,16 @@ public class ShellResultHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		ShellResultMessage shellResultMessage = (ShellResultMessage) message;
 		if (CollectionUtils.isNotEmpty(shellResultMessage.getErr())) {
 			for (String line : shellResultMessage.getErr()) {
-				System.err.println(line);
+				writer.println(line);
 			}
 		}
 		if (CollectionUtils.isNotEmpty(shellResultMessage.getOut())) {
 			for (String line : shellResultMessage.getOut()) {
-				System.out.println(line);
+				writer.println(line);
 			}
 		}
 	}

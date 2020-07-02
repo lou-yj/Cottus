@@ -65,11 +65,11 @@ public class FileCommand extends BaseCommand {
 		String exchangeId = UUID.randomUUID().toString();
 		File file = new File(path);
 		if (!file.exists()) {
-			LogUtils.clientError("file not exists");
+			LogUtils.clientError("file not exists", System.out);
 			return "FAILED";
 		}
 		if (file.isDirectory()) {
-			LogUtils.clientError("directory transfer current not support");
+			LogUtils.clientError("directory transfer current not support", System.out);
 			return "FAILED";
 		}
 		String targetName = isBlank(target) ? file.getName() : target;
@@ -101,7 +101,7 @@ public class FileCommand extends BaseCommand {
 			fileDataMessage.setSize(totalSize, currentSize);
 			BaseMessage responseMessage = messageExchanger.jsonPost(CLIENT_EXCHANGE, fileDataMessage);
 			if (responseMessage instanceof RejectMessage) {
-				LogUtils.serverReject(responseMessage);
+				LogUtils.serverReject(responseMessage, System.out);
 				fis.close();
 				return "FAILED";
 			} else {
@@ -191,7 +191,7 @@ public class FileCommand extends BaseCommand {
 		while (num < repeat) {
 			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 			String echo = messagePoller.pollExchangeMessage(response);
-			LogUtils.printMessage(echo);
+			LogUtils.printMessage(echo, System.out);
 			num++;
 		}
 		return null;

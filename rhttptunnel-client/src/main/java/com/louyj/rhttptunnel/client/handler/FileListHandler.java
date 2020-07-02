@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
+import java.io.PrintStream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,10 +29,10 @@ public class FileListHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		FileListMessage fileListMessage = (FileListMessage) message;
 		clientSession.setCwd(fileListMessage.getPath());
-		System.out.println(StringUtils.join(fileListMessage.getFiles(), "\n"));
+		writer.println(StringUtils.join(fileListMessage.getFiles(), "\n"));
 	}
 
 }

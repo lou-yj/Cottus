@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.util;
 
+import java.io.PrintStream;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -14,37 +16,38 @@ import com.louyj.rhttptunnel.model.message.RejectMessage;
  */
 public class LogUtils {
 
-	public static void log(String log) {
-		System.out.println("[INFO] " + log);
+	public static void log(String log, PrintStream writer) {
+		writer.println("[INFO] " + log);
 	}
 
-	public static void clientError(String log) {
-		System.out.println("[CLIENT ERROR] " + log);
+	public static void clientError(String log, PrintStream writer) {
+		writer.println("[CLIENT ERROR] " + log);
 	}
 
-	public static void serverError(String log) {
-		System.out.println("[SERVER ERROR] " + log);
+	public static void serverError(String log, PrintStream writer) {
+		writer.println("[SERVER ERROR] " + log);
 	}
 
-	public static void networkError(String log) {
-		System.out.println("[NETWORK ERROR] " + log);
+	public static void networkError(String log, PrintStream writer) {
+		writer.println("[NETWORK ERROR] " + log);
 	}
 
-	public static void serverReject(BaseMessage message) {
+	public static void serverReject(BaseMessage message, PrintStream writer) {
 		RejectMessage rejectMessage = (RejectMessage) message;
-		System.out.println("[SERVER ERROR] request rejected by server, reason " + rejectMessage.getReason());
+		writer.println("[SERVER ERROR] request rejected by server, reason " + rejectMessage.getReason());
 	}
 
-	public static void printMessage(String echo) {
-		if (echo == null) {
+	public static void printMessage(String echo, PrintStream writer) {
+		if (StringUtils.isBlank(echo)) {
 			return;
 		}
 		if (StringUtils.isNotBlank(echo)) {
 			if (echo.endsWith("\n")) {
-				System.out.print(echo);
+				writer.print(echo);
 			} else {
-				System.out.println(echo);
+				writer.println(echo);
 			}
 		}
+
 	}
 }

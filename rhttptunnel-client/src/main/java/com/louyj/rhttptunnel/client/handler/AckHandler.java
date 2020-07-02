@@ -1,10 +1,11 @@
 package com.louyj.rhttptunnel.client.handler;
 
-import static com.louyj.rhttptunnel.client.consts.Status.OK;
+import java.io.PrintStream;
 
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
+import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 
@@ -24,12 +25,13 @@ public class AckHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		AckMessage ackMessage = (AckMessage) message;
 		if (ackMessage.getMessage() != null) {
-			throw new EndOfMessageException(ackMessage.getMessage());
+			LogUtils.printMessage(ackMessage.getMessage(), writer);
+			throw new EndOfMessageException();
 		} else
-			throw new EndOfMessageException(OK);
+			throw new EndOfMessageException();
 	}
 
 }

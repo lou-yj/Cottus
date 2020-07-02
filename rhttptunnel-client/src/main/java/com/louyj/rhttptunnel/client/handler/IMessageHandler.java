@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
+import java.io.PrintStream;
+
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 
 /**
@@ -13,6 +15,6 @@ public interface IMessageHandler {
 
 	Class<? extends BaseMessage> supportType();
 
-	void handle(BaseMessage message) throws Exception;
+	void handle(BaseMessage message, PrintStream writer) throws Exception;
 
 }

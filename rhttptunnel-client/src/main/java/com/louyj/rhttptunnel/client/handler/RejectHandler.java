@@ -2,6 +2,8 @@ package com.louyj.rhttptunnel.client.handler;
 
 import static com.louyj.rhttptunnel.client.consts.Status.FAILED;
 
+import java.io.PrintStream;
+
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
@@ -25,9 +27,9 @@ public class RejectHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		RejectMessage rejectMessage = (RejectMessage) message;
-		LogUtils.serverReject(rejectMessage);
+		LogUtils.serverReject(rejectMessage, writer);
 		throw new EndOfMessageException(FAILED);
 	}
 

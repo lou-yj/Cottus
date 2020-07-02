@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
+import java.io.PrintStream;
+
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -21,7 +23,7 @@ public class NoContentHandler implements IMessageHandler {
 	}
 
 	@Override
-	public void handle(BaseMessage message) throws Exception {
+	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 	}
 
 }

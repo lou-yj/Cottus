@@ -9,7 +9,7 @@ package com.louyj.rhttptunnel.client.consts;
  */
 public class Status {
 
-	public static final String OK = "OK";
+//	public static final String OK = "OK";
 
 	public static final String FAILED = "FAILED";
 

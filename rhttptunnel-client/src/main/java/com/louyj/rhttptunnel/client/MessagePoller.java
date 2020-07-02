@@ -2,9 +2,9 @@ package com.louyj.rhttptunnel.client;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.client.consts.Status.FAILED;
-import static com.louyj.rhttptunnel.client.consts.Status.OK;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +68,7 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 	public String pollExchangeMessage(BaseMessage response) {
 		try {
 			if (response == null) {
-				LogUtils.clientError("Null Point Exception");
+				LogUtils.clientError("Null Point Exception", System.out);
 				return FAILED;
 			}
 			if (response instanceof AsyncExecAckMessage) {
@@ -77,18 +77,22 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 			{
 				IMessageHandler handler = messageHandlers.get(response.getClass());
 				if (handler == null) {
-					LogUtils.clientError("No message handler for type " + response.getClass().getSimpleName());
+					LogUtils.clientError("No message handler for type " + response.getClass().getSimpleName(),
+							System.out);
 					return FAILED;
 				}
 				try {
-					handler.handle(response);
-					return OK;
+					handler.handle(response, System.out);
+					return null;
 				} catch (EndOfMessageException e) {
-					return e.getMessage();
+					if (StringUtils.isNotBlank(e.getMessage())) {
+						LogUtils.printMessage(e.getMessage(), System.out);
+					}
+					return null;
 				}
 			}
 		} catch (Exception e) {
-			LogUtils.clientError("[" + e.getClass().getName() + "]" + e.getMessage());
+			LogUtils.clientError("[" + e.getClass().getName() + "]" + e.getMessage(), System.out);
 			return FAILED;
 		}
 	}
@@ -96,39 +100,45 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 	public String pollExchangeMessage(String exchangeId) throws Exception {
 		List<ClientInfo> selectedWorkers = session.getSelectedWorkers();
 		if (selectedWorkers.size() == 1) {
-			return pollExchangeMessageOnce(exchangeId);
+			pollExchangeMessageOnce(exchangeId, false);
+			return null;
 		}
 		for (int i = 0; i < selectedWorkers.size(); i++) {
-			String messageOnce = pollExchangeMessageOnce(exchangeId);
-			LogUtils.printMessage(messageOnce);
+			pollExchangeMessageOnce(exchangeId, true);
 		}
 		return null;
 	}
 
-	private String pollExchangeMessageOnce(String exchangeId) throws Exception {
+	private void pollExchangeMessageOnce(String exchangeId, boolean printWorkerInfo) throws Exception {
 		long start = System.currentTimeMillis();
 		while (true) {
 			if (System.currentTimeMillis() - start > maxWait * 1000) {
-				LogUtils.clientError("Wait Timeout wait over " + maxWait + " second");
-				return FAILED;
+				LogUtils.clientError("Wait Timeout wait over " + maxWait + " second", System.out);
+				LogUtils.printMessage(FAILED, System.out);
+				return;
 			}
 			AsyncFetchMessage fetchMessage = new AsyncFetchMessage(CLIENT);
 			fetchMessage.setExchangeId(exchangeId);
 			BaseMessage respMsg = messageExchanger.jsonPost(CLIENT_EXCHANGE, fetchMessage);
 			if (StringUtils.equals(respMsg.getExchangeId(), exchangeId) == false) {
-				LogUtils.serverError("bad response, exchange id not matched");
-				return FAILED;
+				LogUtils.serverError("bad response, exchange id not matched", System.out);
+				LogUtils.printMessage(FAILED, System.out);
+				return;
 			}
-			LogUtils.printMessage("==========Worker " + respMsg.getClient().getHost() + "==========");
+			PrintStream cps = System.out;
+			if (printWorkerInfo)
+				cps = new CustromPrintStream(respMsg.getClient());
 			IMessageHandler handler = messageHandlers.get(respMsg.getClass());
 			if (handler == null) {
-				LogUtils.clientError("No message handler for type " + respMsg.getClass().getSimpleName());
-				return FAILED;
+				LogUtils.clientError("No message handler for type " + respMsg.getClass().getSimpleName(), cps);
+				LogUtils.printMessage(FAILED, cps);
+				return;
 			}
 			try {
-				handler.handle(respMsg);
+				handler.handle(respMsg, cps);
 			} catch (EndOfMessageException e) {
-				return e.getMessage();
+				LogUtils.printMessage(e.getMessage(), cps);
+				return;
 			}
 		}
 	}
