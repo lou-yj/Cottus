@@ -1,10 +1,14 @@
 package com.louyj.rhttptunnel.client.handler;
 
 import java.io.PrintStream;
+import java.util.List;
+import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.bean.WorkerInfo;
@@ -37,12 +41,17 @@ public class WorkerListHandler implements IMessageHandler {
 		WorkerListMessage listMessage = (WorkerListMessage) message;
 		AsciiTable at = new AsciiTable();
 		at.addRule();
-		at.addRow("INDEX", "HOST", "IP", "UPTIME");
+		at.addRow("INDEX", "HOST", "IP", "LABELS", "UPTIME");
 		int index = 1;
 		for (WorkerInfo worker : listMessage.getWorkers()) {
+			List<String> labelsList = Lists.newArrayList();
+			for (Entry<String, String> entry : worker.getLabels().entrySet()) {
+				labelsList.add(entry.getKey() + "=" + entry.getValue());
+			}
 			ClientInfo clientInfo = worker.getClientInfo();
 			at.addRule();
-			at.addRow(index++, clientInfo.getHost(), clientInfo.getIp(), clientInfo.getUptime());
+			at.addRow(index++, clientInfo.getHost(), clientInfo.getIp(), StringUtils.join(labelsList, "\n"),
+					clientInfo.getUptime());
 		}
 		at.addRule();
 		String rend = at.render();

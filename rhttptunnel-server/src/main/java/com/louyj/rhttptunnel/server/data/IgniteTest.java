@@ -14,6 +14,8 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.DataStorageConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 
+import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
+
 /**
  *
  * Create at 2020年7月1日
@@ -38,22 +40,22 @@ public class IgniteTest {
 		cluster.active(true);
 
 		IgniteCache<Object, Object> cache = ignite.getOrCreateCache(
-				new CacheConfiguration<>().setName("Person").setIndexedTypes(Long.class, Person.class));
+				new CacheConfiguration<>().setName("workerlabels").setIndexedTypes(String.class, LabelRule.class));
 
-		Person person = new Person();
-		person.id = 1;
-		person.name = "xxx";
-		person.salary = 987;
-		cache.put(person.id, person);
+//		LabelRule rule = new LabelRule();
+//		rule.setHost("localhost");
+//		rule.setIp("127.0.0.1");
+//		rule.getLabels().put("xxx", "xxx");
+//		cache.put(rule.identify(), rule);
 
 		System.out.println(">> Created the cache and add the values.");
 
-		SqlFieldsQuery sql = new SqlFieldsQuery("SELECT id, name FROM Person");
+		SqlFieldsQuery sql = new SqlFieldsQuery("SELECT labels FROM LabelRule");
 
 		// Iterate over the result set.
 		try (QueryCursor<List<?>> cursor = cache.query(sql)) {
 			for (List<?> row : cursor)
-				System.out.println("personName=" + row.get(0));
+				System.out.println("host=" + row.get(0));
 		}
 
 		ignite.close();

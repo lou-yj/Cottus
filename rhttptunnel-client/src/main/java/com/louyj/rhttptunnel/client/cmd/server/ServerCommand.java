@@ -45,7 +45,7 @@ public class ServerCommand extends BaseCommand {
 		if (StringUtils.isBlank(resp)) {
 			session.setServerConnected(true);
 			ClientDetector.CLIENT.setUser(userName);
-			resp = workerManageCommand.discover();
+			resp = workerManageCommand.discover("");
 		}
 		return resp;
 	}

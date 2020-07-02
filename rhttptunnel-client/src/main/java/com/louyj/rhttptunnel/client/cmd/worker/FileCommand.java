@@ -23,6 +23,7 @@ import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
+import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ExecMessage;
@@ -66,11 +67,11 @@ public class FileCommand extends BaseCommand {
 		File file = new File(path);
 		if (!file.exists()) {
 			LogUtils.clientError("file not exists", System.out);
-			return "FAILED";
+			return Status.FAILED;
 		}
 		if (file.isDirectory()) {
 			LogUtils.clientError("directory transfer current not support", System.out);
-			return "FAILED";
+			return Status.FAILED;
 		}
 		String targetName = isBlank(target) ? file.getName() : target;
 		long totalSize = file.length();
@@ -103,7 +104,7 @@ public class FileCommand extends BaseCommand {
 			if (responseMessage instanceof RejectMessage) {
 				LogUtils.serverReject(responseMessage, System.out);
 				fis.close();
-				return "FAILED";
+				return Status.FAILED;
 			} else {
 				System.out.println("Send package success, total size " + fileDataMessage.getTotalSize()
 						+ " current received " + fileDataMessage.getCurrentSize());

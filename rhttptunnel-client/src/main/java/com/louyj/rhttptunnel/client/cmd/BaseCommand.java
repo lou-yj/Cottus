@@ -82,6 +82,20 @@ public abstract class BaseCommand {
 		return Availability.unavailable("of bad context");
 	}
 
+	public Availability connectAdminContext() {
+		if (checkPermission(RoleType.ADMIN) && session.inUnconnectedMode() == false) {
+			return Availability.available();
+		}
+		return Availability.unavailable("of bad context");
+	}
+
+	public Availability connectContext() {
+		if (checkPermission(RoleType.NORMAL) && session.inUnconnectedMode() == false) {
+			return Availability.available();
+		}
+		return Availability.unavailable("of bad context");
+	}
+
 	protected boolean checkPermission(RoleType roleType) {
 		if (session.getRole().getLevel() < roleType.getLevel()) {
 			return false;
