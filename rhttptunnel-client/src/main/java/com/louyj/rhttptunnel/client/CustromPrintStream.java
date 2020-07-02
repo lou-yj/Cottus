@@ -19,7 +19,7 @@ public class CustromPrintStream extends PrintStream {
 	private void printWorker() {
 		if (first) {
 			first = false;
-			this.println("==========Worker " + clientInfo.getHost() + "==========");
+			this.println("====>from worker " + clientInfo.getHost() + "<====");
 		}
 	}
 
