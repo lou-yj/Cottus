@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.model.message;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -12,20 +14,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class SelectWorkerMessage extends BaseMessage {
 
-	private ClientInfo worker;
+	private List<ClientInfo> workers;
 
 	@JsonCreator
-	public SelectWorkerMessage(@JsonProperty("client") ClientInfo client, @JsonProperty("worker") ClientInfo worker) {
+	public SelectWorkerMessage(@JsonProperty("client") ClientInfo client,
+			@JsonProperty("workers") List<ClientInfo> workers) {
 		super(client);
-		this.worker = worker;
+		this.workers = workers;
 	}
 
-	public ClientInfo getWorker() {
-		return worker;
+	public List<ClientInfo> getWorkers() {
+		return workers;
 	}
 
-	public void setWorker(ClientInfo worker) {
-		this.worker = worker;
+	public void setWorkers(List<ClientInfo> workers) {
+		this.workers = workers;
 	}
 
 }

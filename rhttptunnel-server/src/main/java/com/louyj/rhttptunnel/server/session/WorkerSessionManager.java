@@ -1,6 +1,7 @@
 package com.louyj.rhttptunnel.server.session;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
@@ -48,6 +50,17 @@ public class WorkerSessionManager {
 			return null;
 		}
 		return workers.getIfPresent(clientInfo.identify());
+	}
+
+	public List<WorkerSession> sessions(List<ClientInfo> clientInfos) {
+		if (clientInfos == null) {
+			return Lists.newArrayList();
+		}
+		List<WorkerSession> workerSessions = Lists.newArrayList();
+		for (ClientInfo clientInfo : clientInfos) {
+			workerSessions.add(session(clientInfo));
+		}
+		return workerSessions;
 	}
 
 	public void remove(ClientInfo clientInfo) {

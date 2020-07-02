@@ -2,10 +2,12 @@ package com.louyj.rhttptunnel.server.exchange;
 
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -28,7 +30,6 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
-import com.louyj.rhttptunnel.server.handler.IMessageHandler;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.ClientSessionManager;
@@ -112,21 +113,25 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		clientManager.update(client, message.getExchangeId());
 
 		ClientSession clientSession = clientManager.session(client);
-		WorkerSession workerSession = workerManager.session(clientSession.getWorkerInfo());
+		List<WorkerSession> workerSessions = workerManager.sessions(clientSession.getWorkerInfos());
 		IClientMessageHandler handler = clientHandlers.get(type);
 		if (handler == null) {
-			if (workerSession == null) {
-				return RejectMessage.sreason(message.getExchangeId(), "Current worker offline or session expired.");
+			if (CollectionUtils.isEmpty(workerSessions)) {
+				return RejectMessage.sreason(message.getExchangeId(), "Current workers offline or session expired.");
 			}
-			workerSession.putMessage(client.identify(), message);
+			for (WorkerSession workerSession : workerSessions) {
+				workerSession.putMessage(client.identify(), message);
+			}
 			return AsyncExecAckMessage.sack(message.getExchangeId());
 		} else {
 			if (handler.asyncMode()) {
-				ExchangeTask task = new ExchangeTask(handler, clientSession, workerSession, message);
-				executorService.execute(task);
+				for (WorkerSession workerSession : workerSessions) {
+					ExchangeTask task = new ExchangeTask(handler, clientSession, workerSession, message);
+					executorService.execute(task);
+				}
 				return AsyncExecAckMessage.sack(message.getExchangeId());
 			} else {
-				return handler.handle(workerSession, clientSession, message);
+				return handler.handle(workerSessions, clientSession, message);
 			}
 		}
 	}
@@ -139,7 +144,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		WorkerSession workerSession = workerManager.session(client);
 		ClientSession clientSession = clientManager.session(message.getExchangeId());
 
-		IMessageHandler handler = workerHandlers.get(type);
+		IWorkerMessageHandler handler = workerHandlers.get(type);
 		if (handler == null) {
 			if (clientSession == null) {
 				return RejectMessage.sreason(message.getExchangeId(), "Current client offline or session expired.");

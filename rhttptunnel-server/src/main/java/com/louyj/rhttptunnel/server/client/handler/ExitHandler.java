@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.server.client.handler;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,15 +32,15 @@ public class ExitHandler implements IClientMessageHandler {
 	}
 
 	@Override
-	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
-			throws Exception {
-		clientSessionManager.clientExit(message.getClient().identify());
-		return AckMessage.sack(message.getExchangeId());
+	public boolean asyncMode() {
+		return false;
 	}
 
 	@Override
-	public boolean asyncMode() {
-		return false;
+	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
+			throws Exception {
+		clientSessionManager.clientExit(message.getClient().identify());
+		return AckMessage.sack(message.getExchangeId());
 	}
 
 }

@@ -1,11 +1,13 @@
 package com.louyj.rhttptunnel.server.exchange;
 
+import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.server.handler.IMessageHandler;
+import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
 
@@ -20,12 +22,12 @@ public class ExchangeTask implements Runnable {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
-	private IMessageHandler handler;
+	private IClientMessageHandler handler;
 	private ClientSession clientSession;
 	private WorkerSession workerSession;
 	private BaseMessage message;
 
-	public ExchangeTask(IMessageHandler handler, ClientSession clientSession, WorkerSession workerSession,
+	public ExchangeTask(IClientMessageHandler handler, ClientSession clientSession, WorkerSession workerSession,
 			BaseMessage message) {
 		super();
 		this.handler = handler;
@@ -37,7 +39,7 @@ public class ExchangeTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			BaseMessage baseMessage = handler.handle(workerSession, clientSession, message);
+			BaseMessage baseMessage = handler.handle(Arrays.asList(workerSession), clientSession, message);
 			if (baseMessage != null) {
 				clientSession.getMessageQueue().add(baseMessage);
 			}

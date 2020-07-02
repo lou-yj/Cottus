@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.server.session;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -21,7 +22,7 @@ public class ClientSession {
 
 	private ClientInfo clientInfo;
 
-	private ClientInfo workerInfo;
+	private List<ClientInfo> workerInfos;
 
 	private String cwd;
 
@@ -64,12 +65,12 @@ public class ClientSession {
 		this.clientInfo = clientInfo;
 	}
 
-	public ClientInfo getWorkerInfo() {
-		return workerInfo;
+	public List<ClientInfo> getWorkerInfos() {
+		return workerInfos;
 	}
 
-	public void setWorkerInfo(ClientInfo workerInfo) {
-		this.workerInfo = workerInfo;
+	public void setWorkerInfos(List<ClientInfo> workerInfos) {
+		this.workerInfos = workerInfos;
 	}
 
 	public BlockingQueue<BaseMessage> getMessageQueue() {

@@ -29,7 +29,7 @@ public class ClientSession {
 
 	private List<WorkerInfo> discoverWorkers = Lists.newArrayList();
 	private String discoverWorkerText;
-	private ClientInfo selectedWorker;
+	private List<ClientInfo> selectedWorkers;
 	private RoleType role = RoleType.NORMAL;
 
 	@Value("${java.io.tmpdir}")
@@ -37,12 +37,12 @@ public class ClientSession {
 
 	private String cwd;
 
-	public ClientInfo getSelectedWorker() {
-		return selectedWorker;
+	public List<ClientInfo> getSelectedWorkers() {
+		return selectedWorkers;
 	}
 
-	public void setSelectedWorker(ClientInfo selectedWorker) {
-		this.selectedWorker = selectedWorker;
+	public void setSelectedWorkers(List<ClientInfo> selectedWorkers) {
+		this.selectedWorkers = selectedWorkers;
 	}
 
 	public String getDiscoverWorkerText() {

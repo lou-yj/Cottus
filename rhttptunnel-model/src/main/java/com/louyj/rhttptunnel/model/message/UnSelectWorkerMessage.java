@@ -12,20 +12,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class UnSelectWorkerMessage extends BaseMessage {
 
-	private ClientInfo worker;
-
 	@JsonCreator
-	public UnSelectWorkerMessage(@JsonProperty("client") ClientInfo client, @JsonProperty("worker") ClientInfo worker) {
+	public UnSelectWorkerMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
-		this.worker = worker;
-	}
-
-	public ClientInfo getWorker() {
-		return worker;
-	}
-
-	public void setWorker(ClientInfo worker) {
-		this.worker = worker;
 	}
 
 }

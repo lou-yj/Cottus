@@ -3,6 +3,8 @@ package com.louyj.rhttptunnel.server.client.handler;
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +39,12 @@ public class AsyncFetchHandler implements IClientMessageHandler {
 	}
 
 	@Override
-	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
+	public boolean asyncMode() {
+		return false;
+	}
+
+	@Override
+	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		while (true) {
 			BaseMessage poll = clientSession.getMessageQueue().poll(clientWait, SECONDS);
@@ -52,11 +59,6 @@ public class AsyncFetchHandler implements IClientMessageHandler {
 				return new NoContentMessage(SERVER, message.getExchangeId());
 			}
 		}
-	}
-
-	@Override
-	public boolean asyncMode() {
-		return false;
 	}
 
 }

@@ -2,6 +2,8 @@ package com.louyj.rhttptunnel.server.client.handler;
 
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +36,12 @@ public class ConnectHandler implements IClientMessageHandler {
 	}
 
 	@Override
-	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
+	public boolean asyncMode() {
+		return false;
+	}
+
+	@Override
+	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		ConnectMessage connectMessage = (ConnectMessage) message;
 		RoleType roleType = userManager.verify(connectMessage.getUser(), connectMessage.getPassword());
@@ -44,11 +51,6 @@ public class ConnectHandler implements IClientMessageHandler {
 			return roleMessage;
 		}
 		return RejectMessage.sreason(message.getExchangeId(), "Auth failed");
-	}
-
-	@Override
-	public boolean asyncMode() {
-		return false;
 	}
 
 }

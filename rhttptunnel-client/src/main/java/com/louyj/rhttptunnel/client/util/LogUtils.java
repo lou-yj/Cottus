@@ -36,6 +36,9 @@ public class LogUtils {
 	}
 
 	public static void printMessage(String echo) {
+		if (echo == null) {
+			return;
+		}
 		if (StringUtils.isNotBlank(echo)) {
 			if (echo.endsWith("\n")) {
 				System.out.print(echo);

@@ -36,7 +36,12 @@ public class DiscoverHandler implements IClientMessageHandler {
 	}
 
 	@Override
-	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
+	public boolean asyncMode() {
+		return false;
+	}
+
+	@Override
+	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		List<WorkerInfo> result = Lists.newArrayList();
 		Collection<WorkerSession> workers = workerSessionManager.workers();
@@ -48,11 +53,6 @@ public class DiscoverHandler implements IClientMessageHandler {
 		WorkerListMessage workersMessage = new WorkerListMessage(ClientInfo.SERVER, message.getExchangeId());
 		workersMessage.setWorkers(result);
 		return workersMessage;
-	}
-
-	@Override
-	public boolean asyncMode() {
-		return false;
 	}
 
 }
