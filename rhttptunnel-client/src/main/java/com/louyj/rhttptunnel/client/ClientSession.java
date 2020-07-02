@@ -35,7 +35,7 @@ public class ClientSession {
 	@Value("${java.io.tmpdir}")
 	private String workDirectory;
 
-	private String cwd;
+	private String cwd = "/";
 
 	public List<ClientInfo> getSelectedWorkers() {
 		return selectedWorkers;
