@@ -113,7 +113,12 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		clientManager.update(client, message.getExchangeId());
 
 		ClientSession clientSession = clientManager.session(client);
-		List<WorkerSession> workerSessions = workerManager.sessions(clientSession.getWorkerInfos());
+		List<WorkerSession> workerSessions = null;
+		if (CollectionUtils.isNotEmpty(message.getToWorkers())) {
+			workerSessions = workerManager.sessions(message.getToWorkers());
+		} else {
+			workerSessions = workerManager.sessions(clientSession.getWorkerInfos());
+		}
 		IClientMessageHandler handler = clientHandlers.get(type);
 		if (handler == null) {
 			if (CollectionUtils.isEmpty(workerSessions)) {

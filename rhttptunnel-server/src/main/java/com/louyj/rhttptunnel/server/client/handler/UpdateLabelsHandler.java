@@ -43,8 +43,7 @@ public class UpdateLabelsHandler implements IClientMessageHandler {
 			throws Exception {
 		UpdateLabelMessage updateLabelMessage = (UpdateLabelMessage) message;
 		for (WorkerSession workerSession : workerSessions) {
-			LabelRule labelRule = workerLabelManager.findRule(workerSession.getClientInfo().getHost(),
-					workerSession.getClientInfo().getIp());
+			LabelRule labelRule = workerLabelManager.findRule(workerSession.getClientInfo());
 			if (labelRule == null) {
 				labelRule = new LabelRule();
 				labelRule.setHostInfo(

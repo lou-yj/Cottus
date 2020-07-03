@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Maps;
@@ -18,13 +19,16 @@ import com.google.common.collect.Maps;
 @Component
 public class ShellManager {
 
+	@Value("${work.directory}")
+	private String workDirectory;
+
 	private Map<String, ShellWrapper> shellHolders = Maps.newConcurrentMap();
 
 	public synchronized ShellWrapper activeShell(String clientId) throws IOException, InterruptedException {
 		ShellWrapper shellHolder = shellHolders.get(clientId);
 		if (shellHolder == null || shellHolder.isAlive() == false) {
 			IOUtils.closeQuietly(shellHolder);
-			shellHolder = new ShellWrapper();
+			shellHolder = new ShellWrapper(workDirectory);
 			shellHolder.setup();
 			shellHolders.put(clientId, shellHolder);
 		}

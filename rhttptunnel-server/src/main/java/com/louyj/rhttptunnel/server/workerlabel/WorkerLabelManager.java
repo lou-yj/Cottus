@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 @Component
@@ -51,8 +52,8 @@ public class WorkerLabelManager {
 		}
 	}
 
-	public LabelRule findRule(String host, String ip) {
-		HostInfo hostInfo = new HostInfo(host, ip);
+	public LabelRule findRule(ClientInfo clientInfo) {
+		HostInfo hostInfo = new HostInfo(clientInfo.getHost(), clientInfo.getIp());
 		String id = hostInfo.identify();
 		LabelRule rule = (LabelRule) cache.get(id);
 		if (rule != null) {

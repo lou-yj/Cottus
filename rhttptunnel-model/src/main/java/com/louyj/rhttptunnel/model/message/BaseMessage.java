@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.model.message;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.google.gson.Gson;
@@ -17,6 +18,15 @@ public abstract class BaseMessage {
 	private String exchangeId = UUID.randomUUID().toString();
 	private long time = System.currentTimeMillis();
 	private ClientInfo client;
+	private List<ClientInfo> toWorkers;
+
+	public List<ClientInfo> getToWorkers() {
+		return toWorkers;
+	}
+
+	public void setToWorkers(List<ClientInfo> toWorkers) {
+		this.toWorkers = toWorkers;
+	}
 
 	public BaseMessage(ClientInfo client) {
 		super();

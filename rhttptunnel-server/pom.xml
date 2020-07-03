@@ -85,5 +85,15 @@
 			<artifactId>ignite-rest-http</artifactId>
 			<version>${ignite.version}</version>
 		</dependency> -->
+		<dependency>
+			<groupId>org.eclipse.jgit</groupId>
+			<artifactId>org.eclipse.jgit</artifactId>
+			<version>3.5.0.201409260305-r</version>
+		</dependency>
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.23</version>
+		</dependency>
 	</dependencies>
 </project>

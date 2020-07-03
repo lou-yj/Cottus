@@ -1,6 +1,7 @@
 package com.louyj.rhttptunnel.worker.shell;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
@@ -12,6 +13,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -44,9 +46,14 @@ public class ShellWrapper implements Closeable {
 	private ByteArrayOutputStream errBuffer = new ByteArrayOutputStream();
 
 	private int timeout = 60;
+	private String workDirectory;
 
 	public static enum SubmitStatus {
 		SUCCESS, BUSY, NOTALIVE
+	}
+
+	public ShellWrapper(String workDirectory) {
+		this.workDirectory = workDirectory;
 	}
 
 	public static class ShellOutput {
@@ -75,6 +82,12 @@ public class ShellWrapper implements Closeable {
 		shellOut = shell.getInputStream();
 		shellErr = shell.getErrorStream();
 		shellIn = shell.getOutputStream();
+		Pair<SubmitStatus, String> submit = submit(
+				String.format("export _WORKER_WORK_DIRECTORY=\"%s\"", workDirectory));
+		if (submit.getLeft() != SubmitStatus.SUCCESS) {
+			throw new RuntimeException("Shell setup failed " + submit.getLeft());
+		}
+		fetchAllResult(submit.getRight());
 	}
 
 	public boolean isAlive() {
@@ -98,6 +111,22 @@ public class ShellWrapper implements Closeable {
 		shellIn.write(encodeWithNewLine(String.format("echo '%s'", currentCommandId)));
 		shellIn.flush();
 		return Pair.of(SubmitStatus.SUCCESS, currentCommandId);
+	}
+
+	public List<ShellOutput> fetchAllResult(String cmdId) throws InterruptedException, IOException {
+		List<ShellOutput> result = Lists.newArrayList();
+		while (true) {
+			ShellOutput fetchResult = fetchResult(cmdId);
+			if (fetchResult.finished == false && isEmpty(fetchResult.out) && isEmpty(fetchResult.err)) {
+				TimeUnit.MILLISECONDS.sleep(10);
+				continue;
+			}
+			result.add(fetchResult);
+			if (fetchResult.finished) {
+				break;
+			}
+		}
+		return result;
 	}
 
 	public ShellOutput fetchResult(String cmdId) throws IOException {

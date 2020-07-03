@@ -54,7 +54,13 @@ public class FileDataHandler implements IMessageHandler, InitializingBean {
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws IOException {
 		FileDataMessage partFileMessage = (FileDataMessage) message;
-		File file = new File(workDirectory, partFileMessage.getFileName());
+		String targetPath = null;
+		if (partFileMessage.getFileName().startsWith("/")) {
+			targetPath = workDirectory + partFileMessage.getFileName();
+		} else {
+			targetPath = workDirectory + "/" + partFileMessage.getFileName();
+		}
+		File file = new File(targetPath);
 		if (partFileMessage.isStart()) {
 			File parentFile = file.getParentFile();
 			if (parentFile.exists() == false) {

@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class IgniteRegistry {
 
-	@Value("${ignite.data.dir:/data/ignite}")
-	private String igniteDataDir;
+	@Value("${data.dir:/data}")
+	private String dataDir;
 
 	@Value("${ignite.localhost.bind:127.0.0.1}")
 	private String localhostBind;
@@ -21,7 +21,7 @@ public class IgniteRegistry {
 	@Bean
 	public Ignite ignite() {
 		IgniteConfiguration cfg = new IgniteConfiguration();
-		cfg.setWorkDirectory(igniteDataDir);
+		cfg.setWorkDirectory(dataDir + "/ignite");
 		cfg.setClientMode(false);
 		cfg.setPeerClassLoadingEnabled(true);
 		cfg.setLocalHost(localhostBind);
