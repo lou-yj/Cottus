@@ -102,6 +102,7 @@ public class ShellScriptEngineFactory implements ScriptEngineFactory {
 	@Override
 	public ScriptEngine getScriptEngine() {
 		ShellWrapper shell = new ShellWrapper(workDirectory);
+		shell.setTimeout(600);
 		return new ShellScriptEngine(shell, this);
 	}
 

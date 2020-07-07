@@ -50,15 +50,15 @@ public class ShellScriptEngine extends AbstractScriptEngine {
 			}
 			Pair<SubmitStatus, String> submit = shell.submit(script);
 			ShellOutput shellResult = shell.fetchAllResult(submit.getRight());
-			ShellScriptResult result = new ShellScriptResult();
-			result.setStdout(StringUtils.join(shellResult.out, "\n"));
-			result.setStderr(StringUtils.join(shellResult.err, "\n"));
+			if (context.getWriter() != null)
+				context.getWriter().write(StringUtils.join(shellResult.out, "\n"));
+			if (context.getErrorWriter() != null)
+				context.getErrorWriter().write(StringUtils.join(shellResult.err, "\n"));
 			submit = shell.submit("echo $?");
 			shellResult = shell.fetchAllResult(submit.getRight());
 			int exitValue = NumberUtils.toInt(StringUtils.trim(StringUtils.join(shellResult.out, "\n")));
-			result.setExitValue(exitValue);
 			IOUtils.closeQuietly(shell);
-			return result;
+			return exitValue;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

@@ -1,6 +1,5 @@
 package com.louyj.rhttptunnel.worker.shell;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -10,6 +9,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +19,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.sshd.common.util.OsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,8 @@ public class ShellWrapper implements Closeable {
 
 	private int timeout = 60;
 	private String workDirectory;
+	private boolean isWin32 = false;
+	private String encoding;
 
 	public static enum SubmitStatus {
 		SUCCESS, BUSY, NOTALIVE
@@ -71,7 +74,14 @@ public class ShellWrapper implements Closeable {
 	}
 
 	public void setup() throws IOException, InterruptedException {
-		String[] command = new String[] { "/bin/bash" };
+		isWin32 = OsUtils.isWin32();
+		encoding = StringUtils.defaultIfBlank(System.getProperty("sun.jnu.encoding"), "UTF8");
+		String[] command = null;
+		if (isWin32) {
+			command = new String[] { "cmd.exe" };
+		} else {
+			command = new String[] { "/bin/bash" };
+		}
 		Map<String, String> varsMap = Maps.newHashMap();
 		ProcessBuilder builder = new ProcessBuilder(command);
 		if (MapUtils.isNotEmpty(varsMap)) {
@@ -82,15 +92,24 @@ public class ShellWrapper implements Closeable {
 		shellOut = shell.getInputStream();
 		shellErr = shell.getErrorStream();
 		shellIn = shell.getOutputStream();
-		Pair<SubmitStatus, String> submit = submit(
-				String.format("export _WORKER_WORK_DIRECTORY=\"%s\"", workDirectory));
-		fetchAllSlient(submit);
-		submit = submit("function ___echo_with_exit_code___(){ local code=$?; echo \"$*\"; return ${code}; }");
-		fetchAllSlient(submit);
+		if (isWin32) {
+
+		} else {
+			Pair<SubmitStatus, String> submit = submit(
+					String.format("export _WORKER_WORK_DIRECTORY=\"%s\"", workDirectory));
+			fetchAllSlient(submit);
+			submit = submit("function ___echo_with_exit_code___(){ local code=$?; echo \"$*\"; return ${code}; }");
+			fetchAllSlient(submit);
+		}
 	}
 
 	public boolean isAlive() {
-		return shell.isAlive();
+		try {
+			return shell.isAlive();
+		} catch (Exception e) {
+			logger.warn("Check alive failed", e);
+			return false;
+		}
 	}
 
 	public synchronized Pair<SubmitStatus, String> submit(String cmd) throws IOException {
@@ -107,7 +126,11 @@ public class ShellWrapper implements Closeable {
 		currentCommandId = UUID.randomUUID().toString();
 		currentStartTime = System.currentTimeMillis();
 		shellIn.write(encodeWithNewLine(cmd));
-		shellIn.write(encodeWithNewLine(String.format("___echo_with_exit_code___ '%s'", currentCommandId)));
+		if (isWin32) {
+			shellIn.write(encodeWithNewLine(String.format("echo '%s'", currentCommandId)));
+		} else {
+			shellIn.write(encodeWithNewLine(String.format("___echo_with_exit_code___ '%s'", currentCommandId)));
+		}
 		shellIn.flush();
 		return Pair.of(SubmitStatus.SUCCESS, currentCommandId);
 	}
@@ -163,39 +186,69 @@ public class ShellWrapper implements Closeable {
 		ShellOutput shellOutput = new ShellOutput();
 		shellOutput.err = readlines(shellErr, errBuffer);
 		shellOutput.out = readlines(shellOut, outBuffer);
-		if (outBuffer.size() > 0) {
-			String lastLine = encode(outBuffer.toByteArray());
-			if (StringUtils.equals(lastLine, cmdId)) {
-				currentCommandId = null;
-				shellOutput.finished = true;
-				outBuffer.reset();
-				cleanBuffer(shellOutput);
-			} else if (StringUtils.endsWith(lastLine, cmdId)) {
-				shellOutput.out.add(lastLine.substring(0, lastLine.length() - cmdId.length()));
-				currentCommandId = null;
-				shellOutput.finished = true;
-				outBuffer.reset();
-				cleanBuffer(shellOutput);
+		if (isFinished(shellOutput, cmdId)) {
+			cleanBuffer(shellOutput);
+			if (!isWin32) {
+				String lastLine = removeLastLine(shellOutput.out);
+				if (lastLine == null) {
+					throw new RuntimeException("Unexpect null lastline when finished");
+				}
+				lastLine = lastLine.trim();
+				if (lastLine.equals(cmdId)) {
+
+				} else if (lastLine.endsWith(cmdId)) {
+					shellOutput.out.add(lastLine.substring(0, lastLine.length() - cmdId.length()));
+				} else {
+					throw new RuntimeException("Unexpect lastline when finished");
+				}
 			}
-		} else if (CollectionUtils.isNotEmpty(shellOutput.out)) {
-			String lastLine = shellOutput.out.get(shellOutput.out.size() - 1);
-			if (StringUtils.equals(lastLine, cmdId)) {
-				shellOutput.out.remove(shellOutput.out.size() - 1);
-				currentCommandId = null;
-				shellOutput.finished = true;
-				cleanBuffer(shellOutput);
-			} else if (StringUtils.endsWith(lastLine, cmdId)) {
-				shellOutput.out.remove(shellOutput.out.size() - 1);
-				shellOutput.out.add(lastLine.substring(0, lastLine.length() - cmdId.length()));
-				currentCommandId = null;
-				shellOutput.finished = true;
-				cleanBuffer(shellOutput);
-			}
+			currentCommandId = null;
+			shellOutput.finished = true;
 		}
 		return shellOutput;
 	}
 
-	private void cleanBuffer(ShellOutput shellOutput) {
+	private boolean isFinished(ShellOutput shellOutput, String cmdId) throws UnsupportedEncodingException {
+		if (isWin32) {
+			for (int i = 0; i < shellOutput.out.size(); i++) {
+				String line = shellOutput.out.get(i);
+				if (line.contains(cmdId)) {
+					shellOutput.out = shellOutput.out.subList(0, i);
+					return true;
+				}
+			}
+		}
+		String lastLine = null;
+		if (outBuffer.size() > 0) {
+			lastLine = encode(outBuffer.toByteArray());
+		} else {
+			lastLine = lastLine(shellOutput.out);
+		}
+		if (lastLine == null) {
+			return false;
+		}
+		lastLine = lastLine.trim();
+		if (lastLine.equals(cmdId) || lastLine.endsWith(cmdId)) {
+			return true;
+		}
+		return false;
+	}
+
+	private String lastLine(List<String> list) {
+		if (CollectionUtils.isNotEmpty(list)) {
+			return list.get(list.size() - 1);
+		}
+		return null;
+	}
+
+	private String removeLastLine(List<String> list) {
+		if (CollectionUtils.isNotEmpty(list)) {
+			return list.remove(list.size() - 1);
+		}
+		return null;
+	}
+
+	private void cleanBuffer(ShellOutput shellOutput) throws UnsupportedEncodingException {
 		if (outBuffer.size() > 0) {
 			shellOutput.out.add(encode(outBuffer.toByteArray()));
 			outBuffer.reset();
@@ -215,12 +268,12 @@ public class ShellWrapper implements Closeable {
 		}
 	}
 
-	private byte[] encodeWithNewLine(String cnt) {
-		return (cnt + "\n").getBytes(UTF_8);
+	private byte[] encodeWithNewLine(String cnt) throws UnsupportedEncodingException {
+		return (cnt + "\n").getBytes(encoding);
 	}
 
-	private String encode(byte[] cnt) {
-		return new String(cnt, UTF_8);
+	private String encode(byte[] cnt) throws UnsupportedEncodingException {
+		return new String(cnt, encoding);
 	}
 
 	private List<String> readlines(InputStream in, ByteArrayOutputStream baos) throws IOException {
