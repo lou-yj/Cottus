@@ -19,22 +19,12 @@ public class RepoConfig {
 
 	private String ruleDirectory = "rules";
 
-	private String scriptDirectory = "scripts";
-
 	public String getRuleDirectory() {
 		return ruleDirectory;
 	}
 
 	public void setRuleDirectory(String ruleDirectory) {
 		this.ruleDirectory = ruleDirectory;
-	}
-
-	public String getScriptDirectory() {
-		return scriptDirectory;
-	}
-
-	public void setScriptDirectory(String scriptDirectory) {
-		this.scriptDirectory = scriptDirectory;
 	}
 
 	public String getUrl() {

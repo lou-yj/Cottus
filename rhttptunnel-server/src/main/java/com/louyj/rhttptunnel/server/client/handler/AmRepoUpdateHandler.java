@@ -133,8 +133,7 @@ public class AmRepoUpdateHandler implements IClientMessageHandler {
 					return RejectMessage.creason(message.getClient(), exchangeId, String
 							.format("Bad format for sample %s in file %s", sampler.getName(), ruleFile.getName()));
 				}
-				File scriptFile = new File(repoCommitIdPath + "/" + repoConfig.getScriptDirectory(),
-						sampler.getScript());
+				File scriptFile = new File(repoCommitIdPath, sampler.getScript());
 				if (scriptFile.exists() == false) {
 					return RejectMessage.creason(message.getClient(), exchangeId, String.format(
 							"Script file not exists for sample %s in file %s", sampler.getName(), ruleFile.getName()));
@@ -155,8 +154,7 @@ public class AmRepoUpdateHandler implements IClientMessageHandler {
 					return RejectMessage.creason(message.getClient(), exchangeId, String
 							.format("Bad format for handler %s in file %s", handler.getRuleName(), ruleFile.getName()));
 				}
-				File scriptFile = new File(repoCommitIdPath + "/" + repoConfig.getScriptDirectory(),
-						handler.getScript());
+				File scriptFile = new File(repoCommitIdPath, handler.getScript());
 				if (scriptFile.exists() == false) {
 					return RejectMessage.creason(message.getClient(), exchangeId,
 							String.format("Script file not exists for handler %s in file %s", handler.getRuleName(),

@@ -84,10 +84,9 @@ public class ShellWrapper implements Closeable {
 		shellIn = shell.getOutputStream();
 		Pair<SubmitStatus, String> submit = submit(
 				String.format("export _WORKER_WORK_DIRECTORY=\"%s\"", workDirectory));
-		if (submit.getLeft() != SubmitStatus.SUCCESS) {
-			throw new RuntimeException("Shell setup failed " + submit.getLeft());
-		}
-		fetchAllResult(submit.getRight());
+		fetchAllSlient(submit);
+		submit = submit("function ___echo_with_exit_code___(){ local code=$?; echo \"$*\"; return ${code}; }");
+		fetchAllSlient(submit);
 	}
 
 	public boolean isAlive() {
@@ -108,20 +107,22 @@ public class ShellWrapper implements Closeable {
 		currentCommandId = UUID.randomUUID().toString();
 		currentStartTime = System.currentTimeMillis();
 		shellIn.write(encodeWithNewLine(cmd));
-		shellIn.write(encodeWithNewLine(String.format("echo '%s'", currentCommandId)));
+		shellIn.write(encodeWithNewLine(String.format("___echo_with_exit_code___ '%s'", currentCommandId)));
 		shellIn.flush();
 		return Pair.of(SubmitStatus.SUCCESS, currentCommandId);
 	}
 
-	public List<ShellOutput> fetchAllResult(String cmdId) throws InterruptedException, IOException {
-		List<ShellOutput> result = Lists.newArrayList();
+	public ShellOutput fetchAllResult(String cmdId) throws InterruptedException, IOException {
+		ShellOutput result = new ShellOutput();
 		while (true) {
 			ShellOutput fetchResult = fetchResult(cmdId);
 			if (fetchResult.finished == false && isEmpty(fetchResult.out) && isEmpty(fetchResult.err)) {
 				TimeUnit.MILLISECONDS.sleep(10);
 				continue;
 			}
-			result.add(fetchResult);
+			result.finished = fetchResult.finished;
+			result.out.addAll(fetchResult.out);
+			result.err.addAll(fetchResult.err);
 			if (fetchResult.finished) {
 				break;
 			}
@@ -249,6 +250,13 @@ public class ShellWrapper implements Closeable {
 			out.close();
 		}
 		return false;
+	}
+
+	private void fetchAllSlient(Pair<SubmitStatus, String> submit) throws InterruptedException, IOException {
+		if (submit.getLeft() != SubmitStatus.SUCCESS) {
+			throw new RuntimeException("Shell submit failed " + submit.getLeft());
+		}
+		fetchAllResult(submit.getRight());
 	}
 
 }
