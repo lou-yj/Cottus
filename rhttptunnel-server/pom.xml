@@ -95,5 +95,10 @@
 			<artifactId>snakeyaml</artifactId>
 			<version>1.23</version>
 		</dependency>
+		<dependency>
+			<groupId>com.espertech</groupId>
+			<artifactId>esper</artifactId>
+			<version>7.1.0</version>
+		</dependency>
 	</dependencies>
 </project>

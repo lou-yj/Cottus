@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<esper-configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xmlns="http://www.espertech.com/schema/esper"
+                     xsi:schemaLocation="
+http://www.espertech.com/schema/esper
+http://www.espertech.com/schema/esper/esper-configuration-7-0.xsd">
+
+   <event-type-auto-name
+		package-name="com.mingjue.stream.data" />
+
+	<auto-import
+		import-name="com.mingjue.stream.cep.esper.func.*" />
+	<auto-import import-name="org.apache.commons.lang3.*" />
+	<auto-import import-name="org.apache.commons.lang3.math.*" />
+	
+	
+   <!-- database settings -->
+	<database-reference name="uatSrvdirectory">
+		<drivermanager-connection
+			class-name="org.postgresql.Driver"
+			url="jdbc:postgresql://app-uat-01:21769/srv_directory" user="pgdata"
+			password="Mingjueinfo2015_db">
+		</drivermanager-connection>
+		<connection-settings auto-commit="true"
+			read-only="true" />
+		<connection-lifecycle value="pooled" />
+		<expiry-time-cache max-age-seconds="600"
+			purge-interval-seconds="1200" />
+	</database-reference>
+	<database-reference name="uatPgdata">
+		<drivermanager-connection
+			class-name="org.postgresql.Driver"
+			url="jdbc:postgresql://app-uat-01:21769/pgdata" user="pgdata"
+			password="Mingjueinfo2015_db">
+		</drivermanager-connection>
+		<connection-settings auto-commit="true"
+			read-only="true" />
+		<connection-lifecycle value="pooled" />
+		<expiry-time-cache max-age-seconds="600"
+			purge-interval-seconds="1200" />
+	</database-reference>
+	<database-reference name="prodPgdata">
+		<drivermanager-connection
+			class-name="org.postgresql.Driver"
+			url="jdbc:postgresql://172.30.1.63:21769/pgdata" user="pgdata"
+			password="Mingjueinfo2015_db">
+		</drivermanager-connection>
+		<connection-settings auto-commit="true"
+			read-only="true" />
+		<connection-lifecycle value="pooled" />
+		<expiry-time-cache max-age-seconds="600"
+			purge-interval-seconds="1200" />
+	</database-reference>
+	<database-reference name="report">
+		<drivermanager-connection
+			class-name="org.postgresql.Driver"
+			url="jdbc:postgresql://172.17.36.130:21769/reportdb" user="gpadmin"
+			password="Mingjueinfo2016_greenplum">
+		</drivermanager-connection>
+		<connection-settings auto-commit="true"
+			read-only="true" />
+		<connection-lifecycle value="pooled" />
+		<expiry-time-cache max-age-seconds="600"
+			purge-interval-seconds="1200" />
+	</database-reference>
+
+	<!-- engine settings -->
+	<engine-settings>
+		<defaults>
+			<event-meta>
+				<event-representation type="objectarray" />
+				<avro-settings enable-avro="false"
+					enable-native-string="false" enable-schema-default-nonnull="false"
+					objectvalue-typewidener-factory-class=""
+					type-representation-mapper-class="" />
+			</event-meta>
+		</defaults>
+		<logging>
+			<execution-path enabled="true" />
+			<timer-debug enabled="false" />
+			<query-plan enabled="true" />
+			<jdbc enabled="true" />
+		</logging>
+	</engine-settings>
+
+</esper-configuration>
