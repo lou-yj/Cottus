@@ -46,17 +46,22 @@ public class ScriptEngineExecutor {
 		engineManager.registerEngineName("shell", shell);
 	}
 
-	public EvalResult eval(String language, String script, Map<String, Object> env) throws ScriptException {
+	public EvalResult eval(String language, String script, Map<String, Object> env, boolean collectStdLog)
+			throws ScriptException {
 		ScriptEngine scriptEngine = engineManager.getEngineByName(language);
 		if (scriptEngine == null) {
 			throw new RuntimeException("No such language " + language);
 		}
 		ScriptContext context = new SimpleScriptContext();
 		Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
-		StringWriter writer = new StringWriter();
-		StringWriter errwriter = new StringWriter();
-		context.setWriter(writer);
-		context.setErrorWriter(errwriter);
+		StringWriter writer = null;
+		StringWriter errwriter = null;
+		if (collectStdLog) {
+			writer = new StringWriter();
+			errwriter = new StringWriter();
+			context.setWriter(writer);
+			context.setErrorWriter(errwriter);
+		}
 		if (env != null) {
 			bindings.putAll(env);
 		}
