@@ -9,9 +9,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.python.apache.commons.compress.utils.Lists;
 
 import com.google.common.collect.Maps;
-import com.louyj.rhttptunnel.model.message.TaskMetricsMessage;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage.MetricsType;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsType;
 import com.louyj.rhttptunnel.worker.ClientDetector;
 
 /**
@@ -38,7 +38,7 @@ public interface IMetricsParser {
 		List<TaskMetricsMessage> result = Lists.newArrayList();
 		for (String line : metrics.split("\n")) {
 			TaskMetricsMessage metricsMessage = new TaskMetricsMessage(ClientDetector.CLIENT,
-					taskMessage.getExchangeId());
+					taskMessage.getExchangeId(), taskMessage.getServerMsgId());
 			metricsMessage.setSre(sreTags);
 			try {
 				doParse(metricsMessage, line);

@@ -22,8 +22,11 @@ import org.yaml.snakeyaml.Yaml;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import com.louyj.rhttptunnel.model.bean.RepoConfig;
-import com.louyj.rhttptunnel.model.bean.Sampler;
+import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
+import com.louyj.rhttptunnel.model.bean.automate.AutomateRule;
+import com.louyj.rhttptunnel.model.bean.automate.Executor;
+import com.louyj.rhttptunnel.model.bean.automate.Handler;
+import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
@@ -35,9 +38,6 @@ import com.louyj.rhttptunnel.model.util.CompressUtils;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.SystemClient;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
-import com.louyj.rhttptunnel.server.automation.AutomateRule;
-import com.louyj.rhttptunnel.server.automation.AutomateRule.Handler;
-import com.louyj.rhttptunnel.server.automation.AutomateRule.Rule;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -121,51 +121,67 @@ public class AmRepoUpdateHandler implements IClientMessageHandler {
 		Collection<File> ruleFiles = FileUtils.listFiles(ruleDir, new String[] { "yaml" }, true);
 		Yaml yaml = new Yaml();
 		ObjectMapper jackson = JsonUtils.jackson();
-		List<Sampler> samplers = Lists.newArrayList();
-		List<Rule> rules = Lists.newArrayList();
+		List<Executor> executors = Lists.newArrayList();
+		List<Alarmer> alarmers = Lists.newArrayList();
 		List<Handler> handlers = Lists.newArrayList();
 		for (File ruleFile : ruleFiles) {
 			Object load = yaml.load(new FileInputStream(ruleFile));
 			AutomateRule automateRule = jackson.convertValue(load, AutomateRule.class);
-			if (automateRule.getSampler() != null) {
-				Sampler sampler = automateRule.getSampler();
-				if (StringUtils.isAnyBlank(sampler.getName(), sampler.getSchedule(), sampler.getScript())) {
+			if (automateRule.getExecutor() != null) {
+				Executor executor = automateRule.getExecutor();
+				if (StringUtils.isAnyBlank(executor.getName(), executor.getScheduleExpression(),
+						executor.getScript())) {
 					return RejectMessage.creason(message.getClient(), exchangeId, String
-							.format("Bad format for sample %s in file %s", sampler.getName(), ruleFile.getName()));
+							.format("Bad format for executor %s in file %s", executor.getName(), ruleFile.getName()));
 				}
-				File scriptFile = new File(repoCommitIdPath, sampler.getScript());
-				if (scriptFile.exists() == false) {
-					return RejectMessage.creason(message.getClient(), exchangeId, String.format(
-							"Script file not exists for sample %s in file %s", sampler.getName(), ruleFile.getName()));
+				if (StringUtils.isNotBlank(executor.getScriptFile())) {
+					File scriptFile = new File(repoCommitIdPath, executor.getScriptFile());
+					if (scriptFile.exists() == false) {
+						return RejectMessage.creason(message.getClient(), exchangeId,
+								String.format("Script file not exists for executor %s in file %s", executor.getName(),
+										ruleFile.getName()));
+					}
 				}
-				samplers.add(sampler);
+				if (StringUtils.isAllBlank(executor.getScript(), executor.getScriptFile())) {
+					return RejectMessage.creason(message.getClient(), exchangeId,
+							String.format("ScriptFile and script are all blank for executor %s in file %s",
+									executor.getName(), ruleFile.getName()));
+				}
+				executors.add(executor);
 			}
-			if (automateRule.getRule() != null) {
-				Rule rule = automateRule.getRule();
+			if (automateRule.getAlarmer() != null) {
+				Alarmer rule = automateRule.getAlarmer();
 				if (StringUtils.isAnyBlank(rule.getName(), rule.getExpression())) {
 					return RejectMessage.creason(message.getClient(), exchangeId,
-							String.format("Bad format for rule %s in file %s", rule.getName(), ruleFile.getName()));
+							String.format("Bad format for alarmer %s in file %s", rule.getName(), ruleFile.getName()));
 				}
-				rules.add(automateRule.getRule());
+				alarmers.add(automateRule.getAlarmer());
 			}
 			if (automateRule.getHandler() != null) {
 				Handler handler = automateRule.getHandler();
-				if (StringUtils.isAnyBlank(handler.getRuleName(), handler.getScript())) {
-					return RejectMessage.creason(message.getClient(), exchangeId, String
-							.format("Bad format for handler %s in file %s", handler.getRuleName(), ruleFile.getName()));
+				if (StringUtils.isAnyBlank(handler.getAlarmName(), handler.getScript())) {
+					return RejectMessage.creason(message.getClient(), exchangeId, String.format(
+							"Bad format for handler %s in file %s", handler.getAlarmName(), ruleFile.getName()));
 				}
-				File scriptFile = new File(repoCommitIdPath, handler.getScript());
-				if (scriptFile.exists() == false) {
+				if (StringUtils.isNotBlank(handler.getScriptFile())) {
+					File scriptFile = new File(repoCommitIdPath, handler.getScriptFile());
+					if (scriptFile.exists() == false) {
+						return RejectMessage.creason(message.getClient(), exchangeId,
+								String.format("Script file not exists for handler %s in file %s",
+										handler.getAlarmName(), ruleFile.getName()));
+					}
+				}
+				if (StringUtils.isAllBlank(handler.getScript(), handler.getScriptFile())) {
 					return RejectMessage.creason(message.getClient(), exchangeId,
-							String.format("Script file not exists for handler %s in file %s", handler.getRuleName(),
-									ruleFile.getName()));
+							String.format("ScriptFile and script are all blank for handler %s in file %s",
+									handler.getAlarmName(), ruleFile.getName()));
 				}
 				handlers.add(automateRule.getHandler());
 			}
 		}
-		sendClientMessage(clientSession, exchangeId,
-				String.format("Parsed %d samplers %d rule %d handler", samplers.size(), rules.size(), handlers.size()));
-		automateManager.updateRules(samplers, rules, handlers);
+		sendClientMessage(clientSession, exchangeId, String.format("Parsed %d samplers %d rule %d handler",
+				executors.size(), alarmers.size(), handlers.size()));
+		automateManager.updateRules(executors, alarmers, handlers);
 		automateManager.updateScheduler();
 		sendClientMessage(clientSession, exchangeId, "Scheduler updated");
 		return AckMessage.sack(exchangeId);

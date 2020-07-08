@@ -8,8 +8,8 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 
 import com.google.common.base.Charsets;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage.MetricsCollectType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsCollectType;
 import com.louyj.rhttptunnel.worker.script.EvalResult;
 
 /**

@@ -26,12 +26,12 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.TaskLogMessage;
-import com.louyj.rhttptunnel.model.message.TaskMetricsMessage;
-import com.louyj.rhttptunnel.model.message.TaskMetricsMessage.ExecuteStatus;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage.MetricsCollectType;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage.MetricsType;
+import com.louyj.rhttptunnel.model.message.server.TaskLogMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsCollectType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsType;
 import com.louyj.rhttptunnel.worker.ClientDetector;
 import com.louyj.rhttptunnel.worker.script.EvalResult;
 import com.louyj.rhttptunnel.worker.script.ScriptEngineExecutor;
@@ -84,13 +84,13 @@ public class ScriptTaskHandler implements IMessageHandler, ApplicationContextAwa
 
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
+		TaskScheduleMessage taskMessage = (TaskScheduleMessage) message;
 		try {
-			TaskScheduleMessage taskMessage = (TaskScheduleMessage) message;
 			File repoDir = new File(workDirectory, "repository");
 			File commitDir = new File(repoDir, taskMessage.getCommitId());
 			if (commitDir.exists() == false) {
 				TaskMetricsMessage taskMetricsMessage = new TaskMetricsMessage(ClientDetector.CLIENT,
-						message.getExchangeId());
+						message.getExchangeId(), taskMessage.getServerMsgId());
 				taskMetricsMessage.setStatus(ExecuteStatus.REPO_NEED_UPDATE);
 				taskMetricsMessage.setErrorMessage("Repository need update");
 				return Arrays.asList(taskMetricsMessage);
@@ -134,7 +134,8 @@ public class ScriptTaskHandler implements IMessageHandler, ApplicationContextAwa
 			}
 			List<BaseMessage> messages = Lists.newArrayList();
 			if (taskMessage.isCollectStdLog()) {
-				TaskLogMessage taskLogMessage = new TaskLogMessage(ClientDetector.CLIENT, message.getExchangeId());
+				TaskLogMessage taskLogMessage = new TaskLogMessage(ClientDetector.CLIENT, message.getExchangeId(),
+						taskMessage.getServerMsgId());
 				if (evalResult.getStdout() != null) {
 					taskLogMessage.setOut(evalResult.getStdout().toString());
 				}
@@ -148,7 +149,7 @@ public class ScriptTaskHandler implements IMessageHandler, ApplicationContextAwa
 			return messages;
 		} catch (Exception e) {
 			TaskMetricsMessage taskMetricsMessage = new TaskMetricsMessage(ClientDetector.CLIENT,
-					message.getExchangeId());
+					message.getExchangeId(), taskMessage.getServerMsgId());
 			taskMetricsMessage.setStatus(ExecuteStatus.FAILED);
 			taskMetricsMessage
 					.setErrorMessage(String.format("Exception %s reason %s", e.getClass().getName(), e.getMessage()));

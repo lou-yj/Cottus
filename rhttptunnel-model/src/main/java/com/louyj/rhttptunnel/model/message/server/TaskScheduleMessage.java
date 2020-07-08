@@ -1,9 +1,10 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.server;
 
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
-public class TaskScheduleMessage extends BaseMessage {
+public class TaskScheduleMessage extends ServerMessage {
 
 	public static enum ScriptContentType {
 		TEXT, FILE
@@ -44,7 +45,7 @@ public class TaskScheduleMessage extends BaseMessage {
 
 	private MetricsType metricsType = MetricsType.STANDARD;
 
-	private int timeout = 600;
+	private long timeout = 600;
 
 	private boolean collectStdLog = true;
 
@@ -53,9 +54,8 @@ public class TaskScheduleMessage extends BaseMessage {
 		super(client);
 	}
 
-	public TaskScheduleMessage(ClientInfo client, String exchangeId) {
-		super(client);
-		setExchangeId(exchangeId);
+	public TaskScheduleMessage(ClientInfo client, String exchangeId, String serverMsgId) {
+		super(client, exchangeId, serverMsgId);
 	}
 
 	public String getName() {
@@ -138,11 +138,11 @@ public class TaskScheduleMessage extends BaseMessage {
 		this.metricsType = metricsType;
 	}
 
-	public int getTimeout() {
+	public long getTimeout() {
 		return timeout;
 	}
 
-	public void setTimeout(int timeout) {
+	public void setTimeout(long timeout) {
 		this.timeout = timeout;
 	}
 

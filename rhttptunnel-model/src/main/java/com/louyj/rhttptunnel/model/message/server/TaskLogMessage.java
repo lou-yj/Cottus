@@ -1,7 +1,8 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.server;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *
@@ -10,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
-public class TaskLogMessage extends BaseMessage {
+public class TaskLogMessage extends ServerMessage {
 
 	private String out;
 	private String err;
@@ -20,9 +21,8 @@ public class TaskLogMessage extends BaseMessage {
 		super(client);
 	}
 
-	public TaskLogMessage(ClientInfo client, String exchangeId) {
-		super(client);
-		setExchangeId(exchangeId);
+	public TaskLogMessage(ClientInfo client, String exchangeId, String serverMsgId) {
+		super(client, exchangeId, serverMsgId);
 	}
 
 	public String getOut() {

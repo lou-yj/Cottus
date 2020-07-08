@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -18,21 +19,25 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.louyj.rhttptunnel.model.bean.RepoConfig;
-import com.louyj.rhttptunnel.model.bean.Sampler;
+import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
+import com.louyj.rhttptunnel.model.bean.automate.Executor;
+import com.louyj.rhttptunnel.model.bean.automate.Handler;
+import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
-import com.louyj.rhttptunnel.model.message.server.SamplerJobAckMessage;
-import com.louyj.rhttptunnel.model.message.server.SamplerJobMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskLogMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.ScriptContentType;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.SystemClient;
 import com.louyj.rhttptunnel.server.SystemClient.SystemClientListener;
-import com.louyj.rhttptunnel.server.automation.AutomateRule.Handler;
-import com.louyj.rhttptunnel.server.automation.AutomateRule.Rule;
-import com.louyj.rhttptunnel.server.automation.SamplerLog.JobStatus;
 import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
 import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
+import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
 
 /**
  *
@@ -47,8 +52,8 @@ public class AutomateManager implements SystemClientListener {
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	private static final String CONFIG_REPO = "config:repo";
-	private static final String AUTOMATE_SAMPLE = "automate:sample";
-	private static final String AUTOMATE_RULE = "automate:rule";
+	private static final String AUTOMATE_EXECUTOR = "automate:executor";
+	private static final String AUTOMATE_ALARMER = "automate:alarmer";
 	private static final String AUTOMATE_HANDLER = "automate:handler";
 
 	@Value("${data.dir:/data}")
@@ -59,14 +64,16 @@ public class AutomateManager implements SystemClientListener {
 	private SystemClient systemClient;
 	@Autowired
 	private WorkerSessionManager workerSessionManager;
+	@Autowired
+	private WorkerLabelManager workerLabelManager;
 
 	private RepoConfig repoConfig;
 	private IgniteCache<Object, Object> configCache;
 	private IgniteCache<Object, Object> logCache;
 
 	private String repoCommitId;
-	private List<Sampler> samplers = Lists.newArrayList();
-	private List<Rule> rules = Lists.newArrayList();
+	private List<Executor> executors = Lists.newArrayList();
+	private List<Alarmer> alarmers = Lists.newArrayList();
 	private List<Handler> handlers = Lists.newArrayList();
 	private ThreadPoolTaskScheduler taskScheduler;
 
@@ -79,8 +86,8 @@ public class AutomateManager implements SystemClientListener {
 		logCache = ignite.getOrCreateCache(
 				new CacheConfiguration<>().setName("automateLog").setIndexedTypes(String.class, LabelRule.class));
 		this.repoConfig = (RepoConfig) configCache.get(CONFIG_REPO);
-		this.samplers = (List<Sampler>) configCache.get(AUTOMATE_SAMPLE);
-		this.rules = (List<Rule>) configCache.get(AUTOMATE_RULE);
+		this.executors = (List<Executor>) configCache.get(AUTOMATE_EXECUTOR);
+		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
 		this.handlers = (List<Handler>) configCache.get(AUTOMATE_HANDLER);
 	}
 
@@ -89,30 +96,54 @@ public class AutomateManager implements SystemClientListener {
 		configCache.put(CONFIG_REPO, repoConfig);
 	}
 
-	public void updateRules(List<Sampler> samplers, List<Rule> rules, List<Handler> handlers) {
-		this.samplers = samplers;
-		this.rules = rules;
+	public void updateRules(List<Executor> samplers, List<Alarmer> rules, List<Handler> handlers) {
+		this.executors = samplers;
+		this.alarmers = rules;
 		this.handlers = handlers;
-		configCache.put(AUTOMATE_SAMPLE, samplers);
-		configCache.put(AUTOMATE_RULE, rules);
+		configCache.put(AUTOMATE_EXECUTOR, samplers);
+		configCache.put(AUTOMATE_ALARMER, rules);
 		configCache.put(AUTOMATE_HANDLER, handlers);
 	}
 
-	public void scheduleSample(Sampler sampler) {
-		List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(sampler.getTargets(), Sets.newHashSet());
+	public void scheduleExecutorTask(Executor executor) {
+		List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(executor.getTargets(), Sets.newHashSet());
 		List<String> workerText = Lists.newArrayList();
 		toWorkers.forEach(e -> workerText.add(e.getHost()));
-		logger.info("Start schedule sampler task {}, matched workers {}", sampler.getName(), workerText);
-		SamplerJobMessage jobMessage = new SamplerJobMessage(systemClient.session().getClientInfo());
-		systemClient.exchange(jobMessage, toWorkers);
+		logger.info("Start schedule executor task {}, matched workers {}", executor.getName(), workerText);
+		TaskScheduleMessage taskMessage = new TaskScheduleMessage(systemClient.session().getClientInfo());
+		taskMessage.setName(executor.getName());
+		taskMessage.setCommitId(repoCommitId);
+		taskMessage.setLanguage(executor.getLanguage());
+		taskMessage.setParams(executor.getParams());
+		taskMessage.setMetricsCollectType(executor.getMetricsCollectType());
+		taskMessage.setMetricsType(executor.getMetricsType());
+		taskMessage.setTimeout(executor.getTimeout());
+		taskMessage.setCollectStdLog(executor.isCollectStdLog());
+		if (StringUtils.isNotBlank(executor.getScript())) {
+			taskMessage.setScript(executor.getScript());
+			taskMessage.setScriptContentType(ScriptContentType.TEXT);
+		}
+		if (StringUtils.isNotBlank(executor.getScriptFile())) {
+			taskMessage.setScript(executor.getScriptFile());
+			taskMessage.setScriptContentType(ScriptContentType.FILE);
+		}
+		for (ClientInfo toWorker : toWorkers) {
+			LabelRule labelRule = workerLabelManager.findRule(toWorker);
+			if (labelRule != null) {
+				taskMessage.setLabels(labelRule.getLabels());
+			} else {
+				taskMessage.setLabels(Maps.newHashMap());
+			}
+			systemClient.exchange(taskMessage, Arrays.asList(toWorker));
+		}
 	}
 
 	public void updateScheduler() {
 		ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
-		for (Sampler sampler : samplers) {
-			String schedule = sampler.getSchedule();
-			SamplerScheduleTask task = new SamplerScheduleTask(sampler, this);
+		for (Executor executor : executors) {
+			String schedule = executor.getScheduleExpression();
+			SamplerScheduleTask task = new SamplerScheduleTask(executor, this);
 			taskScheduler.schedule(task, new CronTrigger(schedule));
 		}
 		this.taskScheduler = taskScheduler;
@@ -144,47 +175,59 @@ public class AutomateManager implements SystemClientListener {
 
 	@Override
 	public List<Class<? extends BaseMessage>> listenSendMessages() {
-		return Arrays.asList(SamplerJobMessage.class);
+		return Arrays.asList(TaskScheduleMessage.class);
 	}
 
 	@Override
 	public List<Class<? extends BaseMessage>> listenReceiveMessages() {
-		return Arrays.asList(SamplerJobAckMessage.class);
+		return Arrays.asList(TaskMetricsMessage.class, TaskLogMessage.class);
 	}
 
 	@Override
 	public void onSendMessage(BaseMessage message, List<ClientInfo> toWorkers) {
-		if (message instanceof SamplerJobMessage) {
-			SamplerJobMessage jobMessage = (SamplerJobMessage) message;
+		if (message instanceof TaskScheduleMessage) {
+			TaskScheduleMessage jobMessage = (TaskScheduleMessage) message;
 			long millis = DateTime.now().getMillis();
 			String serverMsgId = jobMessage.getServerMsgId();
 			for (ClientInfo toWorker : toWorkers) {
-				SamplerLog samplerLog = new SamplerLog();
-				samplerLog.setName(jobMessage.getSampler().getName());
-				samplerLog.setTime(millis);
-				samplerLog.setHost(toWorker.getHost());
-				samplerLog.setIp(toWorker.getIp());
-				samplerLog.setStatus(JobStatus.SCHEDULED);
+				ExecutorAudit samplerAudit = new ExecutorAudit();
+				samplerAudit.setName(jobMessage.getName());
+				samplerAudit.setTime(millis);
+				samplerAudit.setHost(toWorker.getHost());
+				samplerAudit.setIp(toWorker.getIp());
+				samplerAudit.setStatus(ExecuteStatus.SCHEDULED);
 				String key = serverMsgId + ":" + toWorker.getHost() + ":" + toWorker.getIp();
-				logCache.put(key, samplerLog);
+				logCache.put(key, samplerAudit);
 			}
 		}
 	}
 
 	@Override
 	public void onReceiveMessage(BaseMessage message) {
-		if (message instanceof SamplerJobAckMessage) {
-			SamplerJobAckMessage ackMessage = (SamplerJobAckMessage) message;
-			ClientInfo toWorker = ackMessage.getClient();
-			String key = ackMessage.getServerMsgId() + ":" + toWorker.getHost() + ":" + toWorker.getIp();
-			SamplerLog samplerLog = (SamplerLog) logCache.get(key);
-			if (samplerLog == null) {
-				logger.warn("Sample log is null for {}", JsonUtils.gson().toJson(message));
+		if (message instanceof TaskMetricsMessage) {
+			TaskMetricsMessage metricsMessage = (TaskMetricsMessage) message;
+			ClientInfo toWorker = metricsMessage.getClient();
+			String key = metricsMessage.getServerMsgId() + ":" + toWorker.getHost() + ":" + toWorker.getIp();
+			ExecutorAudit samplerAudit = (ExecutorAudit) logCache.get(key);
+			if (samplerAudit == null) {
+				logger.warn("Executor audit is null for {}", JsonUtils.gson().toJson(message));
 				return;
 			}
-			samplerLog.setStatus(JobStatus.FINISHED);
-			samplerLog.setMessage(ackMessage.getMessage());
-			logCache.put(key, samplerLog);
+			samplerAudit.setStatus(metricsMessage.getStatus());
+			samplerAudit.getMetrics().add(metricsMessage.format());
+			logCache.put(key, samplerAudit);
+		} else if (message instanceof TaskLogMessage) {
+			TaskLogMessage logMessage = (TaskLogMessage) message;
+			ClientInfo toWorker = logMessage.getClient();
+			String key = logMessage.getServerMsgId() + ":" + toWorker.getHost() + ":" + toWorker.getIp();
+			ExecutorAudit samplerAudit = (ExecutorAudit) logCache.get(key);
+			if (samplerAudit == null) {
+				logger.warn("Executor audit is null for {}", JsonUtils.gson().toJson(message));
+				return;
+			}
+			samplerAudit.setStdout(logMessage.getOut());
+			samplerAudit.setStderr(logMessage.getErr());
+			logCache.put(key, samplerAudit);
 		}
 	}
 

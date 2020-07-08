@@ -4,8 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
-import com.louyj.rhttptunnel.model.message.TaskMetricsMessage;
-import com.louyj.rhttptunnel.model.message.TaskScheduleMessage.MetricsType;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsType;
 
 /**
  * 

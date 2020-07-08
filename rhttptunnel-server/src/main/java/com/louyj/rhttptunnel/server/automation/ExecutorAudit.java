@@ -1,5 +1,10 @@
 package com.louyj.rhttptunnel.server.automation;
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
+
 /**
  *
  * Create at 2020年7月3日
@@ -7,11 +12,7 @@ package com.louyj.rhttptunnel.server.automation;
  * @author Louyj
  *
  */
-public class SamplerLog {
-
-	public static enum JobStatus {
-		SCHEDULED, FINISHED
-	}
+public class ExecutorAudit {
 
 	private String name;
 
@@ -21,18 +22,38 @@ public class SamplerLog {
 
 	private String ip;
 
-	private JobStatus status;
+	private ExecuteStatus status;
 
-	private String message;
+	private List<String> metrics = Lists.newArrayList();
+
+	private String stdout;
+
+	private String stderr;
 
 	private long duration;
 
-	public String getMessage() {
-		return message;
+	public List<String> getMetrics() {
+		return metrics;
 	}
 
-	public void setMessage(String message) {
-		this.message = message;
+	public void setMetrics(List<String> metrics) {
+		this.metrics = metrics;
+	}
+
+	public String getStdout() {
+		return stdout;
+	}
+
+	public void setStdout(String stdout) {
+		this.stdout = stdout;
+	}
+
+	public String getStderr() {
+		return stderr;
+	}
+
+	public void setStderr(String stderr) {
+		this.stderr = stderr;
 	}
 
 	public String getName() {
@@ -67,11 +88,11 @@ public class SamplerLog {
 		this.ip = ip;
 	}
 
-	public JobStatus getStatus() {
+	public ExecuteStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(JobStatus status) {
+	public void setStatus(ExecuteStatus status) {
 		this.status = status;
 	}
 

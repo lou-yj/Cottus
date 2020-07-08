@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.model.bean;
+package com.louyj.rhttptunnel.model.bean.automate;
 
 /**
  *

@@ -1,10 +1,16 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.server;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *
@@ -13,10 +19,10 @@ import com.google.common.collect.Maps;
  * @author Louyj
  *
  */
-public class TaskMetricsMessage extends BaseMessage {
+public class TaskMetricsMessage extends ServerMessage {
 
 	public static enum ExecuteStatus {
-		SUCCESS, FAILED, REPO_NEED_UPDATE
+		SCHEDULED, SUCCESS, FAILED, REPO_NEED_UPDATE
 	}
 
 	private String name;
@@ -39,9 +45,8 @@ public class TaskMetricsMessage extends BaseMessage {
 		super(client);
 	}
 
-	public TaskMetricsMessage(ClientInfo client, String exchangeId) {
-		super(client);
-		setExchangeId(exchangeId);
+	public TaskMetricsMessage(ClientInfo client, String exchangeId, String serverMsgId) {
+		super(client, exchangeId, serverMsgId);
 	}
 
 	public Map<String, Object> getSre() {
@@ -98,6 +103,34 @@ public class TaskMetricsMessage extends BaseMessage {
 
 	public void setErrorMessage(String errorMessage) {
 		this.errorMessage = errorMessage;
+	}
+
+	public String format() {
+		if (ExecuteStatus.SUCCESS.equals(status)) {
+			String tagStr = null;
+			String fieldStr = null;
+			{
+				List<String> items = Lists.newArrayList();
+				for (Entry<String, Object> entry : tags.entrySet()) {
+					items.add(entry.getKey() + "=" + entry.getValue());
+				}
+				tagStr = StringUtils.join(items, ",");
+			}
+			{
+				List<String> items = Lists.newArrayList();
+				for (Entry<String, Object> entry : fields.entrySet()) {
+					items.add(entry.getKey() + "=" + entry.getValue());
+				}
+				fieldStr = StringUtils.join(items, ",");
+			}
+			if (StringUtils.isNotBlank(tagStr)) {
+				return String.format("%s,%s %s %d", name, tagStr, fieldStr, timestamp);
+			} else {
+				return String.format("%s %s %d", name, fieldStr, timestamp);
+			}
+		} else {
+			return String.format("%s %s", status.name(), errorMessage);
+		}
 	}
 
 }

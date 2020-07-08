@@ -3,7 +3,7 @@ package com.louyj.rhttptunnel.server.automation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.louyj.rhttptunnel.model.bean.Sampler;
+import com.louyj.rhttptunnel.model.bean.automate.Executor;
 
 /**
  *
@@ -16,20 +16,20 @@ public class SamplerScheduleTask implements Runnable {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
-	private Sampler sampler;
+	private Executor executor;
 
 	private AutomateManager automateManager;
 
-	public SamplerScheduleTask(Sampler sampler, AutomateManager automateManager) {
+	public SamplerScheduleTask(Executor sampler, AutomateManager automateManager) {
 		super();
-		this.sampler = sampler;
+		this.executor = sampler;
 		this.automateManager = automateManager;
 	}
 
 	@Override
 	public void run() {
 		try {
-			automateManager.scheduleSample(sampler);
+			automateManager.scheduleExecutorTask(executor);
 		} catch (Exception e) {
 			logger.error("", e);
 		}

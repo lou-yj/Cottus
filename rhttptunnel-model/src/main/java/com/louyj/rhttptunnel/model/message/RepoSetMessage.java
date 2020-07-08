@@ -2,7 +2,7 @@ package com.louyj.rhttptunnel.model.message;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.louyj.rhttptunnel.model.bean.RepoConfig;
+import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 
 /**
  *
