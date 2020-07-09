@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.server.automation;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -7,7 +9,9 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
@@ -16,11 +20,19 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.louyj.rhttptunnel.model.bean.automate.Handler;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsCollectType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.ScriptContentType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
+import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
 
 /**
  *
@@ -35,21 +47,13 @@ public class HandlerService {
 	private Pattern pattern = Pattern.compile("\\{\\{(?<ph>.*?)\\}\\}", Pattern.MULTILINE | Pattern.DOTALL);
 
 	private ObjectMapper jackson = JsonUtils.jackson();
-	private List<Handler> handlers;
 	private IgniteCache<Object, Object> alarmCache;
+	private AutomateManager automateManager;
 
-	public HandlerService(List<Handler> handlers, IgniteCache<Object, Object> alarmCache) {
+	public HandlerService(AutomateManager automateManager, IgniteCache<Object, Object> alarmCache) {
 		super();
-		this.handlers = handlers;
+		this.automateManager = automateManager;
 		this.alarmCache = alarmCache;
-	}
-
-	public List<Handler> getHandlers() {
-		return handlers;
-	}
-
-	public void setHandlers(List<Handler> handlers) {
-		this.handlers = handlers;
 	}
 
 	public void handleAlarm(AlarmEvent alarmEvent) {
@@ -62,7 +66,7 @@ public class HandlerService {
 			logger.info("[{}] Alarm group {}", alarmGroup);
 			Map<String, Object> eventMap = alarmEvent.toMap();
 			DocumentContext eventDc = JsonPath.parse(jackson.writeValueAsString(eventMap));
-			for (Handler handler : handlers) {
+			for (Handler handler : automateManager.getHandlers()) {
 				logger.info("[{}] Start eval handler {}", uuid, handler.getUuid());
 				boolean isMatched = matched(uuid, eventMap, eventDc, handler.isRegexMatch(), handler.getMatched(),
 						handler.getWindowMatched(), handler.getTimeWindowSize());
@@ -106,15 +110,62 @@ public class HandlerService {
 						}
 					}
 				}
-				doHandle(handler, alarmEvent, alarmHandlerInfo);
+				doHandle(handler, alarmEvent, alarmHandlerInfo, eventDc);
 			}
 		} catch (Exception e) {
 			logger.error("", e);
 		}
 	}
 
-	private void doHandle(Handler handler, AlarmEvent alarmEvent, AlarmHandlerInfo alarmHandlerInfo) {
+	private void doHandle(Handler handler, AlarmEvent alarmEvent, AlarmHandlerInfo alarmHandlerInfo,
+			DocumentContext eventDc) {
+		TaskScheduleMessage taskMessage = new TaskScheduleMessage(
+				automateManager.getSystemClient().session().getClientInfo());
+		taskMessage.setType(TaskType.HANDLER);
+		taskMessage.setScheduledId(alarmHandlerInfo.getUuid());
+		taskMessage.setExecutor("handler");
+		taskMessage.setName(handler.getUuid());
+		taskMessage.setCommitId(automateManager.getRepoCommitId());
+		taskMessage.setLanguage(handler.getLanguage());
+		if (StringUtils.isNotBlank(handler.getScript())) {
+			taskMessage.setScript(handler.getScript());
+			taskMessage.setScriptContentType(ScriptContentType.TEXT);
+		}
+		if (StringUtils.isNotBlank(handler.getScriptFile())) {
+			taskMessage.setScript(handler.getScriptFile());
+			taskMessage.setScriptContentType(ScriptContentType.FILE);
+		}
+		if (MapUtils.isEmpty(handler.getParams())) {
+			taskMessage.setParams(Collections.emptyMap());
+		} else {
+			taskMessage.setParams(handler.getParams());
+		}
+		taskMessage.setExpected(Collections.singletonMap("exitValue", 0));
+		taskMessage.setMetricsCollectType(MetricsCollectType.EXITVALUE_WRAPPER);
+		taskMessage.setMetricsType(MetricsType.STANDARD);
+		taskMessage.setTimeout(handler.getTimeout());
+		taskMessage.setCollectStdLog(true);
 
+		Map<String, String> targetMap = Maps.newHashMap();
+		for (Entry<String, String> entry : handler.getTargets().entrySet()) {
+			targetMap.put(replacePlaceHolder(eventDc, entry.getKey()), replacePlaceHolder(eventDc, entry.getValue()));
+		}
+
+		List<ClientInfo> toWorkers = automateManager.getWorkerSessionManager().filterWorkerClients(targetMap,
+				Sets.newHashSet());
+		if (CollectionUtils.isEmpty(toWorkers)) {
+			logger.warn("No worker matched for handler {} ", handler.getUuid());
+			return;
+		}
+		for (ClientInfo toWorker : toWorkers) {
+			LabelRule labelRule = automateManager.getWorkerLabelManager().findRule(toWorker);
+			if (labelRule != null) {
+				taskMessage.setLabels(labelRule.getLabels());
+			} else {
+				taskMessage.setLabels(Maps.newHashMap());
+			}
+			automateManager.getSystemClient().exchange(taskMessage, Arrays.asList(toWorker));
+		}
 		alarmHandlerInfo.setHandled(true);
 		alarmCache.put(alarmHandlerInfo.getUuid(), alarmHandlerInfo);
 	}

@@ -28,6 +28,12 @@ public class TaskScheduleMessage extends ServerMessage {
 		STANDARD, PROMETHEUS
 	}
 
+	public static enum TaskType {
+		EXECUTOR, HANDLER
+	}
+
+	private TaskType type = TaskType.EXECUTOR;
+
 	private String scheduledId;
 
 	private String executor;
@@ -55,6 +61,14 @@ public class TaskScheduleMessage extends ServerMessage {
 	private long timeout = 600;
 
 	private boolean collectStdLog = true;
+
+	public TaskType getType() {
+		return type;
+	}
+
+	public void setType(TaskType type) {
+		this.type = type;
+	}
 
 	public String getScheduledId() {
 		return scheduledId;

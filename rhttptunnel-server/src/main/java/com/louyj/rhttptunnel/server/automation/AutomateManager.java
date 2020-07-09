@@ -125,7 +125,7 @@ public class AutomateManager implements SystemClientListener {
 		alarmCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("alarmCache")
 				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10)))
 				.setIndexedTypes(String.class, AlarmEvent.class, String.class, AlarmHandlerInfo.class));
-		handlerService = new HandlerService(handlers, alarmCache);
+		handlerService = new HandlerService(this, alarmCache);
 		this.repoConfig = (RepoConfig) configCache.get(CONFIG_REPO);
 		this.executors = (List<Executor>) configCache.get(AUTOMATE_EXECUTOR);
 		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
@@ -146,7 +146,6 @@ public class AutomateManager implements SystemClientListener {
 		configCache.put(AUTOMATE_HANDLER, handlers);
 		updateSchedulers();
 		updateAlarmers();
-		handlerService.setHandlers(handlers);
 	}
 
 	public void scheduleExecutorTask(Executor executor) throws JsonParseException, JsonMappingException, IOException {
@@ -183,6 +182,22 @@ public class AutomateManager implements SystemClientListener {
 		this.dataDir = dataDir;
 	}
 
+	public List<Handler> getHandlers() {
+		return handlers;
+	}
+
+	public SystemClient getSystemClient() {
+		return systemClient;
+	}
+
+	public WorkerLabelManager getWorkerLabelManager() {
+		return workerLabelManager;
+	}
+
+	public WorkerSessionManager getWorkerSessionManager() {
+		return workerSessionManager;
+	}
+
 	@Override
 	public List<Class<? extends BaseMessage>> listenSendMessages() {
 		return Arrays.asList(TaskScheduleMessage.class);
@@ -208,6 +223,7 @@ public class AutomateManager implements SystemClientListener {
 				taskAudit.setStatus(ExecuteStatus.SCHEDULED);
 				taskAudit.setParams(taskMessage.getParams());
 				taskAudit.setScheduleId(taskMessage.getScheduledId());
+				taskAudit.setType(taskMessage.getType());
 				String key = auditTaskKey(taskMessage, toWorker);
 				auditCache.put(key, taskAudit);
 			}

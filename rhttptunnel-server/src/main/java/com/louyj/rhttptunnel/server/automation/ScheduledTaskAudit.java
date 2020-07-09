@@ -7,6 +7,7 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 
 /**
  *
@@ -16,6 +17,9 @@ import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStat
  *
  */
 public class ScheduledTaskAudit {
+
+	@QuerySqlField(index = true)
+	private TaskType type;
 
 	@QuerySqlField(index = true)
 	private String scheduleId;
@@ -49,6 +53,14 @@ public class ScheduledTaskAudit {
 
 	@QuerySqlField
 	private String message;
+
+	public TaskType getType() {
+		return type;
+	}
+
+	public void setType(TaskType type) {
+		this.type = type;
+	}
 
 	public String getScheduleId() {
 		return scheduleId;

@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.ScriptContentType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 
 /**
  *
@@ -138,6 +139,7 @@ public class Executor {
 			taskMessage.setExpected(task.getExpected());
 		}
 		taskMessage.setScheduledId(scheduledId);
+		taskMessage.setType(TaskType.EXECUTOR);
 		return taskMessage;
 	}
 

@@ -31,6 +31,7 @@ public class Handler {
 	private String script;
 	private String scriptFile;
 	private Map<String, Object> params = Maps.newHashMap();
+	private Map<String, String> targets = Maps.newHashMap();
 
 	private long timeout = 600;
 
@@ -44,6 +45,14 @@ public class Handler {
 			String message = String.format("Target is empty for handler in file %s", ruleFile.getName());
 			throw new IllegalArgumentException(message);
 		}
+	}
+
+	public Map<String, String> getTargets() {
+		return targets;
+	}
+
+	public void setTargets(Map<String, String> targets) {
+		this.targets = targets;
 	}
 
 	public Map<String, Object> getParams() {
