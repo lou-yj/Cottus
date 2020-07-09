@@ -46,8 +46,11 @@ public class AlarmService implements EPStatementStateListener {
 	private AtomicReference<EPRuntime> epRuntime = new AtomicReference<>();
 	private EPServiceProvider epService;
 	private String esperConfig;
+	private HandlerService handlerService;
 
-	{
+	public AlarmService(HandlerService handlerService) {
+		super();
+		this.handlerService = handlerService;
 		try {
 			URL resource = ClassLoader.getSystemClassLoader().getResource("esper.xml");
 			esperConfig = IOUtils.toString(resource, UTF_8);
@@ -110,10 +113,10 @@ public class AlarmService implements EPStatementStateListener {
 				String name = tagAnno.name();
 				String value = tagAnno.value();
 				if (name.equalsIgnoreCase("alarm") && value.equalsIgnoreCase("main")) {
-					String ruleName = (String) statement.getUserObject();
-					AlarmEventListener listener = new AlarmEventListener(ruleName);
+					Alarmer alarmer = (Alarmer) statement.getUserObject();
+					AlarmEventListener listener = new AlarmEventListener(alarmer, handlerService);
 					statement.addListener(listener);
-					logger.info("Add Listener for rule: {}.", ruleName);
+					logger.info("Add Listener for rule: {}.", alarmer.getName());
 				}
 			}
 		} catch (Exception e) {
@@ -149,7 +152,7 @@ public class AlarmService implements EPStatementStateListener {
 			index++;
 			List<String> parseEpls = alarmer.parseEpls(null);
 			for (String epl : parseEpls) {
-				admin.createEPL(epl, alarmer.getName() + index, alarmer.getName());
+				admin.createEPL(epl, alarmer.getName() + index, alarmer);
 			}
 		}
 	}

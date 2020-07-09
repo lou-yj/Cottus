@@ -3,6 +3,8 @@ package com.louyj.rhttptunnel.server.automation;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
+
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
 
@@ -15,26 +17,37 @@ import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStat
  */
 public class ScheduledTaskAudit {
 
+	@QuerySqlField(index = true)
 	private String scheduleId;
 
+	@QuerySqlField(index = true)
 	private String executor;
 
+	@QuerySqlField(index = true)
 	private String name;
 
+	@QuerySqlField
 	private long time;
 
+	@QuerySqlField
 	private Map<String, Object> params;
 
+	@QuerySqlField
 	private Map<String, String> sre;
 
+	@QuerySqlField
 	private ExecuteStatus status;
 
+	@QuerySqlField
 	private List<String> metrics = Lists.newArrayList();
 
+	@QuerySqlField
 	private String stdout;
 
+	@QuerySqlField
 	private String stderr;
 
+	@QuerySqlField
 	private String message;
 
 	public String getScheduleId() {

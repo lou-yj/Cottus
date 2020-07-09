@@ -27,6 +27,24 @@ public class Alarmer {
 
 	private String expression;
 
+	private List<String> groupKeys = Lists.newArrayList();
+
+	public List<String> getGroupKeys() {
+		return groupKeys;
+	}
+
+	public void setGroupKeys(List<String> groupKeys) {
+		this.groupKeys = groupKeys;
+	}
+
+	public static Pattern getCommentpattern() {
+		return commentPattern;
+	}
+
+	public static String getTagmain() {
+		return tagMain;
+	}
+
 	public String getName() {
 		return name;
 	}

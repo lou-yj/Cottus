@@ -5,9 +5,14 @@ import static com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.Exec
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
@@ -41,6 +46,7 @@ import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.SystemClient;
 import com.louyj.rhttptunnel.server.SystemClient.SystemClientListener;
+import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 import com.louyj.rhttptunnel.server.automation.event.ExecStatusEvent;
 import com.louyj.rhttptunnel.server.automation.event.MetricsEvent;
 import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
@@ -77,6 +83,8 @@ public class AutomateManager implements SystemClientListener {
 	@Autowired
 	private WorkerLabelManager workerLabelManager;
 
+	private List<String> defaultAlarmGroupKeys = Lists.newArrayList();
+
 	// repo
 	private RepoConfig repoConfig;
 	private String repoCommitId;
@@ -85,24 +93,39 @@ public class AutomateManager implements SystemClientListener {
 	private IgniteCache<Object, Object> configCache;
 	private IgniteCache<Object, Object> auditCache;
 	private IgniteCache<Object, Object> scheduleStatusCache;
+	private IgniteCache<Object, Object> alarmCache;
 
 	private List<Executor> executors = Lists.newArrayList();
 	private List<Alarmer> alarmers = Lists.newArrayList();
 	private List<Handler> handlers = Lists.newArrayList();
 	private AlarmService alarmService;
+	private HandlerService handlerService;
 	private ThreadPoolTaskScheduler taskScheduler;
+
+	@Value("${alarmer.default.groupkeys:}")
+	public void setDefaultAlarmGroupKey(String defaultAlarmGroup) {
+		if (StringUtils.isBlank(defaultAlarmGroup) == false) {
+			this.defaultAlarmGroupKeys = Arrays.asList(defaultAlarmGroup.split(","));
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	@PostConstruct
 	public void init() {
-		alarmService = new AlarmService();
+		alarmService = new AlarmService(handlerService);
 		taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
 		configCache = ignite.getOrCreateCache("automate");
 		auditCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("automateAudit")
-				.setIndexedTypes(String.class, ScheduledTaskAudit.class));
+				.setIndexedTypes(String.class, ScheduledTaskAudit.class)
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10))));
 		scheduleStatusCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("automateScheduleStatus")
-				.setIndexedTypes(String.class, ExecutorStatus.class));
+				.setIndexedTypes(String.class, ExecutorStatus.class)
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10))));
+		alarmCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("alarmCache")
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10)))
+				.setIndexedTypes(String.class, AlarmEvent.class, String.class, AlarmHandlerInfo.class));
+		handlerService = new HandlerService(handlers, alarmCache);
 		this.repoConfig = (RepoConfig) configCache.get(CONFIG_REPO);
 		this.executors = (List<Executor>) configCache.get(AUTOMATE_EXECUTOR);
 		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
@@ -123,6 +146,7 @@ public class AutomateManager implements SystemClientListener {
 		configCache.put(AUTOMATE_HANDLER, handlers);
 		updateSchedulers();
 		updateAlarmers();
+		handlerService.setHandlers(handlers);
 	}
 
 	public void scheduleExecutorTask(Executor executor) throws JsonParseException, JsonMappingException, IOException {
@@ -247,6 +271,13 @@ public class AutomateManager implements SystemClientListener {
 	}
 
 	private void updateAlarmers() {
+		if (CollectionUtils.isNotEmpty(defaultAlarmGroupKeys)) {
+			for (Alarmer alarmer : alarmers) {
+				if (CollectionUtils.isEmpty(alarmer.getGroupKeys())) {
+					alarmer.setGroupKeys(defaultAlarmGroupKeys);
+				}
+			}
+		}
 		alarmService.resetEsper(alarmers);
 	}
 

@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.model.bean.automate;
 
+import java.util.List;
+
 /**
  *
  * Create at 2020年7月3日
@@ -11,9 +13,9 @@ public class AutomateRule {
 
 	private Executor executor;
 
-	private Alarmer alarmer;
+	private List<Alarmer> alarmers;
 
-	private Handler handler;
+	private List<Handler> handlers;
 
 	public Executor getExecutor() {
 		return executor;
@@ -23,20 +25,20 @@ public class AutomateRule {
 		this.executor = executor;
 	}
 
-	public Alarmer getAlarmer() {
-		return alarmer;
+	public List<Alarmer> getAlarmers() {
+		return alarmers;
 	}
 
-	public void setAlarmer(Alarmer alarmer) {
-		this.alarmer = alarmer;
+	public void setAlarmers(List<Alarmer> alarmers) {
+		this.alarmers = alarmers;
 	}
 
-	public Handler getHandler() {
-		return handler;
+	public List<Handler> getHandlers() {
+		return handlers;
 	}
 
-	public void setHandler(Handler handler) {
-		this.handler = handler;
+	public void setHandlers(List<Handler> handlers) {
+		this.handlers = handlers;
 	}
 
 }

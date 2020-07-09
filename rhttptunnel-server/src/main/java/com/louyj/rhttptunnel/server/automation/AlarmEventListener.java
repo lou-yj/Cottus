@@ -3,9 +3,13 @@ package com.louyj.rhttptunnel.server.automation;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import com.espertech.esper.client.EventBean;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
+import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 
 /**
  *
@@ -16,33 +20,42 @@ import com.google.common.collect.Maps;
  */
 public class AlarmEventListener implements com.espertech.esper.client.UpdateListener {
 
-	public static final String ALARM_RULE_NAME = "ruleName";
+	private Alarmer alarmer;
+	private HandlerService handlerService;
 
-	private String name;
-
-	public AlarmEventListener(String name) {
+	public AlarmEventListener(Alarmer alarmer, HandlerService handlerService) {
 		super();
-		this.name = name;
+		this.alarmer = alarmer;
+		this.handlerService = handlerService;
 	}
 
 	@Override
 	public void update(EventBean[] newEvents, EventBean[] oldEvents) {
-
+		notifyAlarm(newEvents);
 	}
 
-	protected List<Map<String, Object>> makeOutput(EventBean[] newEvents) {
-		List<Map<String, Object>> result = Lists.newArrayList();
+	protected void notifyAlarm(EventBean[] newEvents) {
 		for (EventBean eventBean : newEvents) {
-			Map<String, Object> item = Maps.newHashMap();
+			AlarmEvent alarmEvent = new AlarmEvent();
+			alarmEvent.setAlarmRule(alarmer.getName());
+			alarmEvent.setAlarmTime(System.currentTimeMillis());
 			String[] propertyNames = eventBean.getEventType().getPropertyNames();
 			for (String propertyName : propertyNames) {
 				Object value = eventBean.get(propertyName);
-				item.put(propertyName, value);
+				alarmEvent.getFields().put(propertyName, value);
 			}
-			item.put(ALARM_RULE_NAME, name);
-			result.add(item);
+			alarmEvent.setAlarmGroup(makeGroup(alarmEvent.getFields()));
+			handlerService.handleAlarm(alarmEvent);
 		}
-		return result;
+	}
+
+	private String makeGroup(Map<String, Object> alarmEvent) {
+		List<String> items = Lists.newArrayList();
+		for (String key : alarmer.getGroupKeys()) {
+			String value = MapUtils.getString(alarmEvent, key, StringUtils.EMPTY);
+			items.add(value);
+		}
+		return StringUtils.join(items, ":");
 	}
 
 }

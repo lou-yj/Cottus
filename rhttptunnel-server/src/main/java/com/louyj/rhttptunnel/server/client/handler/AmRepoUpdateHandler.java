@@ -132,15 +132,17 @@ public class AmRepoUpdateHandler implements IClientMessageHandler {
 					executor.check(ruleFile, repoCommitIdPath);
 					executors.add(executor);
 				}
-				if (automateRule.getAlarmer() != null) {
-					Alarmer alarmer = automateRule.getAlarmer();
-					alarmer.check(ruleFile);
-					alarmers.add(automateRule.getAlarmer());
+				if (automateRule.getAlarmers() != null) {
+					automateRule.getAlarmers().forEach(alarmer -> {
+						alarmer.check(ruleFile);
+						alarmers.add(alarmer);
+					});
 				}
-				if (automateRule.getHandler() != null) {
-					Handler handler = automateRule.getHandler();
-					handler.check(ruleFile, repoCommitIdPath);
-					handlers.add(automateRule.getHandler());
+				if (automateRule.getHandlers() != null) {
+					automateRule.getHandlers().forEach(handler -> {
+						handler.check(ruleFile, repoCommitIdPath);
+						handlers.add(handler);
+					});
 				}
 			}
 			sendClientMessage(clientSession, exchangeId, String.format("Parsed %d samplers %d rule %d handler",

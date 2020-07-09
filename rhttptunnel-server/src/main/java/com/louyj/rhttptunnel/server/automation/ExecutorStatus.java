@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.server.automation;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
@@ -19,16 +20,22 @@ import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStat
  */
 public class ExecutorStatus {
 
+	@QuerySqlField(index = true)
 	private String scheduledId;
 
+	@QuerySqlField(index = true)
 	private Executor executor;
 
+	@QuerySqlField
 	private ExecuteStatus status = ExecuteStatus.PENDING;
 
+	@QuerySqlField
 	private List<Pair<List<ClientInfo>, ExecutorTask>> finalTasks = Lists.newArrayList();
 
+	@QuerySqlField
 	private List<ExecuteStatus> taskStatus = Lists.newArrayList();
 
+	@QuerySqlField
 	private List<Integer> taskRetrys = Lists.newArrayList();
 
 	public ExecutorStatus(Executor executor, List<Pair<List<ClientInfo>, ExecutorTask>> finalTasks,
