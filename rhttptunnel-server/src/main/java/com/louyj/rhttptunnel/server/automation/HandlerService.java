@@ -3,7 +3,10 @@ package com.louyj.rhttptunnel.server.automation;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +32,7 @@ import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
  * @author Louyj
  *
  */
-public class HandlerService {
+public class HandlerService extends TimerTask {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 	private Pattern pattern = Pattern.compile("\\{\\{(?<ph>.*?)\\}\\}", Pattern.MULTILINE | Pattern.DOTALL);
@@ -37,11 +40,14 @@ public class HandlerService {
 	private ObjectMapper jackson = JsonUtils.jackson();
 	private IgniteCache<Object, Object> alarmCache;
 	private AutomateManager automateManager;
+	private Timer timer;
 
 	public HandlerService(AutomateManager automateManager, IgniteCache<Object, Object> alarmCache) {
 		super();
 		this.automateManager = automateManager;
 		this.alarmCache = alarmCache;
+		this.timer = new Timer(true);
+		this.timer.schedule(this, TimeUnit.MINUTES.toMillis(1), TimeUnit.MINUTES.toMillis(1));
 	}
 
 	public void handleAlarm(AlarmEvent alarmEvent) {
@@ -68,6 +74,8 @@ public class HandlerService {
 				alarmHandlerInfo.setUuid(infoUUid);
 				alarmHandlerInfo.setHandlerId(handler.getUuid());
 				alarmHandlerInfo.setAlarmId(uuid);
+				alarmHandlerInfo.setActionWaitCount(handler.getActionWaitCount());
+				alarmHandlerInfo.setActionAggrTime(handler.getActionAggrTime());
 				alarmCache.put(infoUUid, alarmHandlerInfo);
 				if (handler.getActionWaitCount() > 0) {
 					long timeDeadLine = System.currentTimeMillis() - handler.getTimeWindowSize() * 1000;
@@ -204,6 +212,35 @@ public class HandlerService {
 		} catch (Exception e) {
 			logger.warn("find key {} exception", key, e);
 			return null;
+		}
+	}
+
+	@Override
+	public void run() {
+		for (Handler handler : automateManager.getHandlers()) {
+			if (handler.getActionWaitCount() > 0) {
+				continue;
+			}
+			if (handler.getActionAggrTime() <= 0) {
+				continue;
+			}
+			long timeDeadLine = System.currentTimeMillis() - handler.getTimeWindowSize();
+			SqlFieldsQuery sql = new SqlFieldsQuery(
+					"SELECT alarmGroup, count(handled=false) FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId  and handled=false and handlerId = ? and alarmTime > ? group by alarmGroup having count(handled=false) > 0 and count(handled=true)<=0")
+							.setArgs(handler.getUuid(), timeDeadLine);
+			try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
+				for (List<?> row : cursor) {
+					String group = (String) row.get(0);
+
+				}
+				List<?> firstRow = cursor.iterator().next();
+				long count = (long) firstRow.get(0);
+				if (count < handler.getActionWaitCount()) {
+					logger.info("[{}] Current wait count {} little than handler actionWaitCount {}", uuid, count,
+							handler.getActionWaitCount());
+					continue;
+				}
+			}
 		}
 	}
 

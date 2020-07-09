@@ -23,6 +23,28 @@ public class AlarmHandlerInfo {
 	@QuerySqlField(index = true)
 	private boolean handled = false;
 
+	@QuerySqlField(index = true)
+	private int actionWaitCount;
+
+	@QuerySqlField(index = true)
+	private int actionAggrTime;
+
+	public int getActionWaitCount() {
+		return actionWaitCount;
+	}
+
+	public void setActionWaitCount(int actionWaitCount) {
+		this.actionWaitCount = actionWaitCount;
+	}
+
+	public int getActionAggrTime() {
+		return actionAggrTime;
+	}
+
+	public void setActionAggrTime(int actionAggrTime) {
+		this.actionAggrTime = actionAggrTime;
+	}
+
 	public String getUuid() {
 		return uuid;
 	}
