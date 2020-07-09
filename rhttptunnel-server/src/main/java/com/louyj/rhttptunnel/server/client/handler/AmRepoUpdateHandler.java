@@ -11,7 +11,6 @@ import java.util.UUID;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -124,67 +123,35 @@ public class AmRepoUpdateHandler implements IClientMessageHandler {
 		List<Executor> executors = Lists.newArrayList();
 		List<Alarmer> alarmers = Lists.newArrayList();
 		List<Handler> handlers = Lists.newArrayList();
-		for (File ruleFile : ruleFiles) {
-			Object load = yaml.load(new FileInputStream(ruleFile));
-			AutomateRule automateRule = jackson.convertValue(load, AutomateRule.class);
-			if (automateRule.getExecutor() != null) {
-				Executor executor = automateRule.getExecutor();
-				if (StringUtils.isAnyBlank(executor.getName(), executor.getScheduleExpression(),
-						executor.getScript())) {
-					return RejectMessage.creason(message.getClient(), exchangeId, String
-							.format("Bad format for executor %s in file %s", executor.getName(), ruleFile.getName()));
+		try {
+			for (File ruleFile : ruleFiles) {
+				Object load = yaml.load(new FileInputStream(ruleFile));
+				AutomateRule automateRule = jackson.convertValue(load, AutomateRule.class);
+				if (automateRule.getExecutor() != null) {
+					Executor executor = automateRule.getExecutor();
+					executor.check(ruleFile, repoCommitIdPath);
+					executors.add(executor);
 				}
-				if (StringUtils.isNotBlank(executor.getScriptFile())) {
-					File scriptFile = new File(repoCommitIdPath, executor.getScriptFile());
-					if (scriptFile.exists() == false) {
-						return RejectMessage.creason(message.getClient(), exchangeId,
-								String.format("Script file not exists for executor %s in file %s", executor.getName(),
-										ruleFile.getName()));
-					}
+				if (automateRule.getAlarmer() != null) {
+					Alarmer alarmer = automateRule.getAlarmer();
+					alarmer.check(ruleFile);
+					alarmers.add(automateRule.getAlarmer());
 				}
-				if (StringUtils.isAllBlank(executor.getScript(), executor.getScriptFile())) {
-					return RejectMessage.creason(message.getClient(), exchangeId,
-							String.format("ScriptFile and script are all blank for executor %s in file %s",
-									executor.getName(), ruleFile.getName()));
+				if (automateRule.getHandler() != null) {
+					Handler handler = automateRule.getHandler();
+					handler.check(ruleFile, repoCommitIdPath);
+					handlers.add(automateRule.getHandler());
 				}
-				executors.add(executor);
 			}
-			if (automateRule.getAlarmer() != null) {
-				Alarmer rule = automateRule.getAlarmer();
-				if (StringUtils.isAnyBlank(rule.getName(), rule.getExpression())) {
-					return RejectMessage.creason(message.getClient(), exchangeId,
-							String.format("Bad format for alarmer %s in file %s", rule.getName(), ruleFile.getName()));
-				}
-				alarmers.add(automateRule.getAlarmer());
-			}
-			if (automateRule.getHandler() != null) {
-				Handler handler = automateRule.getHandler();
-				if (StringUtils.isAnyBlank(handler.getAlarmName(), handler.getScript())) {
-					return RejectMessage.creason(message.getClient(), exchangeId, String.format(
-							"Bad format for handler %s in file %s", handler.getAlarmName(), ruleFile.getName()));
-				}
-				if (StringUtils.isNotBlank(handler.getScriptFile())) {
-					File scriptFile = new File(repoCommitIdPath, handler.getScriptFile());
-					if (scriptFile.exists() == false) {
-						return RejectMessage.creason(message.getClient(), exchangeId,
-								String.format("Script file not exists for handler %s in file %s",
-										handler.getAlarmName(), ruleFile.getName()));
-					}
-				}
-				if (StringUtils.isAllBlank(handler.getScript(), handler.getScriptFile())) {
-					return RejectMessage.creason(message.getClient(), exchangeId,
-							String.format("ScriptFile and script are all blank for handler %s in file %s",
-									handler.getAlarmName(), ruleFile.getName()));
-				}
-				handlers.add(automateRule.getHandler());
-			}
+			sendClientMessage(clientSession, exchangeId, String.format("Parsed %d samplers %d rule %d handler",
+					executors.size(), alarmers.size(), handlers.size()));
+			automateManager.updateRules(executors, alarmers, handlers);
+			sendClientMessage(clientSession, exchangeId, "Scheduler updated");
+			return AckMessage.sack(exchangeId);
+		} catch (Exception e2) {
+			return RejectMessage.creason(message.getClient(), exchangeId,
+					String.format("Exception %s reason %s", e2.getClass().getName(), e2.getMessage()));
 		}
-		sendClientMessage(clientSession, exchangeId, String.format("Parsed %d samplers %d rule %d handler",
-				executors.size(), alarmers.size(), handlers.size()));
-		automateManager.updateRules(executors, alarmers, handlers);
-		automateManager.updateScheduler();
-		sendClientMessage(clientSession, exchangeId, "Scheduler updated");
-		return AckMessage.sack(exchangeId);
 	}
 
 	private String headCommitId(Git git) {

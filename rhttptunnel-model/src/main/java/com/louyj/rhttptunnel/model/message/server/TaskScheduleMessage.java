@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
@@ -27,6 +28,10 @@ public class TaskScheduleMessage extends ServerMessage {
 		STANDARD, PROMETHEUS
 	}
 
+	private String scheduledId;
+
+	private String executor;
+
 	private String name;
 
 	private String commitId;
@@ -37,7 +42,9 @@ public class TaskScheduleMessage extends ServerMessage {
 
 	private Map<String, String> labels;
 
-	private Map<String, String> params;
+	private Map<String, Object> params;
+
+	private Map<String, Object> expected = Maps.newHashMap();
 
 	private ScriptContentType scriptContentType = ScriptContentType.TEXT;
 
@@ -48,6 +55,30 @@ public class TaskScheduleMessage extends ServerMessage {
 	private long timeout = 600;
 
 	private boolean collectStdLog = true;
+
+	public String getScheduledId() {
+		return scheduledId;
+	}
+
+	public void setScheduledId(String scheduledId) {
+		this.scheduledId = scheduledId;
+	}
+
+	public String getExecutor() {
+		return executor;
+	}
+
+	public void setExecutor(String executor) {
+		this.executor = executor;
+	}
+
+	public Map<String, Object> getExpected() {
+		return expected;
+	}
+
+	public void setExpected(Map<String, Object> expected) {
+		this.expected = expected;
+	}
 
 	@JsonCreator
 	public TaskScheduleMessage(@JsonProperty("client") ClientInfo client) {
@@ -106,11 +137,11 @@ public class TaskScheduleMessage extends ServerMessage {
 		this.labels = labels;
 	}
 
-	public Map<String, String> getParams() {
+	public Map<String, Object> getParams() {
 		return params;
 	}
 
-	public void setParams(Map<String, String> params) {
+	public void setParams(Map<String, Object> params) {
 		this.params = params;
 	}
 

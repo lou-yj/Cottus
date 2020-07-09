@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskAckMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskLogMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
@@ -47,7 +48,7 @@ import com.louyj.rhttptunnel.worker.script.metrics.IMetricsParser;
  *
  */
 @Component
-public class ScriptTaskHandler implements IMessageHandler, ApplicationContextAware {
+public class ScheduledTaskHandler implements IMessageHandler, ApplicationContextAware {
 
 	@Autowired
 	private ScriptEngineExecutor scriptEngineExecutor;
@@ -89,11 +90,11 @@ public class ScriptTaskHandler implements IMessageHandler, ApplicationContextAwa
 			File repoDir = new File(workDirectory, "repository");
 			File commitDir = new File(repoDir, taskMessage.getCommitId());
 			if (commitDir.exists() == false) {
-				TaskMetricsMessage taskMetricsMessage = new TaskMetricsMessage(ClientDetector.CLIENT,
-						message.getExchangeId(), taskMessage.getServerMsgId());
-				taskMetricsMessage.setStatus(ExecuteStatus.REPO_NEED_UPDATE);
-				taskMetricsMessage.setErrorMessage("Repository need update");
-				return Arrays.asList(taskMetricsMessage);
+				TaskAckMessage ackMessage = new TaskAckMessage(ClientDetector.CLIENT, message.getExchangeId(),
+						taskMessage.getServerMsgId());
+				ackMessage.setStatus(ExecuteStatus.REPO_NEED_UPDATE);
+				ackMessage.setMessage("Repository need update");
+				return Arrays.asList(ackMessage);
 			}
 			String script = null;
 			switch (taskMessage.getScriptContentType()) {
@@ -119,10 +120,11 @@ public class ScriptTaskHandler implements IMessageHandler, ApplicationContextAwa
 				env.put(FileMetricsCollector.METRICS_FILE_LOCATION_FORMAT1, metricsFile.getAbsoluteFile());
 				env.put(FileMetricsCollector.METRICS_FILE_LOCATION_FORMAT2, metricsFile.getAbsoluteFile());
 			}
-
+			long startTime = System.currentTimeMillis();
 			Future<EvalResult> future = executorService.submit(new ScriptTask(scriptEngineExecutor,
 					taskMessage.getLanguage(), script, env, taskMessage.isCollectStdLog()));
 			EvalResult evalResult = future.get(taskMessage.getTimeout(), TimeUnit.SECONDS);
+			long endTime = System.currentTimeMillis();
 			IMetricsCollector metricsCollector = metricsCollectors.get(taskMessage.getMetricsCollectType());
 			if (metricsCollector == null) {
 				throw new RuntimeException("No such metrics collect type " + taskMessage.getMetricsCollectType());
@@ -144,16 +146,20 @@ public class ScriptTaskHandler implements IMessageHandler, ApplicationContextAwa
 				}
 				messages.add(taskLogMessage);
 			}
-			List<TaskMetricsMessage> metricsMessage = metricsParser.parse(taskMessage, metrics);
+			List<TaskMetricsMessage> metricsMessage = metricsParser.parse(taskMessage, metrics, startTime, endTime);
 			messages.addAll(metricsMessage);
+			TaskAckMessage ackMessage = new TaskAckMessage(ClientDetector.CLIENT, message.getExchangeId(),
+					taskMessage.getServerMsgId());
+			ackMessage.setStatus(ExecuteStatus.SUCCESS);
+			ackMessage.setMessage(ExecuteStatus.SUCCESS.name());
+			messages.add(ackMessage);
 			return messages;
 		} catch (Exception e) {
-			TaskMetricsMessage taskMetricsMessage = new TaskMetricsMessage(ClientDetector.CLIENT,
-					message.getExchangeId(), taskMessage.getServerMsgId());
-			taskMetricsMessage.setStatus(ExecuteStatus.FAILED);
-			taskMetricsMessage
-					.setErrorMessage(String.format("Exception %s reason %s", e.getClass().getName(), e.getMessage()));
-			return Arrays.asList(taskMetricsMessage);
+			TaskAckMessage ackMessage = new TaskAckMessage(ClientDetector.CLIENT, message.getExchangeId(),
+					taskMessage.getServerMsgId());
+			ackMessage.setStatus(ExecuteStatus.FAILED);
+			ackMessage.setMessage(String.format("Exception %s reason %s", e.getClass().getName(), e.getMessage()));
+			return Arrays.asList(ackMessage);
 		}
 	}
 

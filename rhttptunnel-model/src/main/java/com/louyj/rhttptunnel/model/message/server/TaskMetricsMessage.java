@@ -22,14 +22,22 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
 public class TaskMetricsMessage extends ServerMessage {
 
 	public static enum ExecuteStatus {
-		SCHEDULED, SUCCESS, FAILED, REPO_NEED_UPDATE
+		PENDING(false), SCHEDULED(false), SUCCESS(false), FAILED(true), FAILED_MAX_RETRIED(true),
+		REPO_NEED_UPDATE(true), NO_MATCHED_WORKER(true);
+
+		private boolean failed = false;
+
+		private ExecuteStatus(boolean failed) {
+			this.failed = failed;
+		}
+
+		public boolean isFailed() {
+			return failed;
+		}
+
 	}
 
 	private String name;
-
-	private ExecuteStatus status = ExecuteStatus.SUCCESS;
-
-	private String errorMessage;
 
 	// script runtime environment
 	private Map<String, Object> sre = Maps.newHashMap();
@@ -89,47 +97,27 @@ public class TaskMetricsMessage extends ServerMessage {
 		this.timestamp = timestamp;
 	}
 
-	public ExecuteStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(ExecuteStatus status) {
-		this.status = status;
-	}
-
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
-	public void setErrorMessage(String errorMessage) {
-		this.errorMessage = errorMessage;
-	}
-
 	public String format() {
-		if (ExecuteStatus.SUCCESS.equals(status)) {
-			String tagStr = null;
-			String fieldStr = null;
-			{
-				List<String> items = Lists.newArrayList();
-				for (Entry<String, Object> entry : tags.entrySet()) {
-					items.add(entry.getKey() + "=" + entry.getValue());
-				}
-				tagStr = StringUtils.join(items, ",");
+		String tagStr = null;
+		String fieldStr = null;
+		{
+			List<String> items = Lists.newArrayList();
+			for (Entry<String, Object> entry : tags.entrySet()) {
+				items.add(entry.getKey() + "=" + entry.getValue());
 			}
-			{
-				List<String> items = Lists.newArrayList();
-				for (Entry<String, Object> entry : fields.entrySet()) {
-					items.add(entry.getKey() + "=" + entry.getValue());
-				}
-				fieldStr = StringUtils.join(items, ",");
+			tagStr = StringUtils.join(items, ",");
+		}
+		{
+			List<String> items = Lists.newArrayList();
+			for (Entry<String, Object> entry : fields.entrySet()) {
+				items.add(entry.getKey() + "=" + entry.getValue());
 			}
-			if (StringUtils.isNotBlank(tagStr)) {
-				return String.format("%s,%s %s %d", name, tagStr, fieldStr, timestamp);
-			} else {
-				return String.format("%s %s %d", name, fieldStr, timestamp);
-			}
+			fieldStr = StringUtils.join(items, ",");
+		}
+		if (StringUtils.isNotBlank(tagStr)) {
+			return String.format("%s,%s %s %d", name, tagStr, fieldStr, timestamp);
 		} else {
-			return String.format("%s %s", status.name(), errorMessage);
+			return String.format("%s %s %d", name, fieldStr, timestamp);
 		}
 	}
 

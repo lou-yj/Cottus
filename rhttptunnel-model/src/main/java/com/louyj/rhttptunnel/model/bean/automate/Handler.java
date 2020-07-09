@@ -1,6 +1,10 @@
 package com.louyj.rhttptunnel.model.bean.automate;
 
+import java.io.File;
 import java.util.Map;
+
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Maps;
 
@@ -21,7 +25,23 @@ public class Handler {
 
 	private String scriptFile;
 
-	private long timeout;
+	private long timeout = 600;
+
+	public void check(File ruleFile, String repoCommitIdPath) {
+		if (StringUtils.isAnyBlank(alarmName)) {
+			String message = String.format("Bad format for handler %s in file %s", alarmName, ruleFile.getName());
+			throw new IllegalArgumentException(message);
+		}
+		if (StringUtils.isAllBlank(script, scriptFile)) {
+			String message = String.format("Both script and scriptFile params are blank for handler %s in file %s",
+					alarmName, ruleFile.getName());
+			throw new IllegalArgumentException(message);
+		}
+		if (MapUtils.isEmpty(targets)) {
+			String message = String.format("Target is empty for handler %s in file %s", alarmName, ruleFile.getName());
+			throw new IllegalArgumentException(message);
+		}
+	}
 
 	public Map<String, String> getTargets() {
 		return targets;

@@ -23,16 +23,23 @@ import com.louyj.rhttptunnel.worker.ClientDetector;
  */
 public interface IMetricsParser {
 
-	String EXEC_HOST = "host";
-	String EXEC_IP = "ip";
+	String EXEC_HOST = "HOST";
+	String EXEC_IP = "IP";
 	String PARSE_ERROR = "PARSE_ERROR";
+	String TASK_START_TIME = "TASK_START_TIME";
+	String TASK_END_TIME = "TASK_END_TIME";
+	String TASK_DURATION = "TASK_DURATION";
 
 	MetricsType type();
 
-	default List<TaskMetricsMessage> parse(TaskScheduleMessage taskMessage, String metrics) {
+	default List<TaskMetricsMessage> parse(TaskScheduleMessage taskMessage, String metrics, long startTime,
+			long endTime) {
 		Map<String, Object> sreTags = Maps.newHashMap();
 		sreTags.put(EXEC_HOST, CLIENT.getHost());
 		sreTags.put(EXEC_IP, CLIENT.getIp());
+		sreTags.put(TASK_START_TIME, startTime);
+		sreTags.put(TASK_END_TIME, endTime);
+		sreTags.put(TASK_DURATION, endTime - startTime);
 		sreTags.putAll(taskMessage.getLabels());
 
 		List<TaskMetricsMessage> result = Lists.newArrayList();
@@ -46,7 +53,6 @@ public interface IMetricsParser {
 				String format = String.format("Bad metrics format, type %s content %s", type().name(), line);
 				throw new RuntimeException(format);
 			}
-			metricsMessage.setName(taskMessage.getName());
 			if (metricsMessage.getTimestamp() == null)
 				metricsMessage.setTimestamp(System.currentTimeMillis());
 			result.add(metricsMessage);

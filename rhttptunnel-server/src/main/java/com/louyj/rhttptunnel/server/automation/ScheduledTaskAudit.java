@@ -1,6 +1,7 @@
 package com.louyj.rhttptunnel.server.automation;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
@@ -12,15 +13,19 @@ import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStat
  * @author Louyj
  *
  */
-public class ExecutorAudit {
+public class ScheduledTaskAudit {
+
+	private String scheduleId;
+
+	private String executor;
 
 	private String name;
 
 	private long time;
 
-	private String host;
+	private Map<String, Object> params;
 
-	private String ip;
+	private Map<String, String> sre;
 
 	private ExecuteStatus status;
 
@@ -30,7 +35,47 @@ public class ExecutorAudit {
 
 	private String stderr;
 
-	private long duration;
+	private String message;
+
+	public String getScheduleId() {
+		return scheduleId;
+	}
+
+	public void setScheduleId(String scheduleId) {
+		this.scheduleId = scheduleId;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public Map<String, Object> getParams() {
+		return params;
+	}
+
+	public void setParams(Map<String, Object> params) {
+		this.params = params;
+	}
+
+	public Map<String, String> getSre() {
+		return sre;
+	}
+
+	public void setSre(Map<String, String> sre) {
+		this.sre = sre;
+	}
+
+	public String getExecutor() {
+		return executor;
+	}
+
+	public void setExecutor(String executor) {
+		this.executor = executor;
+	}
 
 	public List<String> getMetrics() {
 		return metrics;
@@ -72,36 +117,12 @@ public class ExecutorAudit {
 		this.time = time;
 	}
 
-	public String getHost() {
-		return host;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	public String getIp() {
-		return ip;
-	}
-
-	public void setIp(String ip) {
-		this.ip = ip;
-	}
-
 	public ExecuteStatus getStatus() {
 		return status;
 	}
 
 	public void setStatus(ExecuteStatus status) {
 		this.status = status;
-	}
-
-	public long getDuration() {
-		return duration;
-	}
-
-	public void setDuration(long duration) {
-		this.duration = duration;
 	}
 
 }

@@ -1,21 +1,20 @@
 package com.louyj.rhttptunnel.server.automation;
 
 import static com.google.common.base.Charsets.UTF_8;
-import static java.util.regex.Pattern.CASE_INSENSITIVE;
-import static java.util.regex.Pattern.DOTALL;
 
 import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.annotation.Annotation;
+import java.net.URL;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -28,6 +27,7 @@ import com.espertech.esper.client.EPServiceProviderManager;
 import com.espertech.esper.client.EPStatement;
 import com.espertech.esper.client.EPStatementStateListener;
 import com.espertech.esper.client.annotation.Tag;
+import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 
 /**
  *
@@ -45,21 +45,35 @@ public class AlarmService implements EPStatementStateListener {
 
 	private AtomicReference<EPRuntime> epRuntime = new AtomicReference<>();
 	private EPServiceProvider epService;
+	private String esperConfig;
+
+	{
+		try {
+			URL resource = ClassLoader.getSystemClassLoader().getResource("esper.xml");
+			esperConfig = IOUtils.toString(resource, UTF_8);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public AtomicReference<EPRuntime> getEpRuntime() {
 		return epRuntime;
 	}
 
-	public AtomicReference<EPRuntime> resetEsper(String config, String epls) {
+	public void sendEvent(Object event) {
+		epRuntime.get().sendEvent(event);
+	}
+
+	public AtomicReference<EPRuntime> resetEsper(List<Alarmer> alarmers) {
 		try {
 			String oldProviderURI = String.format("provider-%s-%d", uuid, providerCounter);
 			String currentProviderURI = String.format("provider-%s-%d", uuid, ++providerCounter);
 			try {
-				epService = EPServiceProviderManager.getProvider(currentProviderURI, getConfiguration(config));
+				epService = EPServiceProviderManager.getProvider(currentProviderURI, getConfiguration(esperConfig));
 				epService.initialize();
 				epService.addStatementStateListener(this);
 				EPAdministrator admin = epService.getEPAdministrator();
-				createStatement(admin, epls);
+				createStatement(admin, alarmers);
 			} catch (Exception e) {
 				epService.destroy();
 				logger.error("Init esper provoder {} failed", currentProviderURI);
@@ -80,29 +94,6 @@ public class AlarmService implements EPStatementStateListener {
 		}
 	}
 
-	private Configuration getConfiguration(String xml) throws Exception {
-		InputStream is = new ReaderInputStream(new StringReader(xml), UTF_8);
-		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		DocumentBuilder db = dbf.newDocumentBuilder();
-		Document doc = db.parse(is);
-		Configuration config = new Configuration();
-		config.configure(doc);
-		return config;
-	}
-
-	private void createStatement(EPAdministrator admin, String epls) throws Exception {
-		epls = Pattern.compile("/\\*.*?\\*/", CASE_INSENSITIVE | DOTALL).matcher(epls).replaceAll("");
-		epls = epls.replaceAll("//.*", "");
-		String[] sqls = epls.split(";");
-		for (String sql : sqls) {
-			sql = StringUtils.trim(sql);
-			if (StringUtils.isBlank(sql)) {
-				continue;
-			}
-			admin.createEPL(sql);
-		}
-	}
-
 	@Override
 	public void onStatementCreate(EPServiceProvider serviceProvider, EPStatement statement) {
 		try {
@@ -117,8 +108,9 @@ public class AlarmService implements EPStatementStateListener {
 				}
 				Tag tagAnno = (Tag) annotation;
 				String name = tagAnno.name();
-				if (name.equalsIgnoreCase("listener")) {
-					String ruleName = tagAnno.value();
+				String value = tagAnno.value();
+				if (name.equalsIgnoreCase("alarm") && value.equalsIgnoreCase("main")) {
+					String ruleName = (String) statement.getUserObject();
 					AlarmEventListener listener = new AlarmEventListener(ruleName);
 					statement.addListener(listener);
 					logger.info("Add Listener for rule: {}.", ruleName);
@@ -138,7 +130,28 @@ public class AlarmService implements EPStatementStateListener {
 			epService.destroy();
 		} catch (Exception e) {
 		}
-		logger.info("Esper service destoryed.");
+		logger.info("Alarm service destoryed.");
+	}
+
+	private Configuration getConfiguration(String xml) throws Exception {
+		InputStream is = new ReaderInputStream(new StringReader(xml), UTF_8);
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder db = dbf.newDocumentBuilder();
+		Document doc = db.parse(is);
+		Configuration config = new Configuration();
+		config.configure(doc);
+		return config;
+	}
+
+	private void createStatement(EPAdministrator admin, List<Alarmer> alarmers) throws Exception {
+		int index = 0;
+		for (Alarmer alarmer : alarmers) {
+			index++;
+			List<String> parseEpls = alarmer.parseEpls(null);
+			for (String epl : parseEpls) {
+				admin.createEPL(epl, alarmer.getName() + index, alarmer.getName());
+			}
+		}
 	}
 
 }

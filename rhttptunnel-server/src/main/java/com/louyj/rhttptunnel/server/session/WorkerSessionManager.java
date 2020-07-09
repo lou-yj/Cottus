@@ -19,6 +19,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.bean.WorkerInfo;
+import com.louyj.rhttptunnel.model.bean.automate.IWorkerClientFilter;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
 import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
@@ -31,7 +32,7 @@ import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
  *
  */
 @Component
-public class WorkerSessionManager {
+public class WorkerSessionManager implements IWorkerClientFilter {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
