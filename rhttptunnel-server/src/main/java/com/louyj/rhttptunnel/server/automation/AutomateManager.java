@@ -4,7 +4,9 @@ import static com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.Exec
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -12,6 +14,7 @@ import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ignite.Ignite;
@@ -30,6 +33,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorTask;
@@ -43,6 +47,10 @@ import com.louyj.rhttptunnel.model.message.server.TaskLogMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsCollectType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.ScriptContentType;
+import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.SystemClient;
 import com.louyj.rhttptunnel.server.SystemClient.SystemClientListener;
@@ -186,18 +194,6 @@ public class AutomateManager implements SystemClientListener {
 		return handlers;
 	}
 
-	public SystemClient getSystemClient() {
-		return systemClient;
-	}
-
-	public WorkerLabelManager getWorkerLabelManager() {
-		return workerLabelManager;
-	}
-
-	public WorkerSessionManager getWorkerSessionManager() {
-		return workerSessionManager;
-	}
-
 	@Override
 	public List<Class<? extends BaseMessage>> listenSendMessages() {
 		return Arrays.asList(TaskScheduleMessage.class);
@@ -275,6 +271,52 @@ public class AutomateManager implements SystemClientListener {
 		}
 	}
 
+	public void scheduleHandler(Handler handler, AlarmEvent alarmEvent, AlarmHandlerInfo alarmHandlerInfo,
+			Map<String, String> targetMap) {
+		TaskScheduleMessage taskMessage = new TaskScheduleMessage(systemClient.session().getClientInfo());
+		taskMessage.setType(TaskType.HANDLER);
+		taskMessage.setScheduledId(alarmHandlerInfo.getUuid());
+		taskMessage.setExecutor("handler");
+		taskMessage.setName(handler.getUuid());
+		taskMessage.setCommitId(getRepoCommitId());
+		taskMessage.setLanguage(handler.getLanguage());
+		if (StringUtils.isNotBlank(handler.getScript())) {
+			taskMessage.setScript(handler.getScript());
+			taskMessage.setScriptContentType(ScriptContentType.TEXT);
+		}
+		if (StringUtils.isNotBlank(handler.getScriptFile())) {
+			taskMessage.setScript(handler.getScriptFile());
+			taskMessage.setScriptContentType(ScriptContentType.FILE);
+		}
+		if (MapUtils.isEmpty(handler.getParams())) {
+			taskMessage.setParams(Collections.emptyMap());
+		} else {
+			taskMessage.setParams(handler.getParams());
+		}
+		taskMessage.setExpected(Collections.singletonMap("exitValue", 0));
+		taskMessage.setMetricsCollectType(MetricsCollectType.EXITVALUE_WRAPPER);
+		taskMessage.setMetricsType(MetricsType.STANDARD);
+		taskMessage.setTimeout(handler.getTimeout());
+		taskMessage.setCollectStdLog(true);
+
+		List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(targetMap, Sets.newHashSet());
+		if (CollectionUtils.isEmpty(toWorkers)) {
+			logger.warn("No worker matched for handler {} ", handler.getUuid());
+			return;
+		}
+		for (ClientInfo toWorker : toWorkers) {
+			LabelRule labelRule = workerLabelManager.findRule(toWorker);
+			if (labelRule != null) {
+				taskMessage.setLabels(labelRule.getLabels());
+			} else {
+				taskMessage.setLabels(Maps.newHashMap());
+			}
+			systemClient.exchange(taskMessage, Arrays.asList(toWorker));
+		}
+		alarmHandlerInfo.setHandled(true);
+		alarmCache.put(alarmHandlerInfo.getUuid(), alarmHandlerInfo);
+	}
+
 	private void updateSchedulers() {
 		ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
@@ -295,30 +337,6 @@ public class AutomateManager implements SystemClientListener {
 			}
 		}
 		alarmService.resetEsper(alarmers);
-	}
-
-	private void scheduleOneTask(Executor executor, Pair<List<ClientInfo>, ExecutorTask> pair, int taskIndex,
-			ExecutorStatus executorStatus) {
-		List<ClientInfo> toWorkers = pair.getLeft();
-		ExecutorTask task = pair.getRight();
-		List<String> workerText = Lists.newArrayList();
-		toWorkers.forEach(e -> workerText.add(e.getHost()));
-		logger.info("Start schedule task {} executor {}, matched workers {}", taskIndex, executor.getName(),
-				workerText);
-		TaskScheduleMessage taskMessage = executor.toMessage(executorStatus.getScheduledId(),
-				systemClient.session().getClientInfo(), task, repoCommitId, taskIndex);
-		for (ClientInfo toWorker : toWorkers) {
-			LabelRule labelRule = workerLabelManager.findRule(toWorker);
-			if (labelRule != null) {
-				taskMessage.setLabels(labelRule.getLabels());
-			} else {
-				taskMessage.setLabels(Maps.newHashMap());
-			}
-			systemClient.exchange(taskMessage, Arrays.asList(toWorker));
-		}
-		executorStatus.getTaskStatus().set(taskIndex, SCHEDULED);
-		executorStatus.setStatus(SCHEDULED);
-		taskIndex++;
 	}
 
 	private String auditTaskKey(ServerMessage message, ClientInfo toWorker) {
@@ -405,6 +423,30 @@ public class AutomateManager implements SystemClientListener {
 		String executorName = executorStatus.getExecutor().getName();
 		String scheduledId = executorStatus.getScheduledId();
 		scheduleStatusCache.put(scheduleStatusKey(executorName, scheduledId), executorStatus);
+	}
+
+	private void scheduleOneTask(Executor executor, Pair<List<ClientInfo>, ExecutorTask> pair, int taskIndex,
+			ExecutorStatus executorStatus) {
+		List<ClientInfo> toWorkers = pair.getLeft();
+		ExecutorTask task = pair.getRight();
+		List<String> workerText = Lists.newArrayList();
+		toWorkers.forEach(e -> workerText.add(e.getHost()));
+		logger.info("Start schedule task {} executor {}, matched workers {}", taskIndex, executor.getName(),
+				workerText);
+		TaskScheduleMessage taskMessage = executor.toMessage(executorStatus.getScheduledId(),
+				systemClient.session().getClientInfo(), task, repoCommitId, taskIndex);
+		for (ClientInfo toWorker : toWorkers) {
+			LabelRule labelRule = workerLabelManager.findRule(toWorker);
+			if (labelRule != null) {
+				taskMessage.setLabels(labelRule.getLabels());
+			} else {
+				taskMessage.setLabels(Maps.newHashMap());
+			}
+			systemClient.exchange(taskMessage, Arrays.asList(toWorker));
+		}
+		executorStatus.getTaskStatus().set(taskIndex, SCHEDULED);
+		executorStatus.setStatus(SCHEDULED);
+		taskIndex++;
 	}
 
 }
