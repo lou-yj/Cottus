@@ -63,6 +63,9 @@ public class UncompressFileHandler implements IMessageHandler, InitializingBean 
 		switch (uncompressFileMessage.getType()) {
 		case "zip":
 			CompressUtils.unZipFile(new File(sourcePath), new File(targetPath));
+			if (uncompressFileMessage.isDeleteSource()) {
+				new File(sourcePath).delete();
+			}
 			return Arrays.asList(AckMessage.cack(ClientDetector.CLIENT, message.getExchangeId()));
 		default:
 			return Arrays.asList(RejectMessage.creason(ClientDetector.CLIENT, message.getExchangeId(),

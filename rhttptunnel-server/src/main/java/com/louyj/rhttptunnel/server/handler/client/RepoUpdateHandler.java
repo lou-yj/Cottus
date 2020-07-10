@@ -1,15 +1,22 @@
 package com.louyj.rhttptunnel.server.handler.client;
 
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
+import static org.apache.commons.collections4.CollectionUtils.intersection;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Ref;
@@ -23,6 +30,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.bean.automate.AutomateRule;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
@@ -38,6 +47,7 @@ import com.louyj.rhttptunnel.model.message.UncompressFileMessage;
 import com.louyj.rhttptunnel.model.util.CompressUtils;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.SystemClient;
+import com.louyj.rhttptunnel.server.SystemClient.ISystemClientListener;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
@@ -52,7 +62,7 @@ import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
  *
  */
 @Component
-public class RepoUpdateHandler implements IClientMessageHandler {
+public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientListener {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -64,6 +74,9 @@ public class RepoUpdateHandler implements IClientMessageHandler {
 	private WorkerSessionManager workerSessionManager;
 	@Autowired
 	private SystemClient systemClient;
+
+	private Set<String> exchangeIds = Sets.newHashSet();
+	private Map<String, BaseMessage> exchangeResult = Maps.newHashMap();
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -78,95 +91,152 @@ public class RepoUpdateHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		String exchangeId = message.getExchangeId();
-		sendClientMessage(clientSession, exchangeId, "Start update automation repository");
-		RepoConfig repoConfig = automateManager.getRepoConfig();
-		String dataDir = automateManager.getDataDir();
-		sendClientMessage(clientSession, exchangeId,
-				String.format("Clone repository from %s branch %s", repoConfig.getUrl(), repoConfig.getBranch()));
-		String repoDirPath = dataDir + "/repository/source";
-		File repoDir = new File(repoDirPath);
-		repoDir.getParentFile().mkdirs();
-		if (repoDir.exists()) {
-			FileUtils.deleteDirectory(repoDir);
-		}
-		String headCommitId = null;
-
+		Set<String> tempExchangeIds = Sets.newHashSet();
 		try {
-			Git git = Git.cloneRepository()
-					.setCredentialsProvider(
-							new UsernamePasswordCredentialsProvider(repoConfig.getUsername(), repoConfig.getPassword()))
-					.setURI(repoConfig.getUrl()).setDirectory(repoDir).setBranch(repoConfig.getBranch()).call();
-			headCommitId = headCommitId(git);
-			automateManager.setRepoCommitId(headCommitId);
-			sendClientMessage(clientSession, exchangeId, "Current commit id is " + headCommitId);
-			git.close();
-		} catch (Exception e2) {
-			throw new RuntimeException(String.format("Clone git from %s failed", repoConfig.getUrl()), e2);
-		}
-		String repoCommitIdPath = dataDir + "/repository/" + headCommitId;
-		File repoCidDir = new File(repoCommitIdPath);
-		if (repoCidDir.exists()) {
-			repoCidDir.delete();
-		}
-		FileUtils.moveDirectory(repoDir, repoCidDir);
+			String exchangeId = message.getExchangeId();
+			sendClientMessage(clientSession, exchangeId, "Start update automation repository");
+			RepoConfig repoConfig = automateManager.getRepoConfig();
+			String dataDir = automateManager.getDataDir();
+			sendClientMessage(clientSession, exchangeId,
+					String.format("Clone repository from %s branch %s", repoConfig.getUrl(), repoConfig.getBranch()));
+			String repoDirPath = dataDir + "/repository/source";
+			File repoDir = new File(repoDirPath);
+			repoDir.getParentFile().mkdirs();
+			if (repoDir.exists()) {
+				FileUtils.deleteDirectory(repoDir);
+			}
+			String headCommitId = null;
 
-		{
-			sendClientMessage(clientSession, exchangeId, "Start send repo file to all workers");
-			File zipFile = new File(dataDir + "/repository", headCommitId + ".zip");
-			CompressUtils.zipFolder(repoCidDir, zipFile);
-			Collection<WorkerSession> workers = workerSessionManager.workers();
-			List<ClientInfo> workerClientInfos = Lists.newArrayList();
-			workers.forEach(e -> workerClientInfos.add(e.getClientInfo()));
-			send(clientSession, exchangeId, zipFile.getAbsolutePath(), "repository/" + zipFile.getName(),
-					workerClientInfos);
-			UncompressFileMessage unzipMessage = new UncompressFileMessage(systemClient.session().getClientInfo());
-			unzipMessage.setSource("repository/" + zipFile.getName());
-			unzipMessage.setTarget("repository/" + headCommitId);
-			unzipMessage.setType("zip");
-			systemClient.exchange(unzipMessage, workerClientInfos);
-		}
+			try {
+				Git git = Git.cloneRepository()
+						.setCredentialsProvider(new UsernamePasswordCredentialsProvider(repoConfig.getUsername(),
+								repoConfig.getPassword()))
+						.setURI(repoConfig.getUrl()).setDirectory(repoDir).setBranch(repoConfig.getBranch()).call();
+				headCommitId = headCommitId(git);
+				automateManager.setRepoCommitId(headCommitId);
+				sendClientMessage(clientSession, exchangeId, "Current commit id is " + headCommitId);
+				git.close();
+			} catch (Exception e2) {
+				throw new RuntimeException(String.format("Clone git from %s failed", repoConfig.getUrl()), e2);
+			}
+			String repoCommitIdPath = dataDir + "/repository/" + headCommitId;
+			File repoCidDir = new File(repoCommitIdPath);
+			if (repoCidDir.exists()) {
+				FileUtils.deleteDirectory(repoCidDir);
+			}
+			FileUtils.moveDirectory(repoDir, repoCidDir);
 
-		sendClientMessage(clientSession, exchangeId,
-				"Start parser automate rules using rule directory " + repoConfig.getRuleDirectory());
-		File ruleDir = new File(repoCidDir, repoConfig.getRuleDirectory());
-		Collection<File> ruleFiles = FileUtils.listFiles(ruleDir, new String[] { "yaml" }, true);
-		Yaml yaml = new Yaml();
-		ObjectMapper jackson = JsonUtils.jackson();
-		List<Executor> executors = Lists.newArrayList();
-		List<Alarmer> alarmers = Lists.newArrayList();
-		List<Handler> handlers = Lists.newArrayList();
-		try {
-			for (File ruleFile : ruleFiles) {
-				Object load = yaml.load(new FileInputStream(ruleFile));
-				AutomateRule automateRule = jackson.convertValue(load, AutomateRule.class);
-				if (automateRule.getExecutor() != null) {
-					Executor executor = automateRule.getExecutor();
-					executor.check(ruleFile, repoCommitIdPath);
-					executors.add(executor);
+			{
+				sendClientMessage(clientSession, exchangeId, "Start send repo zipfile to all workers");
+				File zipFile = new File(dataDir + "/repository", headCommitId + ".zip");
+				CompressUtils.zipFolder(repoCidDir, zipFile);
+				Collection<WorkerSession> workers = workerSessionManager.workers();
+				if (CollectionUtils.isEmpty(workers)) {
+					throw new RuntimeException("No workers online");
 				}
-				if (automateRule.getAlarmers() != null) {
-					automateRule.getAlarmers().forEach(alarmer -> {
-						alarmer.check(ruleFile);
-						alarmers.add(alarmer);
-					});
+				List<ClientInfo> workerClientInfos = Lists.newArrayList();
+				workers.forEach(e -> workerClientInfos.add(e.getClientInfo()));
+				send(tempExchangeIds, clientSession, exchangeId, zipFile.getAbsolutePath(),
+						"repository/" + zipFile.getName(), workerClientInfos);
+				waitAllWorkerAcked(tempExchangeIds, clientSession, exchangeId);
+				cleanExchangeIds(tempExchangeIds);
+				sendClientMessage(clientSession, exchangeId, "Start send uncompress command all workers");
+				UncompressFileMessage unzipMessage = new UncompressFileMessage(systemClient.session().getClientInfo());
+				unzipMessage.setSource("repository/" + zipFile.getName());
+				unzipMessage.setTarget("repository/" + headCommitId);
+				unzipMessage.setType("zip");
+				unzipMessage.setDeleteSource(true);
+				for (ClientInfo toWorker : workerClientInfos) {
+					unzipMessage.setExchangeId(UUID.randomUUID().toString());
+					tempExchangeIds.add(unzipMessage.getExchangeId());
+					exchangeIds.add(unzipMessage.getExchangeId());
+					systemClient.exchange(unzipMessage, Arrays.asList(toWorker));
 				}
-				if (automateRule.getHandlers() != null) {
-					automateRule.getHandlers().forEach(handler -> {
-						handler.check(ruleFile, repoCommitIdPath);
-						handlers.add(handler);
-					});
+				waitAllWorkerAcked(tempExchangeIds, clientSession, exchangeId);
+				cleanExchangeIds(tempExchangeIds);
+			}
+
+			sendClientMessage(clientSession, exchangeId,
+					"Start parser automate rules using rule directory " + repoConfig.getRuleDirectory());
+			File ruleDir = new File(repoCidDir, repoConfig.getRuleDirectory());
+			Collection<File> ruleFiles = FileUtils.listFiles(ruleDir, new String[] { "yaml" }, true);
+			Yaml yaml = new Yaml();
+			ObjectMapper jackson = JsonUtils.jackson();
+			List<Executor> executors = Lists.newArrayList();
+			List<Alarmer> alarmers = Lists.newArrayList();
+			List<Handler> handlers = Lists.newArrayList();
+			try {
+				for (File ruleFile : ruleFiles) {
+					Object load = yaml.load(new FileInputStream(ruleFile));
+					AutomateRule automateRule = jackson.convertValue(load, AutomateRule.class);
+					if (automateRule.getExecutor() != null) {
+						Executor executor = automateRule.getExecutor();
+						executor.check(ruleFile, repoCommitIdPath);
+						executors.add(executor);
+					}
+					if (automateRule.getAlarmers() != null) {
+						automateRule.getAlarmers().forEach(alarmer -> {
+							alarmer.check(ruleFile);
+							alarmers.add(alarmer);
+						});
+					}
+					if (automateRule.getHandlers() != null) {
+						automateRule.getHandlers().forEach(handler -> {
+							handler.check(ruleFile, repoCommitIdPath);
+							handlers.add(handler);
+						});
+					}
+				}
+				sendClientMessage(clientSession, exchangeId, String.format("Parsed %d samplers %d rule %d handler",
+						executors.size(), alarmers.size(), handlers.size()));
+				automateManager.updateRules(executors, alarmers, handlers);
+				sendClientMessage(clientSession, exchangeId, "Scheduler updated");
+				return AckMessage.sack(exchangeId);
+			} catch (Exception e2) {
+				return RejectMessage.creason(message.getClient(), exchangeId,
+						String.format("Exception %s reason %s", e2.getClass().getName(), e2.getMessage()));
+			}
+		} finally {
+			cleanExchangeIds(tempExchangeIds);
+		}
+	}
+
+	private void waitAllWorkerAcked(Set<String> tempExchangeIds, ClientSession clientSession, String exchangeId)
+			throws InterruptedException {
+		sendClientMessage(clientSession, exchangeId, "Wait for all worker acked");
+		long start = System.currentTimeMillis();
+		logger.info("Current exchange ids {}", tempExchangeIds);
+		while (true) {
+			if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
+				throw new RuntimeException("Timeout wait for worker acked");
+			}
+			for (String id : tempExchangeIds) {
+				BaseMessage baseMessage = exchangeResult.remove(id);
+				if (baseMessage instanceof AckMessage) {
+					ClientInfo client = baseMessage.getClient();
+					sendClientMessage(clientSession, exchangeId,
+							String.format("Worker %s[%s] acked", client.getHost(), client.getIp()));
+				} else if (baseMessage instanceof RejectMessage) {
+					ClientInfo client = baseMessage.getClient();
+					throw new RuntimeException(String.format("Worker reject %s[%s] reason %s", client.getHost(),
+							client.getIp(), ((RejectMessage) baseMessage).getReason()));
 				}
 			}
-			sendClientMessage(clientSession, exchangeId, String.format("Parsed %d samplers %d rule %d handler",
-					executors.size(), alarmers.size(), handlers.size()));
-			automateManager.updateRules(executors, alarmers, handlers);
-			sendClientMessage(clientSession, exchangeId, "Scheduler updated");
-			return AckMessage.sack(exchangeId);
-		} catch (Exception e2) {
-			return RejectMessage.creason(message.getClient(), exchangeId,
-					String.format("Exception %s reason %s", e2.getClass().getName(), e2.getMessage()));
+			Collection<String> waitIds = intersection(exchangeIds, tempExchangeIds);
+			if (isEmpty(waitIds)) {
+				sendClientMessage(clientSession, exchangeId, "All worker acked");
+				return;
+			}
+			TimeUnit.SECONDS.sleep(1);
 		}
+	}
+
+	private void cleanExchangeIds(Set<String> tempExchangeIds) {
+		exchangeIds.removeAll(tempExchangeIds);
+		for (String key : tempExchangeIds) {
+			exchangeResult.remove(key);
+		}
+		tempExchangeIds.clear();
 	}
 
 	private String headCommitId(Git git) {
@@ -191,12 +261,12 @@ public class RepoUpdateHandler implements IClientMessageHandler {
 		if (clientSession == null) {
 			return;
 		}
+		message.setExchangeId(exchangeId);
 		clientSession.getMessageQueue().put(message);
 	}
 
-	public boolean send(ClientSession clientSession, String clientExchangeId, String path, String target,
-			List<ClientInfo> toWorkers) throws Exception {
-		String exchangeId = UUID.randomUUID().toString();
+	public boolean send(Set<String> tempExchangeIds, ClientSession clientSession, String clientExchangeId, String path,
+			String target, List<ClientInfo> toWorkers) throws Exception {
 		File file = new File(path);
 		String targetName = isBlank(target) ? file.getName() : target;
 		long totalSize = file.length();
@@ -222,19 +292,23 @@ public class RepoUpdateHandler implements IClientMessageHandler {
 			} else {
 				currentSize += read;
 			}
-			FileDataMessage fileDataMessage = new FileDataMessage(systemClient.session().getClientInfo(), targetName,
-					start, end, data, md5Hex);
-			fileDataMessage.setExchangeId(exchangeId);
-			fileDataMessage.setSize(totalSize, currentSize);
-			fileDataMessage.setToWorkers(toWorkers);
-			BaseMessage responseMessage = systemClient.exchange(fileDataMessage, toWorkers);
-			if (responseMessage instanceof RejectMessage) {
-				sendClientMessage(clientSession, clientExchangeId, responseMessage);
-				fis.close();
-				return false;
-			} else {
-				System.out.println("Send package success, total size " + fileDataMessage.getTotalSize()
-						+ " current received " + fileDataMessage.getCurrentSize());
+			for (ClientInfo toWorker : toWorkers) {
+				FileDataMessage fileDataMessage = new FileDataMessage(systemClient.session().getClientInfo(),
+						targetName, start, end, data, md5Hex);
+				fileDataMessage.setSize(totalSize, currentSize);
+				if (end) {
+					tempExchangeIds.add(fileDataMessage.getExchangeId());
+					exchangeIds.add(fileDataMessage.getExchangeId());
+				}
+				BaseMessage responseMessage = systemClient.exchange(fileDataMessage, Arrays.asList(toWorker));
+				if (responseMessage instanceof RejectMessage) {
+					sendClientMessage(clientSession, clientExchangeId, responseMessage);
+					fis.close();
+					return false;
+				} else {
+					logger.info("Send package success, total size " + fileDataMessage.getTotalSize()
+							+ " current received " + fileDataMessage.getCurrentSize());
+				}
 			}
 			if (end) {
 				return true;
@@ -242,6 +316,35 @@ public class RepoUpdateHandler implements IClientMessageHandler {
 			if (start) {
 				start = false;
 			}
+		}
+	}
+
+	@Override
+	public List<Class<? extends BaseMessage>> listenSendMessages() {
+		return null;
+	}
+
+	@Override
+	public List<Class<? extends BaseMessage>> listenReceiveMessages() {
+		return null;
+	}
+
+	@Override
+	public void onSendMessage(BaseMessage message, List<ClientInfo> toWorkers) {
+
+	}
+
+	@Override
+	public void onReceiveMessage(BaseMessage message) {
+		try {
+			if (exchangeIds.remove(message.getExchangeId())) {
+				exchangeResult.put(message.getExchangeId(), message);
+				logger.info("exchange id exist {}", message.getExchangeId());
+			} else {
+				logger.info("exchange id not exist {}", message.getExchangeId());
+			}
+		} catch (Exception e) {
+			logger.error("", e);
 		}
 	}
 

@@ -39,10 +39,12 @@ import com.louyj.rhttptunnel.server.session.ClientSessionManager;
 @Component
 public class SystemClient extends TimerTask {
 
-	public static interface SystemClientListener {
+	public static interface ISystemClientListener {
 
+		// null is all
 		List<Class<? extends BaseMessage>> listenSendMessages();
 
+		// null is all
 		List<Class<? extends BaseMessage>> listenReceiveMessages();
 
 		void onSendMessage(BaseMessage message, List<ClientInfo> toWorkers);
@@ -58,7 +60,7 @@ public class SystemClient extends TimerTask {
 	@Autowired
 	private ClientSessionManager clientSessionManager;
 	@Autowired
-	private List<SystemClientListener> listeners = Lists.newArrayList();
+	private List<ISystemClientListener> listeners = Lists.newArrayList();
 
 	private ClientInfo systemClient;
 	private Timer timer;
@@ -87,16 +89,13 @@ public class SystemClient extends TimerTask {
 						if (message == null) {
 							continue;
 						}
-						boolean processed = false;
-						for (SystemClientListener listener : listeners) {
-							if (listener.listenReceiveMessages().contains(message.getClass())) {
+						for (ISystemClientListener listener : listeners) {
+							if (listener.listenReceiveMessages() == null
+									|| listener.listenReceiveMessages().contains(message.getClass())) {
 								listener.onReceiveMessage(message);
-								processed = true;
 							}
 						}
-						if (!processed) {
-							logMessage(message);
-						}
+						logMessage(message);
 					} catch (InterruptedException e) {
 					} catch (Exception e) {
 						logger.error("", e);
@@ -111,8 +110,8 @@ public class SystemClient extends TimerTask {
 	}
 
 	public BaseMessage exchange(BaseMessage message, List<ClientInfo> toWorkers) {
-		for (SystemClientListener listener : listeners) {
-			if (listener.listenSendMessages().contains(message.getClass())) {
+		for (ISystemClientListener listener : listeners) {
+			if (listener.listenSendMessages() == null || listener.listenSendMessages().contains(message.getClass())) {
 				listener.onSendMessage(message, toWorkers);
 			}
 		}
@@ -138,11 +137,13 @@ public class SystemClient extends TimerTask {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private String logMessage(BaseMessage msg) throws JsonProcessingException {
+	private void logMessage(BaseMessage msg) throws JsonProcessingException {
 		Map map = normalJackson.convertValue(msg, Map.class);
 		map.remove("client");
 		map.remove("exchangeId");
-		return String.format("Receive [%s] %s", msg.getClass().getSimpleName(), normalJackson.writeValueAsString(map));
+		String log = String.format("Receive [%s] %s", msg.getClass().getSimpleName(),
+				normalJackson.writeValueAsString(map));
+		logger.info(log);
 	}
 
 }

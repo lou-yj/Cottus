@@ -62,6 +62,9 @@ public class FileDataHandler implements IMessageHandler, InitializingBean {
 		}
 		File file = new File(targetPath);
 		if (partFileMessage.isStart()) {
+			if (file.exists()) {
+				file.delete();
+			}
 			File parentFile = file.getParentFile();
 			if (parentFile.exists() == false) {
 				parentFile.mkdirs();

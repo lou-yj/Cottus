@@ -86,10 +86,7 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 					handler.handle(response, System.out);
 					return null;
 				} catch (EndOfMessageException e) {
-					if (StringUtils.isNotBlank(e.getMessage())) {
-						LogUtils.printMessage(e.getMessage(), System.out);
-					}
-					return null;
+					return e.getMessage();
 				}
 			}
 		} catch (Exception e) {

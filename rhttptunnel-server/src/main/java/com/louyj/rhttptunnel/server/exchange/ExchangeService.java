@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.annotation.NoLogFields;
+import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.AsyncExecAckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -92,9 +93,12 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	public String client(@RequestBody String data) throws Exception {
 		BaseMessage request = deserializer(data);
 		BaseMessage response = client(request);
-		ClientInfo client = request.getClient();
-		logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
-				logMessage(request), logMessage(response));
+		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
+				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
+			ClientInfo client = request.getClient();
+			logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
+					logMessage(request), logMessage(response));
+		}
 		return serializer(response);
 	}
 
@@ -102,9 +106,12 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	public String worker(@RequestBody String data) throws Exception {
 		BaseMessage request = deserializer(data);
 		BaseMessage response = worker(request);
-		ClientInfo client = request.getClient();
-		logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
-				logMessage(request), logMessage(response));
+		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
+				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
+			ClientInfo client = request.getClient();
+			logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
+					logMessage(request), logMessage(response));
+		}
 		return serializer(response);
 	}
 

@@ -54,7 +54,7 @@ import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.ScriptCont
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.SystemClient;
-import com.louyj.rhttptunnel.server.SystemClient.SystemClientListener;
+import com.louyj.rhttptunnel.server.SystemClient.ISystemClientListener;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 import com.louyj.rhttptunnel.server.automation.event.ExecStatusEvent;
 import com.louyj.rhttptunnel.server.automation.event.MetricsEvent;
@@ -70,7 +70,7 @@ import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
  *
  */
 @Component
-public class AutomateManager implements SystemClientListener {
+public class AutomateManager implements ISystemClientListener {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 

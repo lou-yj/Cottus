@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.model.message;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
 
 /**
  *
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
+@NoLogMessage
 public class SleepMessage extends BaseMessage {
 
 	private long second = 5;

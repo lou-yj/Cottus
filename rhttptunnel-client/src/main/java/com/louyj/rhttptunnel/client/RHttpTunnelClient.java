@@ -25,7 +25,7 @@ public class RHttpTunnelClient {
 
 	public static void main(String[] args) {
 		// "--spring.shell.command.script.enabled=false",
-		String[] disabledCommands = { /* "--spring.shell.command.stacktrace.enabled=false", */ };
+		String[] disabledCommands = { "--spring.shell.command.stacktrace.enabled=false", };
 		String[] fullArgs = StringUtils.concatenateStringArrays(args, disabledCommands);
 		SpringApplication.run(RHttpTunnelClient.class, fullArgs);
 	}

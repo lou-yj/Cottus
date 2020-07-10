@@ -18,6 +18,8 @@ public class UncompressFileMessage extends BaseMessage {
 
 	private String type;
 
+	private boolean deleteSource = false;
+
 	@JsonCreator
 	public UncompressFileMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
@@ -26,6 +28,14 @@ public class UncompressFileMessage extends BaseMessage {
 	public UncompressFileMessage(ClientInfo client, String exchangeId) {
 		super(client);
 		setExchangeId(exchangeId);
+	}
+
+	public boolean isDeleteSource() {
+		return deleteSource;
+	}
+
+	public void setDeleteSource(boolean deleteSource) {
+		this.deleteSource = deleteSource;
 	}
 
 	public String getSource() {
