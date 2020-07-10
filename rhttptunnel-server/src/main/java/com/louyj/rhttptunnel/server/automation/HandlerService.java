@@ -55,13 +55,13 @@ public class HandlerService extends TimerTask {
 
 	public void handleAlarm(AlarmEvent alarmEvent) {
 		try {
+			Map<String, Object> eventMap = alarmEvent.toMap();
 			String uuid = UUID.randomUUID().toString();
-			logger.info("[{}] Receive alarm event {}", uuid, jackson.writeValueAsString(alarmEvent));
+			logger.info("[{}] Receive alarm event {}", uuid, jackson.writeValueAsString(eventMap));
 			alarmEvent.setUuid(uuid);
 			alarmCache.put(uuid, alarmEvent);
 			String alarmGroup = alarmEvent.getAlarmGroup();
-			logger.info("[{}] Alarm group {}", alarmGroup);
-			Map<String, Object> eventMap = alarmEvent.toMap();
+			logger.info("[{}] Alarm group {}", uuid, alarmGroup);
 			DocumentContext eventDc = JsonPath.parse(jackson.writeValueAsString(eventMap));
 			for (Handler handler : automateManager.getHandlers()) {
 				logger.info("[{}] Start eval handler {}", uuid, handler.getUuid());

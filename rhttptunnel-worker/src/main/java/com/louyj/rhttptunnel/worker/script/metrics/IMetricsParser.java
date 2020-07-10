@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.python.apache.commons.compress.utils.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage;
@@ -22,6 +24,8 @@ import com.louyj.rhttptunnel.worker.ClientDetector;
  *
  */
 public interface IMetricsParser {
+
+	Logger logger = LoggerFactory.getLogger(IMetricsParser.class);
 
 	String EXEC_HOST = "HOST";
 	String EXEC_IP = "IP";
@@ -50,6 +54,7 @@ public interface IMetricsParser {
 			try {
 				doParse(metricsMessage, line);
 			} catch (Exception e) {
+				logger.error("", e);
 				String format = String.format("Bad metrics format, type %s content %s", type().name(), line);
 				throw new RuntimeException(format);
 			}

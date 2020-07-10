@@ -193,6 +193,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 				sendClientMessage(clientSession, exchangeId, "Scheduler updated");
 				return AckMessage.sack(exchangeId);
 			} catch (Exception e2) {
+				logger.error("", e2);
 				return RejectMessage.creason(message.getClient(), exchangeId,
 						String.format("Exception %s reason %s", e2.getClass().getName(), e2.getMessage()));
 			}
@@ -203,12 +204,12 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 
 	private void waitAllWorkerAcked(Set<String> tempExchangeIds, ClientSession clientSession, String exchangeId)
 			throws InterruptedException {
-		sendClientMessage(clientSession, exchangeId, "Wait for all worker acked");
+		sendClientMessage(clientSession, exchangeId, "Wait for all workers acked");
 		long start = System.currentTimeMillis();
 		logger.info("Current exchange ids {}", tempExchangeIds);
 		while (true) {
 			if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
-				throw new RuntimeException("Timeout wait for worker acked");
+				throw new RuntimeException("Timeout wait for workers acked");
 			}
 			for (String id : tempExchangeIds) {
 				BaseMessage baseMessage = exchangeResult.remove(id);
@@ -224,7 +225,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 			}
 			Collection<String> waitIds = intersection(exchangeIds, tempExchangeIds);
 			if (isEmpty(waitIds)) {
-				sendClientMessage(clientSession, exchangeId, "All worker acked");
+				sendClientMessage(clientSession, exchangeId, "All workers acked");
 				return;
 			}
 			TimeUnit.SECONDS.sleep(1);
@@ -339,9 +340,6 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 		try {
 			if (exchangeIds.remove(message.getExchangeId())) {
 				exchangeResult.put(message.getExchangeId(), message);
-				logger.info("exchange id exist {}", message.getExchangeId());
-			} else {
-				logger.info("exchange id not exist {}", message.getExchangeId());
 			}
 		} catch (Exception e) {
 			logger.error("", e);

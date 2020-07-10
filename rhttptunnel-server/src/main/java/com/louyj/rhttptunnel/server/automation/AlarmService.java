@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -68,6 +69,10 @@ public class AlarmService implements EPStatementStateListener {
 
 	public void sendEvent(Object event) {
 		epRuntime.get().sendEvent(event);
+	}
+
+	public void sendEvent(String name, Map<String, Object> event) {
+		epRuntime.get().sendEvent(event, name);
 	}
 
 	public AtomicReference<EPRuntime> resetEsper(List<Alarmer> alarmers) {

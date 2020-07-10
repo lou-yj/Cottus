@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 
@@ -34,10 +35,10 @@ public class ScheduledTaskAudit {
 	private long time;
 
 	@QuerySqlField
-	private Map<String, Object> params;
+	private Map<String, Object> params = Maps.newHashMap();
 
 	@QuerySqlField
-	private Map<String, String> sre;
+	private Map<String, String> sre = Maps.newHashMap();
 
 	@QuerySqlField
 	private ExecuteStatus status;

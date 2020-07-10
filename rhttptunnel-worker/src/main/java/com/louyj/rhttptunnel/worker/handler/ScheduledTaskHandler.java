@@ -17,6 +17,8 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
 import org.python.apache.commons.compress.utils.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +51,8 @@ import com.louyj.rhttptunnel.worker.script.metrics.IMetricsParser;
  */
 @Component
 public class ScheduledTaskHandler implements IMessageHandler, ApplicationContextAware {
+
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private ScriptEngineExecutor scriptEngineExecutor;
@@ -157,6 +161,7 @@ public class ScheduledTaskHandler implements IMessageHandler, ApplicationContext
 			messages.add(ackMessage);
 			return messages;
 		} catch (Exception e) {
+			logger.error("", e);
 			TaskAckMessage ackMessage = new TaskAckMessage(ClientDetector.CLIENT, message.getExchangeId(),
 					taskMessage.getServerMsgId());
 			ackMessage.setStatus(ExecuteStatus.FAILED);

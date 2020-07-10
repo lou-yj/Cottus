@@ -30,8 +30,15 @@ public class StandardMetricsParser implements IMetricsParser {
 		int index = 0;
 		String nameAndTags = tryGet(tokens, index++);
 		int indexOf = nameAndTags.indexOf(",");
-		String name = nameAndTags.substring(0, indexOf);
-		String tags = nameAndTags.substring(indexOf + 1);
+		String name = null;
+		String tags = null;
+		if (indexOf >= 0) {
+			name = nameAndTags.substring(0, indexOf);
+			tags = nameAndTags.substring(indexOf + 1);
+		} else {
+			name = nameAndTags;
+			tags = "";
+		}
 		String fields = tryGet(tokens, index++);
 		String timeStr = tryGet(tokens, index++);
 		long timestamp = System.currentTimeMillis();

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
+import org.springframework.stereotype.Component;
 
 import com.google.common.base.Charsets;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
@@ -19,6 +20,7 @@ import com.louyj.rhttptunnel.worker.script.EvalResult;
  * @author Louyj
  *
  */
+@Component
 public class FileMetricsCollector implements IMetricsCollector {
 
 	public static final String METRICS_FILE_LOCATION_FORMAT1 = "metrics_file_location";

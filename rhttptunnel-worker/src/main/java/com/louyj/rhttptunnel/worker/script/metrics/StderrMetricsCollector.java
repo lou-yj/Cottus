@@ -2,6 +2,8 @@ package com.louyj.rhttptunnel.worker.script.metrics;
 
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsCollectType;
 import com.louyj.rhttptunnel.worker.script.EvalResult;
@@ -13,6 +15,7 @@ import com.louyj.rhttptunnel.worker.script.EvalResult;
  * @author Louyj
  *
  */
+@Component
 public class StderrMetricsCollector implements IMetricsCollector {
 
 	@Override

@@ -75,6 +75,7 @@ public class AutomateManager implements ISystemClientListener {
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	private static final String CONFIG_REPO = "config:repo";
+	private static final String CONFIG_REPO_COMMITID = "config:repo:commitid";
 	private static final String AUTOMATE_EXECUTOR = "automate:executor";
 	private static final String AUTOMATE_ALARMER = "automate:alarmer";
 	private static final String AUTOMATE_HANDLER = "automate:handler";
@@ -122,7 +123,7 @@ public class AutomateManager implements ISystemClientListener {
 	@SuppressWarnings("unchecked")
 	@PostConstruct
 	public void init() {
-		alarmService = new AlarmService(handlerService);
+
 		taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
 		configCache = ignite.getOrCreateCache("automate");
@@ -136,10 +137,13 @@ public class AutomateManager implements ISystemClientListener {
 				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10)))
 				.setIndexedTypes(String.class, AlarmEvent.class, String.class, AlarmHandlerInfo.class));
 		handlerService = new HandlerService(this, alarmCache);
+		alarmService = new AlarmService(handlerService);
 		this.repoConfig = (RepoConfig) configCache.get(CONFIG_REPO);
 		this.executors = (List<Executor>) configCache.get(AUTOMATE_EXECUTOR);
 		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
 		this.handlers = (List<Handler>) configCache.get(AUTOMATE_HANDLER);
+		this.repoCommitId = (String) configCache.get(CONFIG_REPO_COMMITID);
+		updateRuleService();
 	}
 
 	public void updateRepoConfig(RepoConfig repoConfig) {
@@ -147,13 +151,18 @@ public class AutomateManager implements ISystemClientListener {
 		configCache.put(CONFIG_REPO, repoConfig);
 	}
 
-	public void updateRules(List<Executor> samplers, List<Alarmer> rules, List<Handler> handlers) {
-		this.executors = samplers;
-		this.alarmers = rules;
+	public void updateRules(List<Executor> executors, List<Alarmer> alarmers, List<Handler> handlers) {
+		this.executors = executors;
+		this.alarmers = alarmers;
 		this.handlers = handlers;
-		configCache.put(AUTOMATE_EXECUTOR, samplers);
-		configCache.put(AUTOMATE_ALARMER, rules);
+		configCache.put(AUTOMATE_EXECUTOR, executors);
+		configCache.put(AUTOMATE_ALARMER, alarmers);
 		configCache.put(AUTOMATE_HANDLER, handlers);
+		configCache.put(CONFIG_REPO_COMMITID, repoCommitId);
+		updateRuleService();
+	}
+
+	private void updateRuleService() {
 		updateSchedulers();
 		updateAlarmers();
 	}
@@ -165,6 +174,7 @@ public class AutomateManager implements ISystemClientListener {
 		List<Pair<List<ClientInfo>, ExecutorTask>> finalTasks = executor.parseFinalTasks(workerSessionManager);
 		ExecutorStatus executorStatus = new ExecutorStatus(executor, finalTasks, scheduledId);
 		logger.info("Total {} tasks for executor {}", finalTasks.size(), executor.getName());
+		scheduleStatusCache.put(scheduleStatusKey(executor.getName(), scheduledId), executorStatus);
 		scheduleNextTask(executorStatus);
 	}
 
@@ -337,12 +347,15 @@ public class AutomateManager implements ISystemClientListener {
 	private void updateSchedulers() {
 		ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
+		taskScheduler.initialize();
 		for (Executor executor : executors) {
 			String schedule = executor.getScheduleExpression();
 			SamplerScheduleTask task = new SamplerScheduleTask(executor, this);
 			taskScheduler.schedule(task, new CronTrigger(schedule));
 		}
+		ThreadPoolTaskScheduler taskSchedulerOld = this.taskScheduler;
 		this.taskScheduler = taskScheduler;
+		taskSchedulerOld.shutdown();
 	}
 
 	private void updateAlarmers() {
