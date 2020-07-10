@@ -10,7 +10,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
@@ -18,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -77,19 +80,21 @@ public class HandlerService extends TimerTask {
 				alarmHandlerInfo.setActionWaitCount(handler.getActionWaitCount());
 				alarmHandlerInfo.setActionAggrTime(handler.getActionAggrTime());
 				alarmCache.put(infoUUid, alarmHandlerInfo);
+
+				List<AlarmEvent> correlationAlarms = Lists.newArrayList();
 				if (handler.getActionWaitCount() > 0) {
 					long timeDeadLine = System.currentTimeMillis() - handler.getTimeWindowSize() * 1000;
 					SqlFieldsQuery sql = new SqlFieldsQuery(
-							"SELECT count(1) FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId and handlerId = ? and alarmGroup=? and alarmTime > ?")
+							"SELECT info.uuid, alarm.uuid, alarmTime FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId and handlerId = ? and alarmGroup=? and alarmTime > ? order by alarmTime desc")
 									.setArgs(handler.getUuid(), alarmGroup, timeDeadLine);
-					try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
-						List<?> firstRow = cursor.iterator().next();
-						long count = (long) firstRow.get(0);
-						if (count < handler.getActionWaitCount()) {
-							logger.info("[{}] Current wait count {} little than handler actionWaitCount {}", uuid,
-									count, handler.getActionWaitCount());
-							continue;
-						}
+					Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> pair = parseCorrelationAlarms(sql);
+					List<AlarmEvent> alarmEvents = pair.getLeft();
+					if (CollectionUtils.size(alarmEvents) < handler.getActionWaitCount()) {
+						logger.info("[{}] Current wait count {} little than handler actionWaitCount {}", uuid,
+								CollectionUtils.size(alarmEvents), handler.getActionWaitCount());
+						continue;
+					} else {
+						correlationAlarms = alarmEvents;
 					}
 				} else if (handler.getActionAggrTime() > 0) {
 					long timeDeadLine = System.currentTimeMillis() - handler.getActionAggrTime() * 1000;
@@ -103,23 +108,31 @@ public class HandlerService extends TimerTask {
 							logger.info("[{}] Current group already has alarm handled in last {} seconds", uuid,
 									handler.getActionAggrTime());
 							continue;
+						} else {
+							long timeDeadline = System.currentTimeMillis() - handler.getActionAggrTime() * 1000 * 10;
+							SqlFieldsQuery sql1 = new SqlFieldsQuery(
+									"SELECT info.uuid, alarm.uuid, alarmTime FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId and handlerId=? and alarmGroup=? and alarmTime>=? and handled=false order by alarmTime desc")
+											.setArgs(handler.getUuid(), alarmGroup, timeDeadline);
+							Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> pair = parseCorrelationAlarms(sql1);
+							List<AlarmEvent> alarmEvents = pair.getKey();
+							correlationAlarms = alarmEvents;
 						}
 					}
 				}
-				doHandle(handler, alarmEvent, alarmHandlerInfo, eventDc);
+				doHandle(handler, alarmEvent, correlationAlarms, alarmHandlerInfo, eventDc);
 			}
 		} catch (Exception e) {
 			logger.error("", e);
 		}
 	}
 
-	private void doHandle(Handler handler, AlarmEvent alarmEvent, AlarmHandlerInfo alarmHandlerInfo,
-			DocumentContext eventDc) {
+	private void doHandle(Handler handler, AlarmEvent alarmEvent, List<AlarmEvent> correlationAlarms,
+			AlarmHandlerInfo alarmHandlerInfo, DocumentContext eventDc) {
 		Map<String, String> targetMap = Maps.newHashMap();
 		for (Entry<String, String> entry : handler.getTargets().entrySet()) {
 			targetMap.put(replacePlaceHolder(eventDc, entry.getKey()), replacePlaceHolder(eventDc, entry.getValue()));
 		}
-		automateManager.scheduleHandler(handler, alarmEvent, alarmHandlerInfo, targetMap);
+		automateManager.scheduleHandler(handler, alarmEvent, correlationAlarms, alarmHandlerInfo, targetMap);
 	}
 
 	private boolean matched(String uuid, Map<String, Object> eventMap, DocumentContext evnetDc, boolean regexMatch,
@@ -215,32 +228,72 @@ public class HandlerService extends TimerTask {
 		}
 	}
 
+	private Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> parseCorrelationAlarms(SqlFieldsQuery sql1) {
+		List<AlarmEvent> alarmEvents = Lists.newArrayList();
+		List<AlarmHandlerInfo> alarmHanders = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor1 = alarmCache.query(sql1)) {
+			for (List<?> row1 : cursor1) {
+				String infoUuid = (String) row1.get(0);
+				String alarmUuid = (String) row1.get(1);
+				alarmEvents.add((AlarmEvent) alarmCache.get(alarmUuid));
+				alarmHanders.add((AlarmHandlerInfo) alarmCache.get(infoUuid));
+			}
+		}
+		return Pair.of(alarmEvents, alarmHanders);
+	}
+
 	@Override
 	public void run() {
-		for (Handler handler : automateManager.getHandlers()) {
-			if (handler.getActionWaitCount() > 0) {
-				continue;
-			}
-			if (handler.getActionAggrTime() <= 0) {
-				continue;
-			}
-			long timeDeadLine = System.currentTimeMillis() - handler.getTimeWindowSize();
+		try {
 			SqlFieldsQuery sql = new SqlFieldsQuery(
-					"SELECT alarmGroup, count(handled=false) FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId  and handled=false and handlerId = ? and alarmTime > ? group by alarmGroup having count(handled=false) > 0 and count(handled=true)<=0")
-							.setArgs(handler.getUuid(), timeDeadLine);
+					"SELECT handlerId, alarmGroup, max(alarmTime) filter(where handled=true), count(1) filter(where handled=false) FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId group by handlerId,alarmGroup");
 			try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
 				for (List<?> row : cursor) {
-					String group = (String) row.get(0);
-
-				}
-				List<?> firstRow = cursor.iterator().next();
-				long count = (long) firstRow.get(0);
-				if (count < handler.getActionWaitCount()) {
-					logger.info("[{}] Current wait count {} little than handler actionWaitCount {}", uuid, count,
-							handler.getActionWaitCount());
-					continue;
+					String handlerId = (String) row.get(0);
+					String alarmGroup = (String) row.get(1);
+					long maxAlarmTime = (long) row.get(2);
+					long count = (long) row.get(3);
+					if (count <= 0) {
+						continue;
+					}
+					Handler handler = automateManager.getHandler(handlerId);
+					if (handler == null) {
+						logger.warn("Handler {} not found.", handlerId);
+						continue;
+					}
+					if (handler.getActionWaitCount() > 0) {
+						continue;
+					}
+					if (handler.getActionAggrTime() <= 0) {
+						continue;
+					}
+					int actionAggrTime = handler.getActionAggrTime();
+					if (System.currentTimeMillis() - actionAggrTime * 1000 > maxAlarmTime) {
+						SqlFieldsQuery sql1 = new SqlFieldsQuery(
+								"SELECT info.uuid, alarm.uuid, alarmTime FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId and handlerId=? and alarmGroup=? and alarmTime>=? and handled=false order by alarmTime desc")
+										.setArgs(handlerId, alarmGroup, maxAlarmTime);
+						Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> pair = parseCorrelationAlarms(sql1);
+						List<AlarmEvent> alarmEvents = pair.getLeft();
+						List<AlarmHandlerInfo> alarmHanders = pair.getRight();
+						if (CollectionUtils.isEmpty(alarmEvents)) {
+							continue;
+						}
+						AlarmEvent alarmEvent = alarmEvents.get(0);
+						AlarmHandlerInfo alarmHandlerInfo = alarmHanders.get(0);
+						String json = jackson.writeValueAsString(alarmEvent);
+						DocumentContext eventDc = JsonPath.parse(json);
+						Map<String, String> targetMap = Maps.newHashMap();
+						for (Entry<String, String> entry : handler.getTargets().entrySet()) {
+							targetMap.put(replacePlaceHolder(eventDc, entry.getKey()),
+									replacePlaceHolder(eventDc, entry.getValue()));
+						}
+						automateManager.scheduleHandler(handler, alarmEvent, alarmEvents, alarmHandlerInfo,
+								handler.getTargets());
+					}
 				}
 			}
+		} catch (Exception e) {
+			logger.error("", e);
 		}
 	}
 

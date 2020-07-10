@@ -16,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.worker.shell.ShellWrapper;
 import com.louyj.rhttptunnel.worker.shell.ShellWrapper.ShellOutput;
 import com.louyj.rhttptunnel.worker.shell.ShellWrapper.SubmitStatus;
@@ -31,6 +33,7 @@ public class ShellScriptEngine extends AbstractScriptEngine {
 
 	private ShellWrapper shell;
 	private ScriptEngineFactory factory;
+	private ObjectMapper jackson = JsonUtils.jackson();
 
 	public ShellScriptEngine(ShellWrapper shell, ScriptEngineFactory factory) {
 		super();
@@ -45,7 +48,7 @@ public class ShellScriptEngine extends AbstractScriptEngine {
 			Bindings bindings = getBindings(ScriptContext.ENGINE_SCOPE);
 			for (Entry<String, Object> entry : bindings.entrySet()) {
 				Pair<SubmitStatus, String> submit = shell
-						.submit(String.format("export %s=%s", entry.getKey(), String.valueOf(entry.getValue())));
+						.submit(String.format("export %s=%s", entry.getKey(), tryToString(entry.getValue())));
 				shell.fetchAllResult(submit.getRight());
 			}
 			Pair<SubmitStatus, String> submit = shell.submit(script);
@@ -82,6 +85,14 @@ public class ShellScriptEngine extends AbstractScriptEngine {
 	@Override
 	public ScriptEngineFactory getFactory() {
 		return factory;
+	}
+
+	private String tryToString(Object value) {
+		try {
+			return jackson.writeValueAsString(value);
+		} catch (Exception e) {
+			return String.valueOf(value);
+		}
 	}
 
 }

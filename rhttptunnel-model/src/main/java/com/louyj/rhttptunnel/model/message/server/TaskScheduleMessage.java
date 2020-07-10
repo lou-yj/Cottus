@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.model.message.server;
 
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -50,6 +51,8 @@ public class TaskScheduleMessage extends ServerMessage {
 
 	private Map<String, Object> params;
 
+	private List<Map<String, Object>> correlationParams;
+
 	private Map<String, Object> expected = Maps.newHashMap();
 
 	private ScriptContentType scriptContentType = ScriptContentType.TEXT;
@@ -61,6 +64,14 @@ public class TaskScheduleMessage extends ServerMessage {
 	private long timeout = 600;
 
 	private boolean collectStdLog = true;
+
+	public List<Map<String, Object>> getCorrelationParams() {
+		return correlationParams;
+	}
+
+	public void setCorrelationParams(List<Map<String, Object>> correlationParams) {
+		this.correlationParams = correlationParams;
+	}
 
 	public TaskType getType() {
 		return type;

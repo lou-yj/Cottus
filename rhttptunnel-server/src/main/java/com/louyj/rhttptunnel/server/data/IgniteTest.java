@@ -1,6 +1,5 @@
 package com.louyj.rhttptunnel.server.data;
 
-import java.io.Serializable;
 import java.util.List;
 
 import org.apache.ignite.Ignite;
@@ -9,12 +8,12 @@ import org.apache.ignite.IgniteCluster;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
-import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.DataStorageConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 
-import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
+import com.louyj.rhttptunnel.server.automation.AlarmHandlerInfo;
+import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 
 /**
  *
@@ -39,45 +38,18 @@ public class IgniteTest {
 		IgniteCluster cluster = ignite.cluster();
 		cluster.active(true);
 
-		IgniteCache<Object, Object> cache = ignite.getOrCreateCache(
-				new CacheConfiguration<>().setName("workerlabels").setIndexedTypes(String.class, LabelRule.class));
+		IgniteCache<Object, Object> cache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("workerlabels")
+				.setIndexedTypes(String.class, AlarmHandlerInfo.class, String.class, AlarmEvent.class));
 
-//		LabelRule rule = new LabelRule();
-//		rule.setHost("localhost");
-//		rule.setIp("127.0.0.1");
-//		rule.getLabels().put("xxx", "xxx");
-//		cache.put(rule.identify(), rule);
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT handlerId, alarmGroup, max(alarmTime) filter(where handled=true) FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId  and handled=false group by handlerId,alarmGroup having count(handled=false) > 0 and count(handled=true)<=0");
 
-		System.out.println(">> Created the cache and add the values.");
-
-		SqlFieldsQuery sql = new SqlFieldsQuery("SELECT labels FROM LabelRule");
-
-		// Iterate over the result set.
 		try (QueryCursor<List<?>> cursor = cache.query(sql)) {
 			for (List<?> row : cursor)
 				System.out.println("host=" + row.get(0));
 		}
 
 		ignite.close();
-	}
-
-	public static class Person implements Serializable {
-		/** Indexed field. Will be visible for SQL engine. */
-		@QuerySqlField(index = true)
-		private long id;
-
-		/** Queryable field. Will be visible for SQL engine. */
-		@QuerySqlField
-		private String name;
-
-		/** Will NOT be visible for SQL engine. */
-		private int age;
-
-		/**
-		 * Indexed field sorted in descending order. Will be visible for SQL engine.
-		 */
-		@QuerySqlField(index = true, descending = true)
-		private float salary;
 	}
 
 }

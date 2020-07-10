@@ -112,6 +112,8 @@ public class ScheduledTaskHandler implements IMessageHandler, ApplicationContext
 			Map<String, Object> env = Maps.newHashMap();
 			env.putAll(taskMessage.getLabels());
 			env.putAll(taskMessage.getParams());
+			env.put("params", taskMessage.getParams());
+			env.put("correlationParams", taskMessage.getCorrelationParams());
 			{
 				File metricsDir = new File(workDirectory, "metrics");
 				if (metricsDir.exists() == false)

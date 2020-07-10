@@ -30,8 +30,8 @@ public class Handler {
 	private String language;
 	private String script;
 	private String scriptFile;
-	private Map<String, Object> params = Maps.newHashMap();
 	private Map<String, String> targets = Maps.newHashMap();
+	private Map<String, Object> params = Maps.newHashMap();
 
 	private long timeout = 600;
 
@@ -47,20 +47,20 @@ public class Handler {
 		}
 	}
 
-	public Map<String, String> getTargets() {
-		return targets;
-	}
-
-	public void setTargets(Map<String, String> targets) {
-		this.targets = targets;
-	}
-
 	public Map<String, Object> getParams() {
 		return params;
 	}
 
 	public void setParams(Map<String, Object> params) {
 		this.params = params;
+	}
+
+	public Map<String, String> getTargets() {
+		return targets;
+	}
+
+	public void setTargets(Map<String, String> targets) {
+		this.targets = targets;
 	}
 
 	public String getLanguage() {

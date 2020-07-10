@@ -52,8 +52,6 @@ public class ExecutorTask {
 
 	private int retryBackoff = 1;
 
-	private int repeat = 1;
-
 	public String getName() {
 		return name;
 	}
@@ -190,14 +188,6 @@ public class ExecutorTask {
 
 	public void setRetryBackoff(int retryBackoff) {
 		this.retryBackoff = retryBackoff;
-	}
-
-	public int getRepeat() {
-		return repeat;
-	}
-
-	public void setRepeat(int repeat) {
-		this.repeat = repeat;
 	}
 
 }

@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -109,6 +110,7 @@ public class AutomateManager implements SystemClientListener {
 	private AlarmService alarmService;
 	private HandlerService handlerService;
 	private ThreadPoolTaskScheduler taskScheduler;
+	private ObjectMapper jackson = JsonUtils.jackson();
 
 	@Value("${alarmer.default.groupkeys:}")
 	public void setDefaultAlarmGroupKey(String defaultAlarmGroup) {
@@ -194,6 +196,15 @@ public class AutomateManager implements SystemClientListener {
 		return handlers;
 	}
 
+	public Handler getHandler(String id) {
+		for (Handler handler : handlers) {
+			if (StringUtils.equals(handler.getUuid(), id)) {
+				return handler;
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public List<Class<? extends BaseMessage>> listenSendMessages() {
 		return Arrays.asList(TaskScheduleMessage.class);
@@ -271,8 +282,9 @@ public class AutomateManager implements SystemClientListener {
 		}
 	}
 
-	public void scheduleHandler(Handler handler, AlarmEvent alarmEvent, AlarmHandlerInfo alarmHandlerInfo,
-			Map<String, String> targetMap) {
+	@SuppressWarnings("unchecked")
+	public void scheduleHandler(Handler handler, AlarmEvent alarmEvent, List<AlarmEvent> alarmEvents,
+			AlarmHandlerInfo alarmHandlerInfo, Map<String, String> targetMap) {
 		TaskScheduleMessage taskMessage = new TaskScheduleMessage(systemClient.session().getClientInfo());
 		taskMessage.setType(TaskType.HANDLER);
 		taskMessage.setScheduledId(alarmHandlerInfo.getUuid());
@@ -288,16 +300,21 @@ public class AutomateManager implements SystemClientListener {
 			taskMessage.setScript(handler.getScriptFile());
 			taskMessage.setScriptContentType(ScriptContentType.FILE);
 		}
-		if (MapUtils.isEmpty(handler.getParams())) {
-			taskMessage.setParams(Collections.emptyMap());
-		} else {
-			taskMessage.setParams(handler.getParams());
+		Map<String, Object> params = Maps.newHashMap();
+		if (MapUtils.isNotEmpty(handler.getParams())) {
+			params.putAll(handler.getParams());
 		}
+		params.putAll(jackson.convertValue(alarmEvent, Map.class));
+		taskMessage.setParams(params);
 		taskMessage.setExpected(Collections.singletonMap("exitValue", 0));
 		taskMessage.setMetricsCollectType(MetricsCollectType.EXITVALUE_WRAPPER);
 		taskMessage.setMetricsType(MetricsType.STANDARD);
 		taskMessage.setTimeout(handler.getTimeout());
 		taskMessage.setCollectStdLog(true);
+
+		List<Map<String, Object>> correlationParams = Lists.newArrayList();
+		alarmEvents.forEach(e -> correlationParams.add(jackson.convertValue(e, Map.class)));
+		taskMessage.setCorrelationParams(correlationParams);
 
 		List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(targetMap, Sets.newHashSet());
 		if (CollectionUtils.isEmpty(toWorkers)) {
