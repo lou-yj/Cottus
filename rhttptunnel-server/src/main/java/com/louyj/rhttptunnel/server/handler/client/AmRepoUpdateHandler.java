@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.server.client.handler;
+package com.louyj.rhttptunnel.server.handler.client;
 
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 import static org.apache.commons.lang3.StringUtils.isBlank;

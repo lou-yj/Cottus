@@ -103,7 +103,7 @@ public class HandlerService extends TimerTask {
 									.setArgs(handler.getUuid(), alarmGroup, timeDeadLine);
 					try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
 						List<?> firstRow = cursor.iterator().next();
-						long count = (long) firstRow.get(0);
+						Long count = (Long) firstRow.get(0);
 						if (count > 0) {
 							logger.info("[{}] Current group already has alarm handled in last {} seconds", uuid,
 									handler.getActionAggrTime());
@@ -251,8 +251,8 @@ public class HandlerService extends TimerTask {
 				for (List<?> row : cursor) {
 					String handlerId = (String) row.get(0);
 					String alarmGroup = (String) row.get(1);
-					long maxAlarmTime = (long) row.get(2);
-					long count = (long) row.get(3);
+					Long maxAlarmTime = (Long) row.get(2);
+					Long count = (Long) row.get(3);
 					if (count <= 0) {
 						continue;
 					}

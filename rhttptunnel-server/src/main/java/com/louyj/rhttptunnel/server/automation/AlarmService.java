@@ -53,6 +53,9 @@ public class AlarmService implements EPStatementStateListener {
 		this.handlerService = handlerService;
 		try {
 			URL resource = ClassLoader.getSystemClassLoader().getResource("esper.xml");
+			if (resource == null) {
+				resource = ClassLoader.getSystemClassLoader().getResource("BOOT-INF/classes/esper.xml");
+			}
 			esperConfig = IOUtils.toString(resource, UTF_8);
 		} catch (Exception e) {
 			throw new RuntimeException(e);

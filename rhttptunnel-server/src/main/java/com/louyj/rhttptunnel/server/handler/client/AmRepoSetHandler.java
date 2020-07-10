@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.server.client.handler;
+package com.louyj.rhttptunnel.server.handler.client;
 
 import java.util.List;
 

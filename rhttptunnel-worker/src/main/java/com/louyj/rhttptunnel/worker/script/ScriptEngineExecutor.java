@@ -13,6 +13,7 @@ import javax.script.SimpleScriptContext;
 
 import org.python.jsr223.PyScriptEngineFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.worker.script.shell.ShellScriptEngineFactory;
 
@@ -25,6 +26,7 @@ import bsh.engine.BshScriptEngineFactory;
  * @author Louyj
  *
  */
+@Component
 public class ScriptEngineExecutor {
 
 	@Value("${work.directory}")
