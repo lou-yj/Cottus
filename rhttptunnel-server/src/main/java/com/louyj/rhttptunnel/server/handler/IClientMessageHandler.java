@@ -19,6 +19,10 @@ public interface IClientMessageHandler extends IMessageHandler {
 		return true;
 	}
 
+	default boolean needWorkerOnline() {
+		return false;
+	}
+
 	BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception;
 

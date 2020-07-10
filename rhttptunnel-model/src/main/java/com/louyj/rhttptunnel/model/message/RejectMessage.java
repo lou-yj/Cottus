@@ -26,16 +26,22 @@ public class RejectMessage extends BaseMessage {
 		this.reason = reason;
 	}
 
+	public RejectMessage(ClientInfo client, String reason, String exchangeId) {
+		super(client);
+		this.reason = reason;
+		setExchangeId(exchangeId);
+	}
+
 	public String getReason() {
 		return reason;
 	}
 
 	public static RejectMessage creason(ClientInfo client, String exchangeId, String reason) {
-		return new RejectMessage(client, reason);
+		return new RejectMessage(client, reason, exchangeId);
 	}
 
 	public static RejectMessage sreason(String exchangeId, String reason) {
-		return new RejectMessage(SERVER, reason);
+		return new RejectMessage(SERVER, reason, exchangeId);
 	}
 
 }

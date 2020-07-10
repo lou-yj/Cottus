@@ -37,6 +37,20 @@ public class ClientSession {
 
 	private String cwd = "/";
 
+	private boolean debug = true;
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
+
+	public void setDiscoverWorkerText(String discoverWorkerText) {
+		this.discoverWorkerText = discoverWorkerText;
+	}
+
 	public List<ClientInfo> getSelectedWorkers() {
 		return selectedWorkers;
 	}

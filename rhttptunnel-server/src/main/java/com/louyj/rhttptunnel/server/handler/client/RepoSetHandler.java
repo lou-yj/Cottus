@@ -21,7 +21,7 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  *
  */
 @Component
-public class AmRepoSetHandler implements IClientMessageHandler {
+public class RepoSetHandler implements IClientMessageHandler {
 
 	@Autowired
 	private AutomateManager automateManager;

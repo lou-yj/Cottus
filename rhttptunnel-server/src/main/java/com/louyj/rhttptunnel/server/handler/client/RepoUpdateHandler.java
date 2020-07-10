@@ -14,6 +14,8 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,7 +52,9 @@ import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
  *
  */
 @Component
-public class AmRepoUpdateHandler implements IClientMessageHandler {
+public class RepoUpdateHandler implements IClientMessageHandler {
+
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Value("${transfer.data.maxsize:1048576}")
 	private int transferMaxSize;
@@ -86,16 +90,25 @@ public class AmRepoUpdateHandler implements IClientMessageHandler {
 		if (repoDir.exists()) {
 			FileUtils.deleteDirectory(repoDir);
 		}
-		Git git = Git.cloneRepository()
-				.setCredentialsProvider(
-						new UsernamePasswordCredentialsProvider(repoConfig.getUsername(), repoConfig.getPassword()))
-				.setURI(repoConfig.getUrl()).setDirectory(repoDir).setBranch(repoConfig.getBranch()).call();
-		String headCommitId = headCommitId(git);
-		automateManager.setRepoCommitId(headCommitId);
-		sendClientMessage(clientSession, exchangeId, "Current commit id is " + headCommitId);
-		git.close();
+		String headCommitId = null;
+
+		try {
+			Git git = Git.cloneRepository()
+					.setCredentialsProvider(
+							new UsernamePasswordCredentialsProvider(repoConfig.getUsername(), repoConfig.getPassword()))
+					.setURI(repoConfig.getUrl()).setDirectory(repoDir).setBranch(repoConfig.getBranch()).call();
+			headCommitId = headCommitId(git);
+			automateManager.setRepoCommitId(headCommitId);
+			sendClientMessage(clientSession, exchangeId, "Current commit id is " + headCommitId);
+			git.close();
+		} catch (Exception e2) {
+			throw new RuntimeException(String.format("Clone git from %s failed", repoConfig.getUrl()), e2);
+		}
 		String repoCommitIdPath = dataDir + "/repository/" + headCommitId;
 		File repoCidDir = new File(repoCommitIdPath);
+		if (repoCidDir.exists()) {
+			repoCidDir.delete();
+		}
 		FileUtils.moveDirectory(repoDir, repoCidDir);
 
 		{
@@ -164,8 +177,10 @@ public class AmRepoUpdateHandler implements IClientMessageHandler {
 	private void sendClientMessage(ClientSession clientSession, String exchangeId, String content)
 			throws InterruptedException {
 		if (clientSession == null) {
+			logger.warn("client session is null");
 			return;
 		}
+		logger.info(content);
 		RepoUpdateMessage amMessage = new RepoUpdateMessage(SERVER, exchangeId);
 		amMessage.setMessage(content);
 		clientSession.getMessageQueue().put(amMessage);

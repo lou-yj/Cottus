@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
@@ -92,6 +93,9 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 				}
 			}
 		} catch (Exception e) {
+			if (session.isDebug()) {
+				e.printStackTrace();
+			}
 			LogUtils.clientError("[" + e.getClass().getName() + "]" + e.getMessage(), System.out);
 			return FAILED;
 		}
@@ -99,7 +103,10 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 
 	public String pollExchangeMessage(String exchangeId) throws Exception {
 		List<ClientInfo> selectedWorkers = session.getSelectedWorkers();
-		if (selectedWorkers.size() == 1) {
+		if (CollectionUtils.isEmpty(selectedWorkers)) {
+			pollExchangeMessageOnce(exchangeId, false);
+			return null;
+		} else if (selectedWorkers.size() == 1) {
 			pollExchangeMessageOnce(exchangeId, false);
 			return null;
 		}

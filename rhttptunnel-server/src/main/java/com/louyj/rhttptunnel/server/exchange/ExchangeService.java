@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.model.annotation.NoLogFields;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.AsyncExecAckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -129,9 +130,17 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			}
 			return AsyncExecAckMessage.sack(message.getExchangeId());
 		} else {
+			if (CollectionUtils.isEmpty(workerSessions) && handler.needWorkerOnline()) {
+				return RejectMessage.sreason(message.getExchangeId(), "Current workers offline or session expired.");
+			}
 			if (handler.asyncMode()) {
-				for (WorkerSession workerSession : workerSessions) {
-					ExchangeTask task = new ExchangeTask(handler, clientSession, workerSession, message);
+				if (CollectionUtils.isNotEmpty(workerSessions)) {
+					for (WorkerSession workerSession : workerSessions) {
+						ExchangeTask task = new ExchangeTask(handler, clientSession, workerSession, message);
+						executorService.execute(task);
+					}
+				} else {
+					ExchangeTask task = new ExchangeTask(handler, clientSession, null, message);
 					executorService.execute(task);
 				}
 				return AsyncExecAckMessage.sack(message.getExchangeId());
@@ -170,11 +179,20 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		return jackson.writeValueAsString(message);
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private String logMessage(BaseMessage msg) throws JsonProcessingException {
 		Map map = normalJackson.convertValue(msg, Map.class);
 		map.remove("client");
 		map.remove("exchangeId");
+		NoLogFields noLogFields = msg.getClass().getAnnotation(NoLogFields.class);
+		if (noLogFields != null) {
+			String[] values = noLogFields.values();
+			for (String value : values) {
+				if (map.containsKey(value)) {
+					map.put(value, "Log Ignored");
+				}
+			}
+		}
 		return String.format("[%s] %s", msg.getClass().getSimpleName(), normalJackson.writeValueAsString(map));
 	}
 

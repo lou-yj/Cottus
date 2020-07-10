@@ -96,9 +96,9 @@ public class ShellWrapper implements Closeable {
 
 		} else {
 			Pair<SubmitStatus, String> submit = submit(
-					String.format("export _WORKER_WORK_DIRECTORY=\"%s\"", workDirectory));
+					"function ___echo_with_exit_code___(){ local code=$?; echo \"$*\"; return ${code}; }");
 			fetchAllSlient(submit);
-			submit = submit("function ___echo_with_exit_code___(){ local code=$?; echo \"$*\"; return ${code}; }");
+			submit = submit(String.format("export _WORKER_WORK_DIRECTORY=\"%s\"", workDirectory));
 			fetchAllSlient(submit);
 		}
 	}
@@ -113,11 +113,11 @@ public class ShellWrapper implements Closeable {
 	}
 
 	public synchronized Pair<SubmitStatus, String> submit(String cmd) throws IOException {
-		if (currentCommandId != null) {
-			return Pair.of(SubmitStatus.BUSY, EMPTY);
-		}
 		if (shell.isAlive() == false) {
 			return Pair.of(SubmitStatus.NOTALIVE, EMPTY);
+		}
+		if (currentCommandId != null) {
+			return Pair.of(SubmitStatus.BUSY, EMPTY);
 		}
 		if (StringUtils.equals(StringUtils.trim(cmd), "exit")) {
 			this.close();

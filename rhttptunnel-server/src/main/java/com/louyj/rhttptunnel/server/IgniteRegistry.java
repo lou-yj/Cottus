@@ -25,6 +25,7 @@ public class IgniteRegistry {
 		cfg.setClientMode(false);
 		cfg.setPeerClassLoadingEnabled(true);
 		cfg.setLocalHost(localhostBind);
+		cfg.setMetricsLogFrequency(0);
 
 		DataStorageConfiguration dscfg = new DataStorageConfiguration();
 		dscfg.getDefaultDataRegionConfiguration().setPersistenceEnabled(true);

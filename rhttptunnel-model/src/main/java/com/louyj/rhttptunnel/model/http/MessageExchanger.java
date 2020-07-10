@@ -8,6 +8,7 @@ import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOST
 
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
@@ -93,7 +94,10 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 				response.close();
 			}
 		} catch (Exception e) {
-//			logger.error("", e);
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (Exception e2) {
+			}
 			return RejectMessage.creason(message.getClient(), message.getExchangeId(),
 					"[" + CLIENT_ERROR.reason() + "]" + e.getClass().getSimpleName() + ":" + e.getMessage());
 		}
