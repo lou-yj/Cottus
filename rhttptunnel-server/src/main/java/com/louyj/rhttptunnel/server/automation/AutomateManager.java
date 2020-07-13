@@ -5,6 +5,7 @@ import static com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.Exec
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -123,7 +124,6 @@ public class AutomateManager implements ISystemClientListener {
 	@SuppressWarnings("unchecked")
 	@PostConstruct
 	public void init() {
-
 		taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
 		configCache = ignite.getOrCreateCache("automate");
@@ -143,6 +143,12 @@ public class AutomateManager implements ISystemClientListener {
 		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
 		this.handlers = (List<Handler>) configCache.get(AUTOMATE_HANDLER);
 		this.repoCommitId = (String) configCache.get(CONFIG_REPO_COMMITID);
+		Collections.sort(this.handlers, new Comparator<Handler>() {
+			@Override
+			public int compare(Handler o1, Handler o2) {
+				return o2.getOrder() - o1.getOrder();
+			}
+		});
 		updateRuleService();
 	}
 
@@ -152,6 +158,12 @@ public class AutomateManager implements ISystemClientListener {
 	}
 
 	public void updateRules(List<Executor> executors, List<Alarmer> alarmers, List<Handler> handlers) {
+		Collections.sort(handlers, new Comparator<Handler>() {
+			@Override
+			public int compare(Handler o1, Handler o2) {
+				return o2.getOrder() - o1.getOrder();
+			}
+		});
 		this.executors = executors;
 		this.alarmers = alarmers;
 		this.handlers = handlers;
@@ -208,7 +220,7 @@ public class AutomateManager implements ISystemClientListener {
 
 	public Handler getHandler(String id) {
 		for (Handler handler : handlers) {
-			if (StringUtils.equals(handler.getUuid(), id)) {
+			if (StringUtils.equals(handler.getName(), id)) {
 				return handler;
 			}
 		}
@@ -299,7 +311,7 @@ public class AutomateManager implements ISystemClientListener {
 		taskMessage.setType(TaskType.HANDLER);
 		taskMessage.setScheduledId(alarmHandlerInfo.getUuid());
 		taskMessage.setExecutor("handler");
-		taskMessage.setName(handler.getUuid());
+		taskMessage.setName(handler.getName());
 		taskMessage.setCommitId(getRepoCommitId());
 		taskMessage.setLanguage(handler.getLanguage());
 		if (StringUtils.isNotBlank(handler.getScript())) {
@@ -328,7 +340,7 @@ public class AutomateManager implements ISystemClientListener {
 
 		List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(targetMap, Sets.newHashSet());
 		if (CollectionUtils.isEmpty(toWorkers)) {
-			logger.warn("No worker matched for handler {} ", handler.getUuid());
+			logger.warn("No worker matched for handler {} ", handler.getName());
 			return;
 		}
 		for (ClientInfo toWorker : toWorkers) {

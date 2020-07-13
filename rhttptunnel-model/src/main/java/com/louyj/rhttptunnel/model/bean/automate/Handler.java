@@ -1,12 +1,13 @@
 package com.louyj.rhttptunnel.model.bean.automate;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -18,7 +19,7 @@ import com.google.common.collect.Maps;
  */
 public class Handler {
 
-	private String uuid = UUID.randomUUID().toString();
+	private String name;
 	private boolean regexMatch = false;
 	private Map<String, Object> matched = Maps.newHashMap();
 	private Map<String, Object> windowMatched = Maps.newHashMap();
@@ -35,6 +36,9 @@ public class Handler {
 
 	private long timeout = 600;
 
+	private int order = 0;
+	private List<String> preventHandlers = Lists.newArrayList();
+
 	public void check(File ruleFile, String repoCommitIdPath) {
 		if (StringUtils.isAllBlank(script, scriptFile)) {
 			String message = String.format("Both script and scriptFile params are blank for handler in file %s",
@@ -45,6 +49,30 @@ public class Handler {
 			String message = String.format("Target is empty for handler in file %s", ruleFile.getName());
 			throw new IllegalArgumentException(message);
 		}
+	}
+
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
+	}
+
+	public List<String> getPreventHandlers() {
+		return preventHandlers;
+	}
+
+	public void setPreventHandlers(List<String> preventHandlers) {
+		this.preventHandlers = preventHandlers;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public Map<String, Object> getParams() {
@@ -69,14 +97,6 @@ public class Handler {
 
 	public void setLanguage(String language) {
 		this.language = language;
-	}
-
-	public String getUuid() {
-		return uuid;
-	}
-
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
 	}
 
 	public boolean isRegexMatch() {

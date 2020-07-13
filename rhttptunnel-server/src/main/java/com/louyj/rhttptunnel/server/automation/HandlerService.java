@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.server.automation;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.louyj.rhttptunnel.model.bean.automate.Handler;
@@ -63,30 +65,29 @@ public class HandlerService extends TimerTask {
 			String alarmGroup = alarmEvent.getAlarmGroup();
 			logger.info("[{}] Alarm group {}", uuid, alarmGroup);
 			DocumentContext eventDc = JsonPath.parse(jackson.writeValueAsString(eventMap));
+			Set<String> preventHandlers = Sets.newHashSet();
 			for (Handler handler : automateManager.getHandlers()) {
-				logger.info("[{}] Start eval handler {}", uuid, handler.getUuid());
+				logger.info("[{}] Start eval handler {}", uuid, handler.getName());
 				boolean isMatched = matched(uuid, eventMap, eventDc, handler.isRegexMatch(), handler.getMatched(),
 						handler.getWindowMatched(), handler.getTimeWindowSize());
 				if (isMatched == false) {
 					continue;
 				}
 				logger.info("[{}] All condition matched", uuid);
-
 				String infoUUid = UUID.randomUUID().toString();
 				AlarmHandlerInfo alarmHandlerInfo = new AlarmHandlerInfo();
 				alarmHandlerInfo.setUuid(infoUUid);
-				alarmHandlerInfo.setHandlerId(handler.getUuid());
+				alarmHandlerInfo.setHandlerId(handler.getName());
 				alarmHandlerInfo.setAlarmId(uuid);
 				alarmHandlerInfo.setActionWaitCount(handler.getActionWaitCount());
 				alarmHandlerInfo.setActionAggrTime(handler.getActionAggrTime());
 				alarmCache.put(infoUUid, alarmHandlerInfo);
-
 				List<AlarmEvent> correlationAlarms = Lists.newArrayList();
 				if (handler.getActionWaitCount() > 0) {
 					long timeDeadLine = System.currentTimeMillis() - handler.getTimeWindowSize() * 1000;
 					SqlFieldsQuery sql = new SqlFieldsQuery(
 							"SELECT info.uuid, alarm.uuid, alarmTime FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId and handlerId = ? and alarmGroup=? and alarmTime > ? order by alarmTime desc")
-									.setArgs(handler.getUuid(), alarmGroup, timeDeadLine);
+									.setArgs(handler.getName(), alarmGroup, timeDeadLine);
 					Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> pair = parseCorrelationAlarms(sql);
 					List<AlarmEvent> alarmEvents = pair.getLeft();
 					if (CollectionUtils.size(alarmEvents) < handler.getActionWaitCount()) {
@@ -100,7 +101,7 @@ public class HandlerService extends TimerTask {
 					long timeDeadLine = System.currentTimeMillis() - handler.getActionAggrTime() * 1000;
 					SqlFieldsQuery sql = new SqlFieldsQuery(
 							"SELECT count(1) FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId and handled=true and handlerId = ? and alarmGroup=? and alarmTime > ?")
-									.setArgs(handler.getUuid(), alarmGroup, timeDeadLine);
+									.setArgs(handler.getName(), alarmGroup, timeDeadLine);
 					try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
 						List<?> firstRow = cursor.iterator().next();
 						Long count = (Long) firstRow.get(0);
@@ -112,18 +113,36 @@ public class HandlerService extends TimerTask {
 							long timeDeadline = System.currentTimeMillis() - handler.getActionAggrTime() * 1000 * 10;
 							SqlFieldsQuery sql1 = new SqlFieldsQuery(
 									"SELECT info.uuid, alarm.uuid, alarmTime FROM AlarmHandlerInfo info,AlarmEvent alarm where alarm.uuid=info.alarmId and handlerId=? and alarmGroup=? and alarmTime>=? and handled=false order by alarmTime desc")
-											.setArgs(handler.getUuid(), alarmGroup, timeDeadline);
+											.setArgs(handler.getName(), alarmGroup, timeDeadline);
 							Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> pair = parseCorrelationAlarms(sql1);
 							List<AlarmEvent> alarmEvents = pair.getKey();
 							correlationAlarms = alarmEvents;
 						}
 					}
 				}
-				doHandle(handler, alarmEvent, correlationAlarms, alarmHandlerInfo, eventDc);
+				Pair<Boolean, String> preventPair = isPrevent(preventHandlers, handler.getName());
+				if (preventPair.getLeft()) {
+					doHandle(handler, alarmEvent, correlationAlarms, alarmHandlerInfo, eventDc);
+					if (CollectionUtils.isNotEmpty(handler.getPreventHandlers())) {
+						preventHandlers.addAll(handler.getPreventHandlers());
+					}
+				} else {
+					logger.info("[{}] handler {} is prevent by expression {}", uuid, handler.getName(),
+							preventPair.getRight());
+				}
 			}
 		} catch (Exception e) {
 			logger.error("", e);
 		}
+	}
+
+	private Pair<Boolean, String> isPrevent(Set<String> preventHandlers, String handler) {
+		for (String preventHandler : preventHandlers) {
+			if (handler.matches(preventHandler)) {
+				return Pair.of(true, preventHandler);
+			}
+		}
+		return Pair.of(false, "");
 	}
 
 	private void doHandle(Handler handler, AlarmEvent alarmEvent, List<AlarmEvent> correlationAlarms,
