@@ -143,12 +143,6 @@ public class AutomateManager implements ISystemClientListener {
 		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
 		this.handlers = (List<Handler>) configCache.get(AUTOMATE_HANDLER);
 		this.repoCommitId = (String) configCache.get(CONFIG_REPO_COMMITID);
-		Collections.sort(this.handlers, new Comparator<Handler>() {
-			@Override
-			public int compare(Handler o1, Handler o2) {
-				return o2.getOrder() - o1.getOrder();
-			}
-		});
 		updateRuleService();
 	}
 
@@ -158,12 +152,6 @@ public class AutomateManager implements ISystemClientListener {
 	}
 
 	public void updateRules(List<Executor> executors, List<Alarmer> alarmers, List<Handler> handlers) {
-		Collections.sort(handlers, new Comparator<Handler>() {
-			@Override
-			public int compare(Handler o1, Handler o2) {
-				return o2.getOrder() - o1.getOrder();
-			}
-		});
 		this.executors = executors;
 		this.alarmers = alarmers;
 		this.handlers = handlers;
@@ -175,6 +163,21 @@ public class AutomateManager implements ISystemClientListener {
 	}
 
 	private void updateRuleService() {
+		if (this.handlers == null) {
+			this.handlers = Lists.newArrayList();
+		}
+		if (this.executors == null) {
+			this.executors = Lists.newArrayList();
+		}
+		if (this.alarmers == null) {
+			this.alarmers = Lists.newArrayList();
+		}
+		Collections.sort(handlers, new Comparator<Handler>() {
+			@Override
+			public int compare(Handler o1, Handler o2) {
+				return o2.getOrder() - o1.getOrder();
+			}
+		});
 		updateSchedulers();
 		updateAlarmers();
 	}
@@ -297,10 +300,12 @@ public class AutomateManager implements ISystemClientListener {
 			taskAudit.setStatus(ackMessage.getStatus());
 			taskAudit.setMessage(ackMessage.getMessage());
 			auditCache.put(key, taskAudit);
-			alarmService.sendEvent(ExecStatusEvent.make(taskAudit, ackMessage));
-			String scheduleStatusKey = scheduleStatusKey(taskAudit.getExecutor(), taskAudit.getScheduleId());
-			ExecutorStatus executorStatus = (ExecutorStatus) scheduleStatusCache.get(scheduleStatusKey);
-			scheduleNextTask(executorStatus);
+			if (TaskType.EXECUTOR.equals(taskAudit.getType())) {
+				alarmService.sendEvent(ExecStatusEvent.make(taskAudit, ackMessage));
+				String scheduleStatusKey = scheduleStatusKey(taskAudit.getExecutor(), taskAudit.getScheduleId());
+				ExecutorStatus executorStatus = (ExecutorStatus) scheduleStatusCache.get(scheduleStatusKey);
+				scheduleNextTask(executorStatus);
+			}
 		}
 	}
 
@@ -343,6 +348,9 @@ public class AutomateManager implements ISystemClientListener {
 			logger.warn("No worker matched for handler {} ", handler.getName());
 			return;
 		}
+		List<String> toWorkerText = Lists.newArrayList();
+		toWorkers.forEach(e -> toWorkerText.add(e.getHost()));
+		logger.info("Start schedule handler {}, matched workers {}", handler.getName(), toWorkerText);
 		for (ClientInfo toWorker : toWorkers) {
 			LabelRule labelRule = workerLabelManager.findRule(toWorker);
 			if (labelRule != null) {

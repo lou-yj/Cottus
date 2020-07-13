@@ -1,9 +1,9 @@
 package com.louyj.rhttptunnel.worker.script;
 
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -12,6 +12,7 @@ import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
 import org.python.jsr223.PyScriptEngineFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,16 +28,20 @@ import bsh.engine.BshScriptEngineFactory;
  *
  */
 @Component
-public class ScriptEngineExecutor {
+public class ScriptEngineExecutor implements InitializingBean {
 
 	@Value("${work.directory}")
 	private String workDirectory;
 
 	private ScriptEngineManager engineManager;
 
-	@PostConstruct
-	public void setup() {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 		engineManager = new ScriptEngineManager();
+
+		Field field = engineManager.getClass().getDeclaredField("DEBUG");
+		field.setAccessible(true);
+		field.set(true, null);
 
 		PyScriptEngineFactory python = new PyScriptEngineFactory();
 		engineManager.registerEngineName("python", python);

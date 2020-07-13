@@ -121,7 +121,7 @@ public class HandlerService extends TimerTask {
 					}
 				}
 				Pair<Boolean, String> preventPair = isPrevent(preventHandlers, handler.getName());
-				if (preventPair.getLeft()) {
+				if (preventPair.getLeft() == false) {
 					doHandle(handler, alarmEvent, correlationAlarms, alarmHandlerInfo, eventDc);
 					if (CollectionUtils.isNotEmpty(handler.getPreventHandlers())) {
 						preventHandlers.addAll(handler.getPreventHandlers());
@@ -175,33 +175,34 @@ public class HandlerService extends TimerTask {
 	@SuppressWarnings("unchecked")
 	private boolean isWindowMatched(String uuid, DocumentContext evnetDc, boolean regexMatch,
 			Map<String, Object> windowMatched, int timeWindowSize) {
-		if (MapUtils.isNotEmpty(windowMatched)) {
-			Map<String, Object> windowMatchedReplaced = Maps.newHashMap();
-			for (Entry<String, Object> entry : windowMatched.entrySet()) {
-				String matchedKey = replacePlaceHolder(evnetDc, entry.getKey());
-				Object matchedValue = replacePlaceHolder(evnetDc, entry.getValue());
-				windowMatchedReplaced.put(matchedKey, matchedValue);
-			}
-			long timeDeadLine = System.currentTimeMillis() - timeWindowSize * 1000;
-			SqlFieldsQuery sql = new SqlFieldsQuery("SELECT uuid,fields FROM AlarmEvent where alarmTime > ?")
-					.setArgs(timeDeadLine);
-			try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
-				for (List<?> row : cursor) {
-					Map<String, Object> windowMap = (Map<String, Object>) row.get(1);
-					boolean allMatched = true;
-					for (Entry<String, Object> entry : windowMatchedReplaced.entrySet()) {
-						String matchedKey = entry.getKey();
-						Object matchedValue = entry.getValue();
-						Object windowValue = windowMap.get(matchedKey);
-						if (isMatched(regexMatch, matchedValue, windowValue) == false) {
-							allMatched = false;
-							break;
-						}
+		if (MapUtils.isEmpty(windowMatched)) {
+			return true;
+		}
+		Map<String, Object> windowMatchedReplaced = Maps.newHashMap();
+		for (Entry<String, Object> entry : windowMatched.entrySet()) {
+			String matchedKey = replacePlaceHolder(evnetDc, entry.getKey());
+			Object matchedValue = replacePlaceHolder(evnetDc, entry.getValue());
+			windowMatchedReplaced.put(matchedKey, matchedValue);
+		}
+		long timeDeadLine = System.currentTimeMillis() - timeWindowSize * 1000;
+		SqlFieldsQuery sql = new SqlFieldsQuery("SELECT uuid,fields FROM AlarmEvent where alarmTime > ?")
+				.setArgs(timeDeadLine);
+		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
+			for (List<?> row : cursor) {
+				Map<String, Object> windowMap = (Map<String, Object>) row.get(1);
+				boolean allMatched = true;
+				for (Entry<String, Object> entry : windowMatchedReplaced.entrySet()) {
+					String matchedKey = entry.getKey();
+					Object matchedValue = entry.getValue();
+					Object windowValue = windowMap.get(matchedKey);
+					if (isMatched(regexMatch, matchedValue, windowValue) == false) {
+						allMatched = false;
+						break;
 					}
-					if (allMatched) {
-						logger.info("[{}] Matched window event {}", windowMap);
-						return true;
-					}
+				}
+				if (allMatched) {
+					logger.info("[{}] Matched window event {}", windowMap);
+					return true;
 				}
 			}
 		}
