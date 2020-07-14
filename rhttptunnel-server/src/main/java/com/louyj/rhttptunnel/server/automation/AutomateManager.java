@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorLog;
@@ -215,6 +216,24 @@ public class AutomateManager implements ISystemClientListener {
 				record.setStatus(rowGet(row, index++));
 				record.setMetrics(rowGet(row, index++));
 				record.setMessage(rowGet(row, index++));
+				result.add(record);
+			}
+		}
+		return result;
+	}
+
+	public List<AlarmTriggeredRecord> searchAlarmRecords(String name, int limit) {
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT alarmTime,alarmGroup,fields FROM AlarmEvent info where alarmRule=? order by alarmTime desc limit ?")
+						.setArgs(name, limit);
+		List<AlarmTriggeredRecord> result = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
+			for (List<?> row : cursor) {
+				AlarmTriggeredRecord record = new AlarmTriggeredRecord();
+				int index = 0;
+				record.setAlarmTime(rowGet(row, index++));
+				record.setAlarmGroup(rowGet(row, index++));
+				record.setFields(rowGet(row, index++));
 				result.add(record);
 			}
 		}
