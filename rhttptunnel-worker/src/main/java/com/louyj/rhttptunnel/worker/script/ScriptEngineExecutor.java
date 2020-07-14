@@ -1,7 +1,6 @@
 package com.louyj.rhttptunnel.worker.script;
 
 import java.io.StringWriter;
-import java.lang.reflect.Field;
 import java.util.Map;
 
 import javax.script.Bindings;
@@ -39,9 +38,14 @@ public class ScriptEngineExecutor implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		engineManager = new ScriptEngineManager();
 
-		Field field = engineManager.getClass().getDeclaredField("DEBUG");
-		field.setAccessible(true);
-		field.set(true, null);
+//		Field field = engineManager.getClass().getDeclaredField("DEBUG");
+//
+//		Field modifiersField = Field.class.getDeclaredField("modifiers");
+//		modifiersField.setAccessible(true);
+//		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+//
+//		field.setAccessible(true);
+//		field.set(null, true);
 
 		PyScriptEngineFactory python = new PyScriptEngineFactory();
 		engineManager.registerEngineName("python", python);

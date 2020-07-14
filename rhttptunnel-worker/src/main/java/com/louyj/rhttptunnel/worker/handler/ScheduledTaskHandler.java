@@ -172,6 +172,8 @@ public class ScheduledTaskHandler implements IMessageHandler, ApplicationContext
 
 	public static class ScriptTask implements Callable<EvalResult> {
 
+		private Logger logger = LoggerFactory.getLogger(getClass());
+
 		private ScriptEngineExecutor scriptEngineExecutor;
 
 		private String language;
@@ -194,6 +196,7 @@ public class ScheduledTaskHandler implements IMessageHandler, ApplicationContext
 			try {
 				return scriptEngineExecutor.eval(language, script, env, collectStdLog);
 			} catch (Exception e) {
+				logger.error("", e);
 				EvalResult evalResult = new EvalResult();
 				StringWriter stringWriter = new StringWriter();
 				stringWriter.write("Exception " + e.getClass().getName() + " reason " + e.getMessage());
