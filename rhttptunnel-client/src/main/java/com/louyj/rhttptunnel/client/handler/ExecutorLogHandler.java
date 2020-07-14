@@ -39,7 +39,7 @@ public class ExecutorLogHandler implements IMessageHandler {
 			if (StringUtils.isBlank(executorLog.getHost())) {
 				continue;
 			}
-			writer.print(String.format("Worker %s[%s]", executorLog.getHost(), executorLog.getIp()));
+			writer.println(String.format("Worker %s[%s]", executorLog.getHost(), executorLog.getIp()));
 			if (StringUtils.isNotBlank(executorLog.getStdout())) {
 				writer.println(executorLog.getStdout());
 			}

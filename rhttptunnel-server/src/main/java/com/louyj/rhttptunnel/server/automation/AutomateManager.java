@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -318,33 +317,18 @@ public class AutomateManager implements ISystemClientListener {
 		if (message instanceof TaskScheduleMessage) {
 			TaskScheduleMessage taskMessage = (TaskScheduleMessage) message;
 			long millis = DateTime.now().getMillis();
-			if (CollectionUtils.isNotEmpty(toWorkers)) {
-				for (ClientInfo toWorker : toWorkers) {
-					ScheduledTaskAudit taskAudit = new ScheduledTaskAudit();
-					taskAudit.setExecutor(taskMessage.getExecutor());
-					taskAudit.setName(taskMessage.getName());
-					taskAudit.setTime(millis);
-					taskAudit.getSre().put(EXEC_HOST, toWorker.getHost());
-					taskAudit.getSre().put(EXEC_IP, toWorker.getIp());
-					taskAudit.setStatus(ExecuteStatus.SCHEDULED);
-					taskAudit.setParams(taskMessage.getParams());
-					taskAudit.setScheduleId(taskMessage.getScheduledId());
-					taskAudit.setType(taskMessage.getType());
-					String key = auditTaskKey(taskMessage, toWorker);
-					auditCache.put(key, taskAudit);
-				}
-			} else {
+			for (ClientInfo toWorker : toWorkers) {
 				ScheduledTaskAudit taskAudit = new ScheduledTaskAudit();
 				taskAudit.setExecutor(taskMessage.getExecutor());
 				taskAudit.setName(taskMessage.getName());
 				taskAudit.setTime(millis);
-				taskAudit.setStatus(ExecuteStatus.NO_MATCHED_WORKER);
+				taskAudit.getSre().put(EXEC_HOST, toWorker.getHost());
+				taskAudit.getSre().put(EXEC_IP, toWorker.getIp());
+				taskAudit.setStatus(ExecuteStatus.SCHEDULED);
 				taskAudit.setParams(taskMessage.getParams());
 				taskAudit.setScheduleId(taskMessage.getScheduledId());
 				taskAudit.setType(taskMessage.getType());
-				String uuid = UUID.randomUUID().toString();
-				ClientInfo randci = new ClientInfo(uuid, uuid);
-				String key = auditTaskKey(taskMessage, randci);
+				String key = auditTaskKey(taskMessage, toWorker);
 				auditCache.put(key, taskAudit);
 			}
 		}
