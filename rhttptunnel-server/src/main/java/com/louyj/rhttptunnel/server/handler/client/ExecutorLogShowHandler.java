@@ -11,7 +11,6 @@ import com.louyj.rhttptunnel.model.bean.automate.ExecutorLog;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.ExecutorLogMessage;
 import com.louyj.rhttptunnel.model.message.automate.ExecutorLogShowMessage;
-import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
@@ -46,7 +45,7 @@ public class ExecutorLogShowHandler implements IClientMessageHandler {
 		ExecutorLogShowMessage logMessage = (ExecutorLogShowMessage) message;
 		String executor = logMessage.getExecutor();
 		String task = logMessage.getTask();
-		List<ExecutorLog> executorLogs = automateManager.searchAuditLogs(TaskType.EXECUTOR, executor, task,
+		List<ExecutorLog> executorLogs = automateManager.searchAuditLogs(logMessage.getTaskType(), executor, task,
 				logMessage.getScheduleId());
 		ExecutorLogMessage executorLogMessage = new ExecutorLogMessage(SERVER, message.getExchangeId());
 		executorLogMessage.setLogs(executorLogs);

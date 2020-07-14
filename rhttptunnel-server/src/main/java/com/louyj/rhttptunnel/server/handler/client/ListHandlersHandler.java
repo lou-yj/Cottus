@@ -7,10 +7,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.louyj.rhttptunnel.model.bean.automate.ExecutorTaskRecord;
+import com.louyj.rhttptunnel.model.bean.automate.Handler;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorRecordsListMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorRecordsMessage;
+import com.louyj.rhttptunnel.model.message.automate.HandlerItemsMessage;
+import com.louyj.rhttptunnel.model.message.automate.ListExecutorsMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
@@ -24,14 +24,14 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  *
  */
 @Component
-public class ExecutorRecordsHandler implements IClientMessageHandler {
+public class ListHandlersHandler implements IClientMessageHandler {
 
 	@Autowired
 	private AutomateManager automateManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ExecutorRecordsListMessage.class;
+		return ListExecutorsMessage.class;
 	}
 
 	@Override
@@ -42,14 +42,10 @@ public class ExecutorRecordsHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		ExecutorRecordsListMessage listMessage = (ExecutorRecordsListMessage) message;
-		String executor = listMessage.getExecutor();
-		String task = listMessage.getTask();
-		List<ExecutorTaskRecord> auditRecords = automateManager.searchAuditRecords(listMessage.getTaskType(), executor,
-				task, 100);
-		ExecutorRecordsMessage recordsMessage = new ExecutorRecordsMessage(SERVER, message.getExchangeId());
-		recordsMessage.setRecords(auditRecords);
-		return recordsMessage;
+		List<Handler> handlers = automateManager.getHandlers();
+		HandlerItemsMessage itemsMessage = new HandlerItemsMessage(SERVER, message.getExchangeId());
+		itemsMessage.setHandlers(handlers);
+		return itemsMessage;
 	}
 
 }
