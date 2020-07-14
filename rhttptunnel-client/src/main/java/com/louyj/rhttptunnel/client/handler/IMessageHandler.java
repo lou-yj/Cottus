@@ -1,7 +1,13 @@
 package com.louyj.rhttptunnel.client.handler;
 
 import java.io.PrintStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 
 /**
@@ -16,5 +22,13 @@ public interface IMessageHandler {
 	Class<? extends BaseMessage> supportType();
 
 	void handle(BaseMessage message, PrintStream writer) throws Exception;
+
+	default String formatMap(Map<?, ?> map) {
+		List<String> labelsList = Lists.newArrayList();
+		for (Entry<?, ?> entry : map.entrySet()) {
+			labelsList.add(entry.getKey() + "=" + entry.getValue());
+		}
+		return StringUtils.join(labelsList, "\n");
+	}
 
 }

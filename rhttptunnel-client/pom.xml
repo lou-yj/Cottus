@@ -50,15 +50,5 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- <dependency>
-			<groupId>com.googlecode.lanterna</groupId>
-			<artifactId>lanterna</artifactId>
-			<version>3.0.3</version>
-		</dependency> -->
-		<dependency>
-			<groupId>de.vandermeer</groupId>
-			<artifactId>asciitable</artifactId>
-			<version>0.3.2</version>
-		</dependency>
 	</dependencies>
 </project>

@@ -6,10 +6,14 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
+import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.repo.RepoShowMessage;
+import com.louyj.rhttptunnel.model.message.automate.DescribeExecutorMessage;
+import com.louyj.rhttptunnel.model.message.automate.ExecutorLogShowMessage;
+import com.louyj.rhttptunnel.model.message.automate.ExecutorRecordsListMessage;
+import com.louyj.rhttptunnel.model.message.automate.ListExecutorsMessage;
 
 /**
  *
@@ -22,9 +26,42 @@ import com.louyj.rhttptunnel.model.message.repo.RepoShowMessage;
 public class ExecutorCommand extends BaseCommand {
 
 	@ShellMethod(value = "show executor list")
-	@ShellMethodAvailability("serverAdminContext")
+	@ShellMethodAvailability("serverContext")
 	public String executorList() {
-		RepoShowMessage message = new RepoShowMessage(CLIENT);
+		ListExecutorsMessage message = new ListExecutorsMessage(CLIENT);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
+	@ShellMethod(value = "show executor details")
+	@ShellMethodAvailability("serverContext")
+	public String executorDescribe(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name) {
+		DescribeExecutorMessage message = new DescribeExecutorMessage(CLIENT);
+		message.setName(name);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
+	@ShellMethod(value = "show executor task execute history record")
+	@ShellMethodAvailability("serverContext")
+	public String executorRecords(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name,
+			@ShellOption(value = { "-t", "--task" }, help = "task") String task) {
+		ExecutorRecordsListMessage message = new ExecutorRecordsListMessage(CLIENT);
+		message.setExecutor(name);
+		message.setTask(task);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
+	@ShellMethod(value = "show executor task execute log")
+	@ShellMethodAvailability("serverContext")
+	public String executorLogs(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name,
+			@ShellOption(value = { "-t", "--task" }, help = "task") String task,
+			@ShellOption(value = { "-i", "--id" }, help = "schedule id") String id) {
+		ExecutorLogShowMessage message = new ExecutorLogShowMessage(CLIENT);
+		message.setExecutor(name);
+		message.setTask(task);
+		message.setScheduleId(id);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}

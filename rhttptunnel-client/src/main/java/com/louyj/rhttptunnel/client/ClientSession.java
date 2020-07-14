@@ -37,7 +37,7 @@ public class ClientSession {
 
 	private String cwd = "/";
 
-	private boolean debug = false;
+	private boolean debug = true;
 
 	public boolean isDebug() {
 		return debug;

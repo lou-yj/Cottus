@@ -2,21 +2,22 @@ package com.louyj.rhttptunnel.client.handler;
 
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Map.Entry;
 
-import org.apache.commons.lang3.StringUtils;
+import org.jline.terminal.Terminal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.shell.table.ArrayTableModel;
+import org.springframework.shell.table.BorderStyle;
+import org.springframework.shell.table.TableBuilder;
+import org.springframework.shell.table.TableModel;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.bean.WorkerInfo;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.WorkerListMessage;
-
-import de.vandermeer.asciitable.AsciiTable;
 
 /**
  *
@@ -31,6 +32,10 @@ public class WorkerListHandler implements IMessageHandler {
 	@Autowired
 	protected ClientSession session;
 
+	@Autowired
+	@Lazy
+	private Terminal terminal;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
 		return WorkerListMessage.class;
@@ -39,23 +44,20 @@ public class WorkerListHandler implements IMessageHandler {
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		WorkerListMessage listMessage = (WorkerListMessage) message;
-		AsciiTable at = new AsciiTable();
-		at.addRule();
-		at.addRow("INDEX", "HOST", "IP", "LABELS", "UPTIME");
+		List<WorkerInfo> workers = listMessage.getWorkers();
+		Object[][] data = new Object[workers.size() + 1][];
+		data[0] = new Object[] { "INDEX", "HOST", "IP", "LABELS", "UPTIME" };
 		int index = 1;
-		for (WorkerInfo worker : listMessage.getWorkers()) {
-			List<String> labelsList = Lists.newArrayList();
-			for (Entry<String, String> entry : worker.getLabels().entrySet()) {
-				labelsList.add(entry.getKey() + "=" + entry.getValue());
-			}
+		for (WorkerInfo worker : workers) {
 			ClientInfo clientInfo = worker.getClientInfo();
-			at.addRule();
-			at.addRow(index++, clientInfo.getHost(), clientInfo.getIp(), StringUtils.join(labelsList, "\n"),
-					clientInfo.getUptime());
+			data[index++] = new Object[] { index - 1, clientInfo.getHost(), clientInfo.getIp(),
+					formatMap(worker.getLabels()), clientInfo.getUptime() };
 		}
-		at.addRule();
-		String rend = at.render();
-		writer.println(rend);
+		TableModel model = new ArrayTableModel(data);
+		TableBuilder tableBuilder = new TableBuilder(model);
+		tableBuilder.addHeaderBorder(BorderStyle.fancy_double);
+		tableBuilder.addFullBorder(BorderStyle.fancy_light);
+		writer.println(tableBuilder.build().render(terminal.getWidth()));
 		writer.println("Found " + (index - 1) + " workes");
 		session.setDiscoverWorkers(listMessage.getWorkers());
 		throw new EndOfMessageException();

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -20,6 +21,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.query.QueryCursor;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -38,7 +41,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
+import com.louyj.rhttptunnel.model.bean.automate.ExecutorLog;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorTask;
+import com.louyj.rhttptunnel.model.bean.automate.ExecutorTaskRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Handler;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -193,6 +198,57 @@ public class AutomateManager implements ISystemClientListener {
 		scheduleNextTask(executorStatus);
 	}
 
+	public List<ExecutorTaskRecord> searchAuditRecords(TaskType type, String executor, String name, int limit) {
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT scheduleId,time,params,sre,status,metrics,message FROM ScheduledTaskAudit info where type=? and executor=? and name = ? order by scheduleId desc limit ?")
+						.setArgs(type, executor, name, limit);
+		List<ExecutorTaskRecord> result = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = auditCache.query(sql)) {
+			for (List<?> row : cursor) {
+				ExecutorTaskRecord record = new ExecutorTaskRecord();
+				record.setExecutor(executor);
+				record.setName(name);
+				int index = 0;
+				record.setScheduleId(rowGet(row, index++));
+				record.setTime(rowGet(row, index++));
+				record.setParams(rowGet(row, index++));
+				record.setSre(rowGet(row, index++));
+				record.setStatus(rowGet(row, index++));
+				record.setMetrics(rowGet(row, index++));
+				record.setMessage(rowGet(row, index++));
+				result.add(record);
+			}
+		}
+		return result;
+	}
+
+	public List<ExecutorLog> searchAuditLogs(TaskType type, String executor, String name, String scheduleId) {
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT stdout,stderr,sre FROM ScheduledTaskAudit info where type=? and executor=? and name = ? and scheduleId=?")
+						.setArgs(type, executor, name, scheduleId);
+		List<ExecutorLog> result = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = auditCache.query(sql)) {
+			for (List<?> row : cursor) {
+				ExecutorLog executorLog = new ExecutorLog();
+				int index = 0;
+				executorLog.setStdout(rowGet(row, index++));
+				executorLog.setStderr(rowGet(row, index++));
+				Map<String, String> sre = rowGet(row, index++);
+				String host = MapUtils.getString(sre, EXEC_HOST);
+				String ip = MapUtils.getString(sre, EXEC_IP);
+				executorLog.setHost(host);
+				executorLog.setIp(ip);
+				result.add(executorLog);
+			}
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> T rowGet(List<?> row, int index) {
+		return (T) row.get(index);
+	}
+
 	public String getRepoCommitId() {
 		return repoCommitId;
 	}
@@ -221,6 +277,23 @@ public class AutomateManager implements ISystemClientListener {
 		return handlers;
 	}
 
+	public List<Executor> getExecutors() {
+		return executors;
+	}
+
+	public List<Alarmer> getAlarmers() {
+		return alarmers;
+	}
+
+	public Executor getExecutor(String name) {
+		for (Executor executor : executors) {
+			if (StringUtils.equals(executor.getName(), name)) {
+				return executor;
+			}
+		}
+		return null;
+	}
+
 	public Handler getHandler(String id) {
 		for (Handler handler : handlers) {
 			if (StringUtils.equals(handler.getName(), id)) {
@@ -245,18 +318,33 @@ public class AutomateManager implements ISystemClientListener {
 		if (message instanceof TaskScheduleMessage) {
 			TaskScheduleMessage taskMessage = (TaskScheduleMessage) message;
 			long millis = DateTime.now().getMillis();
-			for (ClientInfo toWorker : toWorkers) {
+			if (CollectionUtils.isNotEmpty(toWorkers)) {
+				for (ClientInfo toWorker : toWorkers) {
+					ScheduledTaskAudit taskAudit = new ScheduledTaskAudit();
+					taskAudit.setExecutor(taskMessage.getExecutor());
+					taskAudit.setName(taskMessage.getName());
+					taskAudit.setTime(millis);
+					taskAudit.getSre().put(EXEC_HOST, toWorker.getHost());
+					taskAudit.getSre().put(EXEC_IP, toWorker.getIp());
+					taskAudit.setStatus(ExecuteStatus.SCHEDULED);
+					taskAudit.setParams(taskMessage.getParams());
+					taskAudit.setScheduleId(taskMessage.getScheduledId());
+					taskAudit.setType(taskMessage.getType());
+					String key = auditTaskKey(taskMessage, toWorker);
+					auditCache.put(key, taskAudit);
+				}
+			} else {
 				ScheduledTaskAudit taskAudit = new ScheduledTaskAudit();
 				taskAudit.setExecutor(taskMessage.getExecutor());
 				taskAudit.setName(taskMessage.getName());
 				taskAudit.setTime(millis);
-				taskAudit.getSre().put(EXEC_HOST, toWorker.getHost());
-				taskAudit.getSre().put(EXEC_IP, toWorker.getIp());
-				taskAudit.setStatus(ExecuteStatus.SCHEDULED);
+				taskAudit.setStatus(ExecuteStatus.NO_MATCHED_WORKER);
 				taskAudit.setParams(taskMessage.getParams());
 				taskAudit.setScheduleId(taskMessage.getScheduledId());
 				taskAudit.setType(taskMessage.getType());
-				String key = auditTaskKey(taskMessage, toWorker);
+				String uuid = UUID.randomUUID().toString();
+				ClientInfo randci = new ClientInfo(uuid, uuid);
+				String key = auditTaskKey(taskMessage, randci);
 				auditCache.put(key, taskAudit);
 			}
 		}

@@ -57,6 +57,8 @@ public class Executor {
 
 	private List<ExecutorTask> tasks = Lists.newArrayList();
 
+	private long updateTime = System.currentTimeMillis();
+
 	public void check(File ruleFile, String repoCommitIdPath) {
 		if (StringUtils.isAnyBlank(name, scheduleExpression)) {
 			String message = String.format("Bad format for executor %s in file %s", name, ruleFile.getName());
@@ -141,6 +143,14 @@ public class Executor {
 		taskMessage.setScheduledId(scheduledId);
 		taskMessage.setType(TaskType.EXECUTOR);
 		return taskMessage;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
 	}
 
 	public String getName() {
