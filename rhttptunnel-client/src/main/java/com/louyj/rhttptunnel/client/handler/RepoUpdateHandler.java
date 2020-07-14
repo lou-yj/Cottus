@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.RepoUpdateMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoUpdateMessage;
 
 /**
  *

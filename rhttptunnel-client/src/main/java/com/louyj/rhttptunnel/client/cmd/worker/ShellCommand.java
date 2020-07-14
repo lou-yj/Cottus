@@ -23,9 +23,9 @@ import org.springframework.shell.standard.ShellMethodAvailability;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ShellEndMessage;
-import com.louyj.rhttptunnel.model.message.ShellMessage;
-import com.louyj.rhttptunnel.model.message.ShellStartMessage;
+import com.louyj.rhttptunnel.model.message.shell.ShellEndMessage;
+import com.louyj.rhttptunnel.model.message.shell.ShellMessage;
+import com.louyj.rhttptunnel.model.message.shell.ShellStartMessage;
 
 /**
  *

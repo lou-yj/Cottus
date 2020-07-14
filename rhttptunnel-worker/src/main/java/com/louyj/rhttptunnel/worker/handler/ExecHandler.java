@@ -1,7 +1,7 @@
 package com.louyj.rhttptunnel.worker.handler;
 
 import static com.louyj.rhttptunnel.model.http.Endpoints.WORKER_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.status.RejectReason.SERVER_BAD_RESPONSE;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.SERVER_BAD_RESPONSE;
 import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
@@ -20,9 +20,9 @@ import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ExecMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.ShellResultMessage;
+import com.louyj.rhttptunnel.model.message.file.ExecMessage;
+import com.louyj.rhttptunnel.model.message.shell.ShellResultMessage;
 import com.louyj.rhttptunnel.worker.shell.ShellManager;
 import com.louyj.rhttptunnel.worker.shell.ShellWrapper;
 import com.louyj.rhttptunnel.worker.shell.ShellWrapper.ShellOutput;

@@ -14,7 +14,7 @@ import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.RmMessage;
+import com.louyj.rhttptunnel.model.message.file.RmMessage;
 
 /**
  *

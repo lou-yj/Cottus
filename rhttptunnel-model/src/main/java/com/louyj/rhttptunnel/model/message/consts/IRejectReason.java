@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.model.message.status;
+package com.louyj.rhttptunnel.model.message.consts;
 
 /**
  *

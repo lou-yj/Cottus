@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.AckMessage;
-import com.louyj.rhttptunnel.model.message.RepoSetMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;

@@ -11,7 +11,7 @@ import com.louyj.rhttptunnel.model.bean.RoleType;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.RoleMessage;
+import com.louyj.rhttptunnel.model.message.auth.RoleMessage;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;

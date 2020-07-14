@@ -1,6 +1,6 @@
 package com.louyj.rhttptunnel.server.handler.worker;
 
-import static com.louyj.rhttptunnel.model.message.status.RejectReason.INTERRUPT;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.INTERRUPT;
 
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;

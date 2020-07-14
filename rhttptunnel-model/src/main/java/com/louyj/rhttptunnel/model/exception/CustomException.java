@@ -1,6 +1,6 @@
 package com.louyj.rhttptunnel.model.exception;
 
-import com.louyj.rhttptunnel.model.message.status.RejectReason;
+import com.louyj.rhttptunnel.model.message.consts.RejectReason;
 
 /**
  *

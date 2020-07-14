@@ -1,10 +1,12 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.shell;
 
 import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.FileListMessage;
+import com.louyj.rhttptunnel.model.message.file.FileListMessage;
 
 /**
  *

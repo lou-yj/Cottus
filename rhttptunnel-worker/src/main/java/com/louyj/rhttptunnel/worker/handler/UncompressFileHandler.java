@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.UncompressFileMessage;
+import com.louyj.rhttptunnel.model.message.file.UncompressFileMessage;
 import com.louyj.rhttptunnel.model.util.CompressUtils;
 import com.louyj.rhttptunnel.worker.ClientDetector;
 

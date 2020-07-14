@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.label;
 
 import java.util.Map;
 import java.util.Set;
@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *

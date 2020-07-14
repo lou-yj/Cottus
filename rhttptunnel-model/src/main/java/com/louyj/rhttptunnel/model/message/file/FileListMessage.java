@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.file;
 
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 
@@ -6,6 +6,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *

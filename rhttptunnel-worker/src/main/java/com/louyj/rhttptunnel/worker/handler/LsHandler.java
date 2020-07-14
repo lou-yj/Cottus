@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.FileListMessage;
-import com.louyj.rhttptunnel.model.message.LsMessage;
+import com.louyj.rhttptunnel.model.message.file.FileListMessage;
+import com.louyj.rhttptunnel.model.message.file.LsMessage;
 
 /**
  *

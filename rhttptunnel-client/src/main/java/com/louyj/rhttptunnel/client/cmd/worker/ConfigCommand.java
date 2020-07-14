@@ -11,8 +11,8 @@ import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ConfigGetMessage;
-import com.louyj.rhttptunnel.model.message.ConfigSetMessage;
+import com.louyj.rhttptunnel.model.message.config.ConfigGetMessage;
+import com.louyj.rhttptunnel.model.message.config.ConfigSetMessage;
 
 /**
  *

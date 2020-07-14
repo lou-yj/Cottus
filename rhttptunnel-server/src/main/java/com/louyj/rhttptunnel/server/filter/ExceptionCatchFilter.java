@@ -1,7 +1,7 @@
 package com.louyj.rhttptunnel.server.filter;
 
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
-import static com.louyj.rhttptunnel.model.message.status.RejectReason.INTERNEL_SERVER_ERROR;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.INTERNEL_SERVER_ERROR;
 
 import java.io.IOException;
 

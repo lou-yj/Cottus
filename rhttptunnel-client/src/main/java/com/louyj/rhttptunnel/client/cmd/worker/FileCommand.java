@@ -26,13 +26,13 @@ import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ExecMessage;
-import com.louyj.rhttptunnel.model.message.FileDataMessage;
-import com.louyj.rhttptunnel.model.message.FileRequestMessage;
-import com.louyj.rhttptunnel.model.message.LsMessage;
-import com.louyj.rhttptunnel.model.message.PwdMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
-import com.louyj.rhttptunnel.model.message.RmMessage;
+import com.louyj.rhttptunnel.model.message.file.ExecMessage;
+import com.louyj.rhttptunnel.model.message.file.FileDataMessage;
+import com.louyj.rhttptunnel.model.message.file.FileRequestMessage;
+import com.louyj.rhttptunnel.model.message.file.LsMessage;
+import com.louyj.rhttptunnel.model.message.file.PwdMessage;
+import com.louyj.rhttptunnel.model.message.file.RmMessage;
 
 /**
  *

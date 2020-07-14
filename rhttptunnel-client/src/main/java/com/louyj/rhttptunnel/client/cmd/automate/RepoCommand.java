@@ -13,9 +13,9 @@ import org.springframework.shell.standard.ShellMethodAvailability;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.RepoSetMessage;
-import com.louyj.rhttptunnel.model.message.RepoShowMessage;
-import com.louyj.rhttptunnel.model.message.RepoUpdateMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoShowMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoUpdateMessage;
 
 /**
  *

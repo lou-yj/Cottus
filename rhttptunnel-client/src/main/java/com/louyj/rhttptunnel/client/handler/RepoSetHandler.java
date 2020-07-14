@@ -8,7 +8,7 @@ import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.RepoSetMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
 
 /**
  *

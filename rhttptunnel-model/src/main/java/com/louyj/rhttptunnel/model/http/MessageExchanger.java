@@ -1,7 +1,7 @@
 package com.louyj.rhttptunnel.model.http;
 
 import static com.google.common.base.Charsets.UTF_8;
-import static com.louyj.rhttptunnel.model.message.status.RejectReason.CLIENT_ERROR;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.CLIENT_ERROR;
 import static com.louyj.rhttptunnel.model.util.AESEncryptUtils.defaultKey;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;

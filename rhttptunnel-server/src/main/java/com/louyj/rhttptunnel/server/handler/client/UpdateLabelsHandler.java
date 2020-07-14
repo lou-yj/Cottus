@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.UpdateLabelMessage;
+import com.louyj.rhttptunnel.model.message.label.UpdateLabelMessage;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;

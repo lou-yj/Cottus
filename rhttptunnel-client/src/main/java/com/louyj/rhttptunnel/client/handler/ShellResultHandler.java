@@ -6,7 +6,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ShellResultMessage;
+import com.louyj.rhttptunnel.model.message.shell.ShellResultMessage;
 
 /**
  *

@@ -1,8 +1,10 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.auth;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.louyj.rhttptunnel.model.bean.RoleType;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *

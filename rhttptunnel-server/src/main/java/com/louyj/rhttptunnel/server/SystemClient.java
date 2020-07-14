@@ -1,6 +1,6 @@
 package com.louyj.rhttptunnel.server;
 
-import static com.louyj.rhttptunnel.model.message.status.RejectReason.INTERNEL_SERVER_ERROR;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.INTERNEL_SERVER_ERROR;
 
 import java.util.List;
 import java.util.Map;

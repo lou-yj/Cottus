@@ -1,8 +1,8 @@
 package com.louyj.rhttptunnel.model.exception;
 
-import static com.louyj.rhttptunnel.model.message.status.RejectReason.BAD_REQUEST;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.BAD_REQUEST;
 
-import com.louyj.rhttptunnel.model.message.status.RejectReason;
+import com.louyj.rhttptunnel.model.message.consts.RejectReason;
 
 /**
  *

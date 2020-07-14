@@ -15,7 +15,7 @@ import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.UpdateLabelMessage;
+import com.louyj.rhttptunnel.model.message.label.UpdateLabelMessage;
 
 /**
  *

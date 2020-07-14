@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ShellStartMessage;
+import com.louyj.rhttptunnel.model.message.shell.ShellStartMessage;
 import com.louyj.rhttptunnel.worker.shell.ShellManager;
 
 /**

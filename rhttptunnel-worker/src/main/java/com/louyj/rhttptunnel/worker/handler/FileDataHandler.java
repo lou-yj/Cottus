@@ -1,6 +1,6 @@
 package com.louyj.rhttptunnel.worker.handler;
 
-import static com.louyj.rhttptunnel.model.message.status.RejectReason.ACCESS_FILE_FAILED;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.ACCESS_FILE_FAILED;
 import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 
 import java.io.File;
@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.FileDataMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.file.FileDataMessage;
 
 /**
  *

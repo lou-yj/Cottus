@@ -1,7 +1,9 @@
-package com.louyj.rhttptunnel.model.message;
+package com.louyj.rhttptunnel.model.message.shell;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *
@@ -10,16 +12,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
-public class RepoUpdateMessage extends BaseMessage {
+public class ShellMessage extends BaseMessage {
 
 	private String message;
 
 	@JsonCreator
-	public RepoUpdateMessage(@JsonProperty("client") ClientInfo client) {
+	public ShellMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
 	}
 
-	public RepoUpdateMessage(ClientInfo client, String exchangeId) {
+	public ShellMessage(ClientInfo client, String exchangeId) {
 		super(client);
 		setExchangeId(exchangeId);
 	}
@@ -32,9 +34,8 @@ public class RepoUpdateMessage extends BaseMessage {
 		this.message = message;
 	}
 
-	public RepoUpdateMessage withMessage(String message) {
+	public ShellMessage withMessage(String message) {
 		setMessage(message);
 		return this;
 	}
-
 }

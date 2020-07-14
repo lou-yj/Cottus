@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.RoleMessage;
+import com.louyj.rhttptunnel.model.message.auth.RoleMessage;
 
 /**
  *
