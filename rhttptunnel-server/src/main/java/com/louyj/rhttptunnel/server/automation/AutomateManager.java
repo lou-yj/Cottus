@@ -200,6 +200,12 @@ public class AutomateManager implements ISystemClientListener {
 				return o2.getOrder() - o1.getOrder();
 			}
 		});
+		Collections.sort(alarmMarkers, new Comparator<AlarmMarker>() {
+			@Override
+			public int compare(AlarmMarker o1, AlarmMarker o2) {
+				return o2.getOrder() - o1.getOrder();
+			}
+		});
 		updateSchedulers();
 		updateAlarmers();
 	}
