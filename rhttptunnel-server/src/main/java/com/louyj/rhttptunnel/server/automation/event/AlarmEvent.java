@@ -1,10 +1,13 @@
 package com.louyj.rhttptunnel.server.automation.event;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
 
 /**
  *
@@ -33,6 +36,17 @@ public class AlarmEvent {
 
 	@QuerySqlField
 	private Map<String, Object> fields = Maps.newHashMap();
+
+	@QuerySqlField
+	private List<HandlerProcessInfo> handlerInfo = Lists.newArrayList();
+
+	public List<HandlerProcessInfo> getHandlerInfo() {
+		return handlerInfo;
+	}
+
+	public void setHandlerInfo(List<HandlerProcessInfo> handlerInfo) {
+		this.handlerInfo = handlerInfo;
+	}
 
 	public String getUuid() {
 		return uuid;

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -38,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
@@ -45,6 +47,8 @@ import com.louyj.rhttptunnel.model.bean.automate.ExecutorLog;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorTask;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorTaskRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Handler;
+import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
+import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo.HandlerExecuteInfo;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
@@ -224,13 +228,14 @@ public class AutomateManager implements ISystemClientListener {
 
 	public List<AlarmTriggeredRecord> searchAlarmRecords(String name, int limit) {
 		SqlFieldsQuery sql = new SqlFieldsQuery(
-				"SELECT alarmTime,alarmGroup,fields FROM AlarmEvent info where alarmRule=? order by alarmTime desc limit ?")
+				"SELECT uuid,alarmTime,alarmGroup,fields FROM AlarmEvent info where alarmRule=? order by alarmTime desc limit ?")
 						.setArgs(name, limit);
 		List<AlarmTriggeredRecord> result = Lists.newArrayList();
 		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
 			for (List<?> row : cursor) {
 				AlarmTriggeredRecord record = new AlarmTriggeredRecord();
 				int index = 0;
+				record.setUuid(rowGet(row, index++));
 				record.setAlarmTime(rowGet(row, index++));
 				record.setAlarmGroup(rowGet(row, index++));
 				record.setFields(rowGet(row, index++));
@@ -260,6 +265,72 @@ public class AutomateManager implements ISystemClientListener {
 			}
 		}
 		return result;
+	}
+
+	public AlarmTrace findAlarmTrace(String uuid) {
+		AlarmTrace alarmTrace = new AlarmTrace();
+		AlarmEvent alarmEvent = (AlarmEvent) alarmCache.get(uuid);
+		AlarmTriggeredRecord record = new AlarmTriggeredRecord();
+		record.setUuid(alarmEvent.getUuid());
+		record.setAlarmTime(alarmEvent.getAlarmTime());
+		record.setAlarmGroup(alarmEvent.getAlarmGroup());
+		record.setFields(alarmEvent.getFields());
+		alarmTrace.setRecord(record);
+
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT alarmId,handlerId,evaluateTime,preventedBy,scheduledTime,params,targetHosts,scheduleId,status,message,correlationAlarmIds FROM AlarmHandlerInfo info where alarmId=? order by evaluateTime")
+						.setArgs(uuid);
+		List<HandlerProcessInfo> handlerInfos = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
+			for (List<?> row : cursor) {
+				int index = 0;
+				HandlerProcessInfo pinfo = new HandlerProcessInfo();
+				pinfo.setAlarmId(rowGet(row, index++));
+				pinfo.setHandlerId(rowGet(row, index++));
+				pinfo.setEvaluateTime(rowGet(row, index++));
+				pinfo.setPreventedBy(rowGet(row, index++));
+				pinfo.setScheduledTime(rowGet(row, index++));
+				pinfo.setParams(rowGet(row, index++));
+				pinfo.setTargetHosts(rowGet(row, index++));
+				pinfo.setScheduleId(rowGet(row, index++));
+				pinfo.setStatus(rowGet(row, index++));
+				pinfo.setMessage(rowGet(row, index++));
+				List<String> correlationAlarmIds = rowGet(row, index++);
+				List<Map<String, Object>> correlationAlarms = Lists.newArrayList();
+				for (String caid : correlationAlarmIds) {
+					AlarmEvent ae = (AlarmEvent) alarmCache.get(caid);
+					correlationAlarms.add(ae.getFields());
+				}
+				pinfo.setCorrelationAlarms(correlationAlarms);
+				handlerInfos.add(pinfo);
+			}
+		}
+		alarmTrace.setHandlerInfos(handlerInfos);
+		for (HandlerProcessInfo pinfo : handlerInfos) {
+			sql = new SqlFieldsQuery(
+					"SELECT sre,metrics,status,message,stdout,stderr FROM ScheduledTaskAudit audit where scheduleId=? order by time")
+							.setArgs(pinfo.getScheduleId());
+			List<HandlerExecuteInfo> executeInfos = Lists.newArrayList();
+			try (QueryCursor<List<?>> cursor = auditCache.query(sql)) {
+				for (List<?> row : cursor) {
+					int index = 0;
+					HandlerExecuteInfo einfo = new HandlerExecuteInfo();
+					einfo.setSre(rowGet(row, index++));
+					einfo.setMetrics(rowGet(row, index++));
+					einfo.setStatus(rowGet(row, index++));
+					einfo.setMessage(rowGet(row, index++));
+					einfo.setStdout(rowGet(row, index++));
+					einfo.setStderr(rowGet(row, index++));
+
+					Map<String, String> sre = einfo.getSre();
+					einfo.setHost(MapUtils.getString(sre, EXEC_HOST));
+					einfo.setIp(MapUtils.getString(sre, EXEC_IP));
+					executeInfos.add(einfo);
+				}
+				pinfo.setExecuteInfos(executeInfos);
+			}
+		}
+		return alarmTrace;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -353,6 +424,20 @@ public class AutomateManager implements ISystemClientListener {
 		}
 	}
 
+	private void noWorkerAudit(TaskScheduleMessage taskMessage) {
+		long millis = DateTime.now().getMillis();
+		ScheduledTaskAudit taskAudit = new ScheduledTaskAudit();
+		taskAudit.setExecutor(taskMessage.getExecutor());
+		taskAudit.setName(taskMessage.getName());
+		taskAudit.setTime(millis);
+		taskAudit.setStatus(ExecuteStatus.NO_MATCHED_WORKER);
+		taskAudit.setParams(taskMessage.getParams());
+		taskAudit.setScheduleId(taskMessage.getScheduledId());
+		taskAudit.setType(taskMessage.getType());
+		String key = auditTaskKey(taskMessage, null);
+		auditCache.put(key, taskAudit);
+	}
+
 	@Override
 	public void onReceiveMessage(BaseMessage message) {
 		if (message instanceof TaskMetricsMessage) {
@@ -435,12 +520,23 @@ public class AutomateManager implements ISystemClientListener {
 		taskMessage.setCorrelationParams(correlationParams);
 
 		List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(targetMap, Sets.newHashSet());
+		alarmHandlerInfo.setTargetHosts(toWorkers);
+		alarmHandlerInfo.setParams(params);
+		alarmHandlerInfo.setScheduleId(alarmHandlerInfo.getUuid());
+
+		List<String> correlationAlarmIds = Lists.newArrayList();
+		alarmEvents.forEach(e -> correlationAlarmIds.add(e.getUuid()));
+		alarmHandlerInfo.setCorrelationAlarmIds(correlationAlarmIds);
+
 		if (CollectionUtils.isEmpty(toWorkers)) {
+			noWorkerAudit(taskMessage);
+			alarmHandlerInfo.setStatus(ExecuteStatus.NO_MATCHED_WORKER);
 			logger.warn("No worker matched for handler {} ", handler.getName());
 			return;
 		}
 		List<String> toWorkerText = Lists.newArrayList();
 		toWorkers.forEach(e -> toWorkerText.add(e.getHost()));
+		alarmHandlerInfo.setScheduledTime(System.currentTimeMillis());
 		logger.info("Start schedule handler {}, matched workers {}", handler.getName(), toWorkerText);
 		for (ClientInfo toWorker : toWorkers) {
 			LabelRule labelRule = workerLabelManager.findRule(toWorker);
@@ -452,6 +548,24 @@ public class AutomateManager implements ISystemClientListener {
 			systemClient.exchange(taskMessage, Arrays.asList(toWorker));
 		}
 		alarmHandlerInfo.setHandled(true);
+		alarmHandlerInfo.setStatus(ExecuteStatus.SCHEDULED);
+		if (CollectionUtils.isNotEmpty(alarmEvents)) {
+			List<String> alarmIds = Lists.newArrayList();
+			alarmEvents.forEach(e -> alarmIds.add(e.getUuid()));
+			SqlFieldsQuery sql1 = new SqlFieldsQuery(
+					"SELECT uuid FROM AlarmHandlerInfo info join table (alarmId varchar = ? ) t on t.alarmId=info.alarmId where handlerId=?")
+							.setArgs(alarmIds.toArray(), handler.getName());
+			try (QueryCursor<List<?>> cursor1 = alarmCache.query(sql1)) {
+				for (List<?> row1 : cursor1) {
+					String uuid = rowGet(row1, 0);
+					AlarmHandlerInfo relInfo = (AlarmHandlerInfo) alarmCache.get(uuid);
+					if (relInfo != null) {
+						relInfo.setHandled(true);
+						alarmCache.put(uuid, relInfo);
+					}
+				}
+			}
+		}
 		alarmCache.put(alarmHandlerInfo.getUuid(), alarmHandlerInfo);
 	}
 
@@ -481,7 +595,10 @@ public class AutomateManager implements ISystemClientListener {
 	}
 
 	private String auditTaskKey(ServerMessage message, ClientInfo toWorker) {
-		return "audit:task:" + message.getServerMsgId() + ":" + toWorker.getHost() + ":" + toWorker.getIp();
+		if (toWorker == null) {
+			return "audit:task:" + message.getServerMsgId() + ":" + UUID.randomUUID().toString();
+		} else
+			return "audit:task:" + message.getServerMsgId() + ":" + toWorker.getHost() + ":" + toWorker.getIp();
 	}
 
 	private String scheduleStatusKey(String executorName, String scheduleId) {
@@ -576,6 +693,10 @@ public class AutomateManager implements ISystemClientListener {
 				workerText);
 		TaskScheduleMessage taskMessage = executor.toMessage(executorStatus.getScheduledId(),
 				systemClient.session().getClientInfo(), task, repoCommitId, taskIndex);
+		if (CollectionUtils.isEmpty(toWorkers)) {
+			noWorkerAudit(taskMessage);
+			return;
+		}
 		for (ClientInfo toWorker : toWorkers) {
 			LabelRule labelRule = workerLabelManager.findRule(toWorker);
 			if (labelRule != null) {

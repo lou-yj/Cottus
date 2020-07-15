@@ -187,8 +187,9 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 						});
 					}
 				}
-				sendClientMessage(clientSession, exchangeId, String.format("Parsed %d samplers %d rule %d handler",
-						executors.size(), alarmers.size(), handlers.size()));
+				sendClientMessage(clientSession, exchangeId,
+						String.format("Parsed %d executors %d alarmers %d handlers", executors.size(), alarmers.size(),
+								handlers.size()));
 				automateManager.updateRules(executors, alarmers, handlers);
 				sendClientMessage(clientSession, exchangeId, "Scheduler updated");
 				return AckMessage.sack(exchangeId);

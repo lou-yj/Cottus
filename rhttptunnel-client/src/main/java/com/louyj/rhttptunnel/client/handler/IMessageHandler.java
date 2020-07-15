@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -29,6 +30,10 @@ public interface IMessageHandler {
 			labelsList.add(entry.getKey() + "=" + entry.getValue());
 		}
 		return StringUtils.join(labelsList, "\n");
+	}
+
+	default String formatTime(Long time) {
+		return new DateTime(time).toString("yyyy-MM-dd HH:mm:ss");
 	}
 
 }

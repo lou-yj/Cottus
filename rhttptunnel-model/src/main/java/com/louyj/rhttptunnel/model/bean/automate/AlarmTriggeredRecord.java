@@ -13,11 +13,21 @@ import com.google.common.collect.Maps;
  */
 public class AlarmTriggeredRecord {
 
+	private String uuid;
+
 	private long alarmTime;
 
 	private String alarmGroup;
 
 	private Map<String, Object> fields = Maps.newHashMap();
+
+	public String getUuid() {
+		return uuid;
+	}
+
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
+	}
 
 	public long getAlarmTime() {
 		return alarmTime;

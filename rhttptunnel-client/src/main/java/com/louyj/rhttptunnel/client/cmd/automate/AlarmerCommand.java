@@ -11,6 +11,7 @@ import org.springframework.shell.standard.ShellOption;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmerRecordsListMessage;
+import com.louyj.rhttptunnel.model.message.automate.AlarmerTraceListMessage;
 import com.louyj.rhttptunnel.model.message.automate.ListAlarmersMessage;
 
 /**
@@ -36,6 +37,17 @@ public class AlarmerCommand extends BaseCommand {
 	public String alarmerRecords(@ShellOption(value = { "-n", "--name" }, help = "alarmer name") String name) {
 		AlarmerRecordsListMessage message = new AlarmerRecordsListMessage(CLIENT);
 		message.setName(name);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
+	@ShellMethod(value = "trace alarm event")
+	@ShellMethodAvailability("serverContext")
+	public String alarmerTrace(@ShellOption(value = { "-n", "--name" }, help = "alarmer name") String name,
+			@ShellOption(value = { "-i", "--id" }, help = "event id") String id) {
+		AlarmerTraceListMessage message = new AlarmerTraceListMessage(CLIENT);
+		message.setName(name);
+		message.setUuid(id);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}

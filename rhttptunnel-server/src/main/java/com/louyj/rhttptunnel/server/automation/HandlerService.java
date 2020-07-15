@@ -1,9 +1,10 @@
 package com.louyj.rhttptunnel.server.automation;
 
+import static org.apache.commons.collections4.CollectionUtils.size;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
@@ -23,10 +25,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.louyj.rhttptunnel.model.bean.automate.Handler;
+import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 
@@ -65,7 +67,7 @@ public class HandlerService extends TimerTask {
 			String alarmGroup = alarmEvent.getAlarmGroup();
 			logger.info("[{}] Alarm group {}", uuid, alarmGroup);
 			DocumentContext eventDc = JsonPath.parse(jackson.writeValueAsString(eventMap));
-			Set<String> preventHandlers = Sets.newHashSet();
+			Map<String, String> preventHandlers = Maps.newHashMap();
 			for (Handler handler : automateManager.getHandlers()) {
 				logger.info("[{}] Start eval handler {}", uuid, handler.getName());
 				boolean isMatched = matched(uuid, eventMap, eventDc, handler.isRegexMatch(), handler.getMatched(),
@@ -81,6 +83,7 @@ public class HandlerService extends TimerTask {
 				alarmHandlerInfo.setAlarmId(uuid);
 				alarmHandlerInfo.setActionWaitCount(handler.getActionWaitCount());
 				alarmHandlerInfo.setActionAggrTime(handler.getActionAggrTime());
+				alarmHandlerInfo.setEvaluateTime(System.currentTimeMillis());
 				alarmCache.put(infoUUid, alarmHandlerInfo);
 				List<AlarmEvent> correlationAlarms = Lists.newArrayList();
 				if (handler.getActionWaitCount() > 0) {
@@ -90,9 +93,12 @@ public class HandlerService extends TimerTask {
 									.setArgs(handler.getName(), alarmGroup, timeDeadLine);
 					Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> pair = parseCorrelationAlarms(sql);
 					List<AlarmEvent> alarmEvents = pair.getLeft();
-					if (CollectionUtils.size(alarmEvents) < handler.getActionWaitCount()) {
+					if (size(alarmEvents) < handler.getActionWaitCount()) {
 						logger.info("[{}] Current wait count {} little than handler actionWaitCount {}", uuid,
-								CollectionUtils.size(alarmEvents), handler.getActionWaitCount());
+								size(alarmEvents), handler.getActionWaitCount());
+						alarmHandlerInfo.setStatus(ExecuteStatus.NO_NEED_PROCESS);
+						alarmHandlerInfo.setMessage(String.format("Configured actionWaitCount %d current %d",
+								handler.getActionWaitCount(), size(alarmEvents)));
 						continue;
 					} else {
 						correlationAlarms = alarmEvents;
@@ -108,6 +114,10 @@ public class HandlerService extends TimerTask {
 						if (count > 0) {
 							logger.info("[{}] Current group already has alarm handled in last {} seconds", uuid,
 									handler.getActionAggrTime());
+							alarmHandlerInfo.setStatus(ExecuteStatus.NO_NEED_PROCESS);
+							alarmHandlerInfo.setMessage(
+									String.format("Configured actionAggrTime %d seconds which was processed in",
+											handler.getActionAggrTime()));
 							continue;
 						} else {
 							long timeDeadline = System.currentTimeMillis() - handler.getActionAggrTime() * 1000 * 10;
@@ -120,13 +130,20 @@ public class HandlerService extends TimerTask {
 						}
 					}
 				}
-				Pair<Boolean, String> preventPair = isPrevent(preventHandlers, handler.getName());
+				Triple<Boolean, String, String> preventPair = isPrevent(preventHandlers, handler.getName());
 				if (preventPair.getLeft() == false) {
 					doHandle(handler, alarmEvent, correlationAlarms, alarmHandlerInfo, eventDc);
 					if (CollectionUtils.isNotEmpty(handler.getPreventHandlers())) {
-						preventHandlers.addAll(handler.getPreventHandlers());
+						for (String expr : handler.getPreventHandlers()) {
+							preventHandlers.put(expr, handler.getName());
+						}
 					}
 				} else {
+					List<String> correlationAlarmIds = Lists.newArrayList();
+					correlationAlarms.forEach(e -> correlationAlarmIds.add(e.getUuid()));
+					alarmHandlerInfo.setCorrelationAlarmIds(correlationAlarmIds);
+					alarmHandlerInfo.setPreventedBy(
+							com.louyj.rhttptunnel.model.bean.Pair.of(preventPair.getRight(), preventPair.getMiddle()));
 					logger.info("[{}] handler {} is prevent by expression {}", uuid, handler.getName(),
 							preventPair.getRight());
 				}
@@ -136,13 +153,14 @@ public class HandlerService extends TimerTask {
 		}
 	}
 
-	private Pair<Boolean, String> isPrevent(Set<String> preventHandlers, String handler) {
-		for (String preventHandler : preventHandlers) {
+	private Triple<Boolean, String, String> isPrevent(Map<String, String> preventHandlers, String handler) {
+		for (Entry<String, String> entry : preventHandlers.entrySet()) {
+			String preventHandler = entry.getKey();
 			if (handler.matches(preventHandler)) {
-				return Pair.of(true, preventHandler);
+				return Triple.of(true, preventHandler, entry.getValue());
 			}
 		}
-		return Pair.of(false, "");
+		return Triple.of(false, "", "");
 	}
 
 	private void doHandle(Handler handler, AlarmEvent alarmEvent, List<AlarmEvent> correlationAlarms,

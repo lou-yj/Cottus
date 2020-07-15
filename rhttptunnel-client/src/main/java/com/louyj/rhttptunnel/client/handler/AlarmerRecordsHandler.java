@@ -48,11 +48,12 @@ public class AlarmerRecordsHandler implements IMessageHandler {
 		List<AlarmTriggeredRecord> records = itemsMessage.getRecords();
 		Collections.reverse(records);
 		Object[][] data = new Object[records.size() + 1][];
-		data[0] = new Object[] { "ALARM TIME", "ALARM GROUP", "FIELDS" };
+		data[0] = new Object[] { "ID", "ALARM TIME", "ALARM GROUP", "FIELDS" };
 		int index = 1;
 		for (AlarmTriggeredRecord record : records) {
-			data[index++] = new Object[] { new DateTime(record.getAlarmTime()).toString("yyyy-MM-dd HH:mm:ss"),
-					record.getAlarmGroup(), formatMap(record.getFields()) };
+			data[index++] = new Object[] { record.getUuid(),
+					new DateTime(record.getAlarmTime()).toString("yyyy-MM-dd HH:mm:ss"), record.getAlarmGroup(),
+					formatMap(record.getFields()) };
 		}
 		TableModel model = new ArrayTableModel(data);
 		TableBuilder tableBuilder = new TableBuilder(model);

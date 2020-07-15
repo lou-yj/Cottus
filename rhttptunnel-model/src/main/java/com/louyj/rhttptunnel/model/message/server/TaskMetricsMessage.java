@@ -22,8 +22,8 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
 public class TaskMetricsMessage extends ServerMessage {
 
 	public static enum ExecuteStatus {
-		PENDING(false), SCHEDULED(false), SUCCESS(false), FAILED(true), FAILED_MAX_RETRIED(true),
-		REPO_NEED_UPDATE(true), NO_MATCHED_WORKER(true);
+		PENDING(false), SCHEDULED(false), SUCCESS(false), NO_NEED_PROCESS(false), FAILED(true),
+		FAILED_MAX_RETRIED(true), REPO_NEED_UPDATE(true), NO_MATCHED_WORKER(true);
 
 		private boolean failed = false;
 
