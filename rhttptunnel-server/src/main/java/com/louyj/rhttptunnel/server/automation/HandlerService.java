@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,7 +59,7 @@ public class HandlerService extends TimerTask {
 	public void handleAlarm(AlarmEvent alarmEvent) {
 		try {
 			Map<String, Object> eventMap = alarmEvent.toMap();
-			String uuid = UUID.randomUUID().toString();
+			String uuid = automateManager.nextIndex();
 			logger.info("[{}] Receive alarm event {}", uuid, jackson.writeValueAsString(eventMap));
 			alarmEvent.setUuid(uuid);
 			alarmCache.put(uuid, alarmEvent);
@@ -76,7 +75,7 @@ public class HandlerService extends TimerTask {
 					continue;
 				}
 				logger.info("[{}] All condition matched", uuid);
-				String infoUUid = UUID.randomUUID().toString();
+				String infoUUid = automateManager.nextIndex();
 				AlarmHandlerInfo alarmHandlerInfo = new AlarmHandlerInfo();
 				alarmHandlerInfo.setUuid(infoUUid);
 				alarmHandlerInfo.setHandlerId(handler.getName());

@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -20,6 +19,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
@@ -122,6 +122,7 @@ public class AutomateManager implements ISystemClientListener {
 	private HandlerService handlerService;
 	private ThreadPoolTaskScheduler taskScheduler;
 	private ObjectMapper jackson = JsonUtils.jackson();
+	private IgniteAtomicLong indexCounter;
 
 	@Value("${alarmer.default.groupkeys:}")
 	public void setDefaultAlarmGroupKey(String defaultAlarmGroup) {
@@ -133,6 +134,7 @@ public class AutomateManager implements ISystemClientListener {
 	@SuppressWarnings("unchecked")
 	@PostConstruct
 	public void init() {
+		indexCounter = ignite.atomicLong("indexCounter", 0, true);
 		taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
 		configCache = ignite.getOrCreateCache("automate");
@@ -153,6 +155,10 @@ public class AutomateManager implements ISystemClientListener {
 		this.handlers = (List<Handler>) configCache.get(AUTOMATE_HANDLER);
 		this.repoCommitId = (String) configCache.get(CONFIG_REPO_COMMITID);
 		updateRuleService();
+	}
+
+	public String nextIndex() {
+		return String.valueOf(indexCounter.incrementAndGet());
 	}
 
 	public void updateRepoConfig(RepoConfig repoConfig) {
@@ -596,7 +602,7 @@ public class AutomateManager implements ISystemClientListener {
 
 	private String auditTaskKey(ServerMessage message, ClientInfo toWorker) {
 		if (toWorker == null) {
-			return "audit:task:" + message.getServerMsgId() + ":" + UUID.randomUUID().toString();
+			return "audit:task:" + message.getServerMsgId() + ":" + nextIndex();
 		} else
 			return "audit:task:" + message.getServerMsgId() + ":" + toWorker.getHost() + ":" + toWorker.getIp();
 	}
