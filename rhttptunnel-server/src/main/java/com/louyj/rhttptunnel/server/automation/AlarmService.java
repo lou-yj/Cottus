@@ -187,7 +187,7 @@ public class AlarmService implements EPStatementStateListener {
 					return false;
 				}
 			} else {
-				if (isMatched(regexMatch, value, expect)) {
+				if (isMatched(regexMatch, value, expect) == false) {
 					return false;
 				}
 			}
