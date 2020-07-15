@@ -194,6 +194,9 @@ public class AutomateManager implements ISystemClientListener {
 		if (this.alarmers == null) {
 			this.alarmers = Lists.newArrayList();
 		}
+		if (this.alarmMarkers == null) {
+			this.alarmMarkers = Lists.newArrayList();
+		}
 		Collections.sort(handlers, new Comparator<Handler>() {
 			@Override
 			public int compare(Handler o1, Handler o2) {

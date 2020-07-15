@@ -20,6 +20,8 @@ public class IgniteRegistry {
 
 	@Bean
 	public Ignite ignite() {
+		System.setProperty("IGNITE_NO_ASCII", "true");
+		System.setProperty("IGNITE_QUIET", "true");
 		IgniteConfiguration cfg = new IgniteConfiguration();
 		cfg.setWorkDirectory(dataDir + "/ignite");
 		cfg.setClientMode(false);
