@@ -1,8 +1,11 @@
 package com.louyj.rhttptunnel.model.bean.automate;
 
+import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.model.bean.Pair;
 
 /**
  *
@@ -20,6 +23,16 @@ public class AlarmTriggeredRecord {
 	private String alarmGroup;
 
 	private Map<String, Object> fields = Maps.newHashMap();
+
+	private List<Pair<String, Map<String, Object>>> tags = Lists.newArrayList();
+
+	public List<Pair<String, Map<String, Object>>> getTags() {
+		return tags;
+	}
+
+	public void setTags(List<Pair<String, Map<String, Object>>> tags) {
+		this.tags = tags;
+	}
 
 	public String getUuid() {
 		return uuid;

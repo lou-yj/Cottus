@@ -17,6 +17,8 @@ public class AutomateRule {
 
 	private List<Handler> handlers;
 
+	private List<AlarmMarker> alarmMarkers;
+
 	public Executor getExecutor() {
 		return executor;
 	}
@@ -39,6 +41,14 @@ public class AutomateRule {
 
 	public void setHandlers(List<Handler> handlers) {
 		this.handlers = handlers;
+	}
+
+	public List<AlarmMarker> getAlarmMarkers() {
+		return alarmMarkers;
+	}
+
+	public void setAlarmMarkers(List<AlarmMarker> alarmMarkers) {
+		this.alarmMarkers = alarmMarkers;
 	}
 
 }

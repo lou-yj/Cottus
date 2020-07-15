@@ -7,6 +7,7 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
 
 /**
@@ -38,6 +39,9 @@ public class AlarmEvent {
 	private Map<String, Object> fields = Maps.newHashMap();
 
 	@QuerySqlField
+	private List<Pair<String, Map<String, Object>>> tags = Lists.newArrayList();
+
+	@QuerySqlField
 	private List<HandlerProcessInfo> handlerInfo = Lists.newArrayList();
 
 	public List<HandlerProcessInfo> getHandlerInfo() {
@@ -54,6 +58,14 @@ public class AlarmEvent {
 
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
+	}
+
+	public List<Pair<String, Map<String, Object>>> getTags() {
+		return tags;
+	}
+
+	public void setTags(List<Pair<String, Map<String, Object>>> tags) {
+		this.tags = tags;
 	}
 
 	public AlarmEvent() {
@@ -98,6 +110,9 @@ public class AlarmEvent {
 	public Map<String, Object> toMap() {
 		Map<String, Object> map = Maps.newHashMap();
 		map.putAll(fields);
+		for (Pair<String, Map<String, Object>> pair : tags) {
+			map.putAll(pair.getRight());
+		}
 		return map;
 	}
 

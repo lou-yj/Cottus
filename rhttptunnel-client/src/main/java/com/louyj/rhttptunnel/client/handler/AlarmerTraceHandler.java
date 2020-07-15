@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
+import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
@@ -64,6 +65,16 @@ public class AlarmerTraceHandler implements IMessageHandler {
 			addChildNode(recordNode, "Alarm Group", record.getAlarmGroup());
 			addChildNode(recordNode, "Alarm Event Fields", record.getFields());
 			root.addChild(recordNode);
+		}
+		{
+			List<Pair<String, Map<String, Object>>> tags = record.getTags();
+			if (CollectionUtils.isNotEmpty(tags)) {
+				DefaultNode markersNode = new DefaultNode("Alarm Markers");
+				for (Pair<String, Map<String, Object>> pair : tags) {
+					addChildNode(markersNode, "Tag Added By Marker " + pair.getLeft(), pair.getRight());
+				}
+				root.addChild(markersNode);
+			}
 		}
 		{
 			DefaultNode handlersNode = new DefaultNode("Alarm Handlers");

@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
@@ -89,6 +90,7 @@ public class AutomateManager implements ISystemClientListener {
 	private static final String AUTOMATE_EXECUTOR = "automate:executor";
 	private static final String AUTOMATE_ALARMER = "automate:alarmer";
 	private static final String AUTOMATE_HANDLER = "automate:handler";
+	private static final String AUTOMATE_ALARM_MARKER = "automate:alarmmarker";
 	private static final String EXEC_HOST = "HOST";
 	private static final String EXEC_IP = "IP";
 
@@ -118,6 +120,7 @@ public class AutomateManager implements ISystemClientListener {
 	private List<Executor> executors = Lists.newArrayList();
 	private List<Alarmer> alarmers = Lists.newArrayList();
 	private List<Handler> handlers = Lists.newArrayList();
+	private List<AlarmMarker> alarmMarkers = Lists.newArrayList();
 	private AlarmService alarmService;
 	private HandlerService handlerService;
 	private ThreadPoolTaskScheduler taskScheduler;
@@ -148,11 +151,12 @@ public class AutomateManager implements ISystemClientListener {
 				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10)))
 				.setIndexedTypes(String.class, AlarmEvent.class, String.class, AlarmHandlerInfo.class));
 		handlerService = new HandlerService(this, alarmCache);
-		alarmService = new AlarmService(handlerService);
+		alarmService = new AlarmService(handlerService, this);
 		this.repoConfig = (RepoConfig) configCache.get(CONFIG_REPO);
 		this.executors = (List<Executor>) configCache.get(AUTOMATE_EXECUTOR);
 		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
 		this.handlers = (List<Handler>) configCache.get(AUTOMATE_HANDLER);
+		this.alarmMarkers = (List<AlarmMarker>) configCache.get(AUTOMATE_ALARM_MARKER);
 		this.repoCommitId = (String) configCache.get(CONFIG_REPO_COMMITID);
 		updateRuleService();
 	}
@@ -166,13 +170,16 @@ public class AutomateManager implements ISystemClientListener {
 		configCache.put(CONFIG_REPO, repoConfig);
 	}
 
-	public void updateRules(List<Executor> executors, List<Alarmer> alarmers, List<Handler> handlers) {
+	public void updateRules(List<Executor> executors, List<Alarmer> alarmers, List<Handler> handlers,
+			List<AlarmMarker> alarmMarkers) {
 		this.executors = executors;
 		this.alarmers = alarmers;
 		this.handlers = handlers;
+		this.alarmMarkers = alarmMarkers;
 		configCache.put(AUTOMATE_EXECUTOR, executors);
 		configCache.put(AUTOMATE_ALARMER, alarmers);
 		configCache.put(AUTOMATE_HANDLER, handlers);
+		configCache.put(AUTOMATE_ALARM_MARKER, alarmMarkers);
 		configCache.put(CONFIG_REPO_COMMITID, repoCommitId);
 		updateRuleService();
 	}
@@ -281,6 +288,7 @@ public class AutomateManager implements ISystemClientListener {
 		record.setAlarmTime(alarmEvent.getAlarmTime());
 		record.setAlarmGroup(alarmEvent.getAlarmGroup());
 		record.setFields(alarmEvent.getFields());
+		record.setTags(alarmEvent.getTags());
 		alarmTrace.setRecord(record);
 
 		SqlFieldsQuery sql = new SqlFieldsQuery(
@@ -378,6 +386,10 @@ public class AutomateManager implements ISystemClientListener {
 
 	public List<Alarmer> getAlarmers() {
 		return alarmers;
+	}
+
+	public List<AlarmMarker> getAlarmMarkers() {
+		return alarmMarkers;
 	}
 
 	public Executor getExecutor(String name) {

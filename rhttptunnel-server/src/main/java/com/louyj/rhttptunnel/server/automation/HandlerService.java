@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.server.automation;
 
+import static com.louyj.rhttptunnel.model.util.PlaceHolderUtils.replacePlaceHolder;
 import static org.apache.commons.collections4.CollectionUtils.size;
 
 import java.util.List;
@@ -8,8 +9,6 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -41,7 +40,6 @@ import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 public class HandlerService extends TimerTask {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
-	private Pattern pattern = Pattern.compile("\\{\\{(?<ph>.*?)\\}\\}", Pattern.MULTILINE | Pattern.DOTALL);
 
 	private ObjectMapper jackson = JsonUtils.jackson();
 	private IgniteCache<Object, Object> alarmCache;
@@ -234,34 +232,6 @@ public class HandlerService extends TimerTask {
 			return String.valueOf(eventValue).matches(String.valueOf(matchedValue));
 		} else {
 			return matchedValue.equals(eventValue);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T> T replacePlaceHolder(DocumentContext evnetDc, T content) {
-		if (!(content instanceof String)) {
-			return content;
-		}
-		String contentStr = (String) content;
-		Matcher matcher = pattern.matcher(contentStr);
-		while (matcher.find()) {
-			String ph = matcher.group("ph");
-			Object value = tryGet(evnetDc, ph);
-			if (value == null) {
-				value = "";
-			}
-			contentStr = matcher.replaceAll(Matcher.quoteReplacement(String.valueOf(value)));
-			matcher = pattern.matcher(contentStr);
-		}
-		return (T) contentStr;
-	}
-
-	private Object tryGet(DocumentContext dc, String key) {
-		try {
-			return dc.read(key);
-		} catch (Exception e) {
-			logger.warn("find key {} exception", key, e);
-			return null;
 		}
 	}
 

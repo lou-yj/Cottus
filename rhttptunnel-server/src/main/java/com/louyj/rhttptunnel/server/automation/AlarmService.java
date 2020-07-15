@@ -1,6 +1,7 @@
 package com.louyj.rhttptunnel.server.automation;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static com.louyj.rhttptunnel.model.util.PlaceHolderUtils.replacePlaceHolder;
 
 import java.io.InputStream;
 import java.io.StringReader;
@@ -8,12 +9,14 @@ import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.slf4j.Logger;
@@ -28,7 +31,13 @@ import com.espertech.esper.client.EPServiceProviderManager;
 import com.espertech.esper.client.EPStatement;
 import com.espertech.esper.client.EPStatementStateListener;
 import com.espertech.esper.client.annotation.Tag;
+import com.google.common.collect.Maps;
+import com.jayway.jsonpath.DocumentContext;
+import com.louyj.rhttptunnel.model.bean.Pair;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
+import com.louyj.rhttptunnel.model.util.PlaceHolderUtils;
+import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 
 /**
  *
@@ -48,10 +57,12 @@ public class AlarmService implements EPStatementStateListener {
 	private EPServiceProvider epService;
 	private String esperConfig;
 	private HandlerService handlerService;
+	private AutomateManager automateManager;
 
-	public AlarmService(HandlerService handlerService) {
+	public AlarmService(HandlerService handlerService, AutomateManager automateManager) {
 		super();
 		this.handlerService = handlerService;
+		this.automateManager = automateManager;
 		try {
 			URL resource = ClassLoader.getSystemClassLoader().getResource("esper.xml");
 			if (resource == null) {
@@ -122,7 +133,7 @@ public class AlarmService implements EPStatementStateListener {
 				String value = tagAnno.value();
 				if (name.equalsIgnoreCase("alarm") && value.equalsIgnoreCase("main")) {
 					Alarmer alarmer = (Alarmer) statement.getUserObject();
-					AlarmEventListener listener = new AlarmEventListener(alarmer, handlerService);
+					AlarmEventListener listener = new AlarmEventListener(alarmer, this);
 					statement.addListener(listener);
 					logger.info("Add Listener for rule: {}.", alarmer.getName());
 				}
@@ -142,6 +153,66 @@ public class AlarmService implements EPStatementStateListener {
 		} catch (Exception e) {
 		}
 		logger.info("Alarm service destoryed.");
+	}
+
+	public void handleAlarm(AlarmEvent alarmEvent) {
+		for (AlarmMarker alarmMarker : automateManager.getAlarmMarkers()) {
+			Map<String, Object> eventMap = alarmEvent.toMap();
+			boolean matched = isMatched(alarmMarker.isRegexMatch(), eventMap, alarmMarker.getMatched());
+			if (matched) {
+				Map<String, Object> tags = alarmMarker.getTags();
+				if (MapUtils.isNotEmpty(alarmMarker.getProperties())) {
+					DocumentContext dc = PlaceHolderUtils.toDc(alarmMarker.getProperties());
+					Map<String, Object> replacedTags = Maps.newHashMap();
+					for (Entry<String, Object> entry : tags.entrySet()) {
+						String key = replacePlaceHolder(dc, entry.getKey());
+						Object value = replacePlaceHolder(dc, entry.getValue());
+						replacedTags.put(key, value);
+					}
+					tags = replacedTags;
+				}
+				alarmEvent.getTags().add(Pair.of(alarmMarker.getName(), tags));
+			}
+		}
+		handlerService.handleAlarm(alarmEvent);
+	}
+
+	private boolean isMatched(boolean regexMatch, Map<String, Object> eventMap, Map<String, Object> matched) {
+		for (Entry<String, Object> entry : matched.entrySet()) {
+			String key = entry.getKey();
+			Object expect = entry.getValue();
+			Object value = eventMap.get(key);
+			if (expect instanceof List) {
+				if (isMatched(regexMatch, value, (List<?>) expect) == false) {
+					return false;
+				}
+			} else {
+				if (isMatched(regexMatch, value, expect)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean isMatched(boolean regexMatch, Object value, Object expect) {
+		if (value == null) {
+			return false;
+		}
+		if (regexMatch) {
+			return String.valueOf(value).matches(String.valueOf(expect));
+		} else {
+			return String.valueOf(value).equals(String.valueOf(expect));
+		}
+	}
+
+	private boolean isMatched(boolean regexMatch, Object value, List<?> expects) {
+		for (Object expect : expects) {
+			if (isMatched(regexMatch, value, expect)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private Configuration getConfiguration(String xml) throws Exception {

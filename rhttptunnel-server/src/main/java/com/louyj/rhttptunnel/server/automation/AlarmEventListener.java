@@ -21,12 +21,12 @@ import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 public class AlarmEventListener implements com.espertech.esper.client.UpdateListener {
 
 	private Alarmer alarmer;
-	private HandlerService handlerService;
+	private AlarmService alarmService;
 
-	public AlarmEventListener(Alarmer alarmer, HandlerService handlerService) {
+	public AlarmEventListener(Alarmer alarmer, AlarmService handlerService) {
 		super();
 		this.alarmer = alarmer;
-		this.handlerService = handlerService;
+		this.alarmService = handlerService;
 	}
 
 	@Override
@@ -45,7 +45,7 @@ public class AlarmEventListener implements com.espertech.esper.client.UpdateList
 				alarmEvent.getFields().put(propertyName, value);
 			}
 			alarmEvent.setAlarmGroup(makeGroup(alarmEvent.getFields()));
-			handlerService.handleAlarm(alarmEvent);
+			alarmService.handleAlarm(alarmEvent);
 		}
 	}
 

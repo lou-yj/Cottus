@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.bean.automate.AutomateRule;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
@@ -165,6 +166,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 			List<Executor> executors = Lists.newArrayList();
 			List<Alarmer> alarmers = Lists.newArrayList();
 			List<Handler> handlers = Lists.newArrayList();
+			List<AlarmMarker> alarmMarkers = Lists.newArrayList();
 			try {
 				for (File ruleFile : ruleFiles) {
 					Object load = yaml.load(new FileInputStream(ruleFile));
@@ -186,11 +188,17 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 							handlers.add(handler);
 						});
 					}
+					if (automateRule.getAlarmMarkers() != null) {
+						automateRule.getAlarmMarkers().forEach(marker -> {
+							marker.check(ruleFile);
+							alarmMarkers.add(marker);
+						});
+					}
 				}
 				sendClientMessage(clientSession, exchangeId,
-						String.format("Parsed %d executors %d alarmers %d handlers", executors.size(), alarmers.size(),
-								handlers.size()));
-				automateManager.updateRules(executors, alarmers, handlers);
+						String.format("Parsed %d executors %d alarmers %d handlers %d alarm markers", executors.size(),
+								alarmers.size(), handlers.size(), alarmMarkers.size()));
+				automateManager.updateRules(executors, alarmers, handlers, alarmMarkers);
 				sendClientMessage(clientSession, exchangeId, "Scheduler updated");
 				return AckMessage.sack(exchangeId);
 			} catch (Exception e2) {
