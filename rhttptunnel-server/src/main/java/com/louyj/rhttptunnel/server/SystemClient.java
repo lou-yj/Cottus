@@ -110,6 +110,7 @@ public class SystemClient extends TimerTask {
 	}
 
 	public BaseMessage exchange(BaseMessage message, List<ClientInfo> toWorkers) {
+		message = JsonUtils.cloneObject(normalJackson, message);
 		for (ISystemClientListener listener : listeners) {
 			if (listener.listenSendMessages() == null || listener.listenSendMessages().contains(message.getClass())) {
 				listener.onSendMessage(message, toWorkers);

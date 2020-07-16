@@ -191,6 +191,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		Map map = normalJackson.convertValue(msg, Map.class);
 		map.remove("client");
 		map.remove("exchangeId");
+		map.remove("toWorkers");
 		NoLogFields noLogFields = msg.getClass().getAnnotation(NoLogFields.class);
 		if (noLogFields != null) {
 			String[] values = noLogFields.values();

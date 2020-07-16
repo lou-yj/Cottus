@@ -47,7 +47,7 @@ public class ClientDetector implements InitializingBean {
 			String hostName = localHost.getHostName();
 			CLIENT.setHost(hostName);
 		}
-		logger.info("host name {} ip {} ", CLIENT.getHost(), CLIENT.getIp());
+		logger.info("host name {} ip {} id {}", CLIENT.getHost(), CLIENT.getIp(), CLIENT.getUuid());
 	}
 
 }

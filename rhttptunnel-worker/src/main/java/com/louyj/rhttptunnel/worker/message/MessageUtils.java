@@ -71,8 +71,10 @@ public class MessageUtils implements ApplicationContextAware, InitializingBean {
 	public static void handle(BaseMessage taskMessage) {
 		Class<? extends BaseMessage> type = taskMessage.getClass();
 		boolean noLog = type.isAnnotationPresent(NoLogMessage.class);
-		if (!noLog)
+		if (!noLog) {
 			logger.info("[{}] Receive message {}", taskMessage.getExchangeId(), type.getSimpleName());
+		}
+
 		IMessageHandler messageHandler = messageHandlers.get(type);
 		if (messageHandler == null) {
 			logger.error("Unknow Message Type {}", type);

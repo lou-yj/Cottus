@@ -149,9 +149,10 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 				unzipMessage.setType("zip");
 				unzipMessage.setDeleteSource(true);
 				for (ClientInfo toWorker : workerClientInfos) {
-					unzipMessage.setExchangeId(UUID.randomUUID().toString());
-					tempExchangeIds.add(unzipMessage.getExchangeId());
-					exchangeIds.add(unzipMessage.getExchangeId());
+					String uuid = UUID.randomUUID().toString();
+					unzipMessage.setExchangeId(uuid);
+					tempExchangeIds.add(uuid);
+					exchangeIds.add(uuid);
 					systemClient.exchange(unzipMessage, Arrays.asList(toWorker));
 				}
 				waitAllWorkerAcked(tempExchangeIds, clientSession, exchangeId);

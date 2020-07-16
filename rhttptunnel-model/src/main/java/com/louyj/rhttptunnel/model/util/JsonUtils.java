@@ -49,4 +49,14 @@ public class JsonUtils {
 		return objectMapper;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T cloneObject(ObjectMapper jackson, T object) {
+		try {
+			String json = jackson.writeValueAsString(object);
+			return (T) jackson.readValue(json, object.getClass());
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }
