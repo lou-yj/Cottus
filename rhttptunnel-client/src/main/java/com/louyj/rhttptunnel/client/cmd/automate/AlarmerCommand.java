@@ -43,10 +43,8 @@ public class AlarmerCommand extends BaseCommand {
 
 	@ShellMethod(value = "trace alarm event")
 	@ShellMethodAvailability("serverContext")
-	public String alarmerTrace(@ShellOption(value = { "-n", "--name" }, help = "alarmer name") String name,
-			@ShellOption(value = { "-i", "--id" }, help = "event id") String id) {
+	public String alarmerTrace(@ShellOption(value = { "-i", "--id" }, help = "event id") String id) {
 		AlarmerTraceListMessage message = new AlarmerTraceListMessage(CLIENT);
-		message.setName(name);
 		message.setUuid(id);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
