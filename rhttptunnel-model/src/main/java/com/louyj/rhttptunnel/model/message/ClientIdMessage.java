@@ -5,6 +5,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
 
 /**
  *
@@ -13,6 +14,7 @@ import com.google.common.collect.Sets;
  * @author Louyj
  *
  */
+@NoLogMessage
 public class ClientIdMessage extends BaseMessage {
 
 	private Set<String> clientIds;

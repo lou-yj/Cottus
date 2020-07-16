@@ -31,7 +31,7 @@ public class LongPullHandler implements IWorkerMessageHandler {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	@Value("${worker.sleep:1}")
+	@Value("${worker.sleep:0}")
 	private int workerSleep;
 
 	@Value("${worker.wait:60}")

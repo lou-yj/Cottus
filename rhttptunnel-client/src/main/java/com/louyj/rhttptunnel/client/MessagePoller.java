@@ -46,8 +46,8 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 	@Autowired
 	private ClientSession session;
 
-	@Value("${client.max.wait:600}")
-	private int maxWait = 600;
+	@Value("${client.max.wait:120}")
+	private int maxWait = 120;
 
 	private Map<Class<? extends BaseMessage>, IMessageHandler> messageHandlers;
 

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
+import com.louyj.rhttptunnel.model.message.IWorkerParallelMessage;
 
 /**
  *
@@ -15,7 +16,7 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
  * @author Louyj
  *
  */
-public class TaskScheduleMessage extends ServerMessage {
+public class TaskScheduleMessage extends ServerMessage implements IWorkerParallelMessage {
 
 	public static enum ScriptContentType {
 		TEXT, FILE

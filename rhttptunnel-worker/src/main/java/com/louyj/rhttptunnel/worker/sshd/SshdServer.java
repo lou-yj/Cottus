@@ -9,7 +9,6 @@ import org.apache.sshd.server.session.ServerSession;
 import org.apache.sshd.server.shell.InteractiveProcessShellFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -18,7 +17,7 @@ import org.springframework.stereotype.Component;
  * @author Louyj
  *
  */
-@Component
+//@Component
 public class SshdServer implements InitializingBean {
 
 	private SshServer sshd;

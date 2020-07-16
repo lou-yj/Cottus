@@ -43,12 +43,6 @@ public class ClientWorker extends Thread {
 	@Override
 	public void run() {
 		logger.info("Start worker thread response for client {}", clientId);
-		try {
-			shellManager.activeShell(clientId);
-			logger.info("Shell actived.");
-		} catch (Exception e2) {
-			logger.error("Active shell failed.", e2);
-		}
 		while (!shouldBreak) {
 			try {
 				doRun();
