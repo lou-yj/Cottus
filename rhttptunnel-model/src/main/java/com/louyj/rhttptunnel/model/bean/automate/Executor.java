@@ -80,7 +80,7 @@ public class Executor {
 		for (ExecutorTask task : tasks) {
 			task = task.clone();
 			List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(task.getTargets(), Sets.newHashSet());
-			if (toWorkers.size() < 0) {
+			if (toWorkers.size() <= 0) {
 				logger.warn("No worker matched for executor {} task {}", name, index);
 			} else {
 				switch (task.getTaskDispatchMode()) {
