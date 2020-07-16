@@ -202,7 +202,7 @@ public class AlarmService implements EPStatementStateListener {
 		logger.info("[{}] Start eval silencers", uuid);
 		eventMap = alarmEvent.toMap();
 		DocumentContext eventDc = PlaceHolderUtils.toDc(eventMap);
-		List<AlarmSilencer> alarmSilencers = findAvalilAlarmSilencer();
+		List<AlarmSilencer> alarmSilencers = findAvalilAlarmSilencers();
 		for (AlarmSilencer alarmSilencer : alarmSilencers) {
 			boolean matched = MatchUtils.isMatched(alarmSilencer.isRegexMatch(), eventMap, alarmSilencer.getMatched(),
 					eventDc);
@@ -278,7 +278,7 @@ public class AlarmService implements EPStatementStateListener {
 		return result;
 	}
 
-	public List<AlarmSilencer> findAvalilAlarmSilencer() {
+	public List<AlarmSilencer> findAvalilAlarmSilencers() {
 		SqlFieldsQuery sql = new SqlFieldsQuery(
 				"SELECT uuid,regexMatch,matched,startTime,endTime FROM AlarmSilencer info where CURRENT_TIMESTAMP(3) >= startTime and CURRENT_TIMESTAMP(3) <= endTime");
 		List<AlarmSilencer> result = Lists.newArrayList();

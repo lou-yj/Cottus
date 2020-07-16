@@ -26,9 +26,9 @@ import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 @ShellComponent
 public class HandlerCommand extends BaseCommand {
 
-	@ShellMethod(value = "show handler list")
+	@ShellMethod(value = "list handlers")
 	@ShellMethodAvailability("serverContext")
-	public String handlerList() {
+	public String handlers() {
 		ListHandlersMessage message = new ListHandlersMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);

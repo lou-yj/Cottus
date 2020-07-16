@@ -26,9 +26,9 @@ import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 @ShellComponent
 public class ExecutorCommand extends BaseCommand {
 
-	@ShellMethod(value = "show executor list")
+	@ShellMethod(value = "list executors")
 	@ShellMethodAvailability("serverContext")
-	public String executorList() {
+	public String executors() {
 		ListExecutorsMessage message = new ListExecutorsMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
