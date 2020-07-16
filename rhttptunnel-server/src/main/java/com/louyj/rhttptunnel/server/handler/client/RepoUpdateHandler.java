@@ -169,6 +169,8 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 			List<Handler> handlers = Lists.newArrayList();
 			List<AlarmMarker> alarmMarkers = Lists.newArrayList();
 			List<AlarmInhibitor> alarmInhibitors = Lists.newArrayList();
+
+			Set<String> names = Sets.newHashSet();
 			try {
 				for (File ruleFile : ruleFiles) {
 					Object load = yaml.load(new FileInputStream(ruleFile));
@@ -177,29 +179,35 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 						Executor executor = automateRule.getExecutor();
 						executor.check(ruleFile, repoCommitIdPath);
 						executors.add(executor);
+						checkNames(names, "executor", executor.getName());
+						executor.getTasks().forEach(t -> checkNames(names, "executor task", t.getName()));
 					}
 					if (automateRule.getAlarmers() != null) {
 						automateRule.getAlarmers().forEach(alarmer -> {
 							alarmer.check(ruleFile);
 							alarmers.add(alarmer);
+							checkNames(names, "alarmer", alarmer.getName());
 						});
 					}
 					if (automateRule.getHandlers() != null) {
 						automateRule.getHandlers().forEach(handler -> {
 							handler.check(ruleFile, repoCommitIdPath);
 							handlers.add(handler);
+							checkNames(names, "handler", handler.getName());
 						});
 					}
 					if (automateRule.getMarkers() != null) {
 						automateRule.getMarkers().forEach(marker -> {
 							marker.check(ruleFile);
 							alarmMarkers.add(marker);
+							checkNames(names, "marker", marker.getName());
 						});
 					}
 					if (automateRule.getInhibitors() != null) {
 						automateRule.getInhibitors().forEach(inhibitor -> {
 							inhibitor.check(ruleFile, repoCommitIdPath);
 							alarmInhibitors.add(inhibitor);
+							checkNames(names, "inhibitor", inhibitor.getName());
 						});
 					}
 				}
@@ -217,6 +225,14 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 		} finally {
 			cleanExchangeIds(tempExchangeIds);
 		}
+	}
+
+	private void checkNames(Set<String> names, String category, String name) {
+		String key = category + ":" + name;
+		if (names.contains(key)) {
+			throw new RuntimeException(String.format("Name duplicate, %s: %s", category, name));
+		}
+		names.add(key);
 	}
 
 	private void waitAllWorkerAcked(Set<String> tempExchangeIds, ClientSession clientSession, String exchangeId)
