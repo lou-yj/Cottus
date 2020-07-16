@@ -57,9 +57,8 @@ public class HandlerService extends TimerTask {
 	public void handleAlarm(AlarmEvent alarmEvent) {
 		try {
 			Map<String, Object> eventMap = alarmEvent.toMap();
-			String uuid = automateManager.nextIndex();
-			logger.info("[{}] Receive alarm event {}", uuid, jackson.writeValueAsString(eventMap));
-			alarmEvent.setUuid(uuid);
+			String uuid = alarmEvent.getUuid();
+			logger.info("[{}] Start handle alarm event", uuid);
 			alarmCache.put(uuid, alarmEvent);
 			String alarmGroup = alarmEvent.getAlarmGroup();
 			logger.info("[{}] Alarm group {}", uuid, alarmGroup);

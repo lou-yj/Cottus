@@ -36,6 +36,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.model.util.PlaceHolderUtils;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 
@@ -156,24 +157,31 @@ public class AlarmService implements EPStatementStateListener {
 	}
 
 	public void handleAlarm(AlarmEvent alarmEvent) {
+		Map<String, Object> eventMap = alarmEvent.toMap();
+		String uuid = automateManager.nextIndex();
+		alarmEvent.setUuid(uuid);
+		logger.info("[{}] Receive alarm event {}", uuid, JsonUtils.gson().toJson(eventMap));
+		logger.info("[{}] Start mark alarm event", uuid);
 		for (AlarmMarker alarmMarker : automateManager.getAlarmMarkers()) {
-			Map<String, Object> eventMap = alarmEvent.toMap();
+			eventMap = alarmEvent.toMap();
 			boolean matched = isMatched(alarmMarker.isRegexMatch(), eventMap, alarmMarker.getMatched());
 			if (matched) {
-				Map<String, Object> tags = alarmMarker.getTags();
+				logger.info("Marker {} condition matched ", alarmMarker.getName());
 				if (MapUtils.isNotEmpty(alarmMarker.getProperties())) {
 					DocumentContext dc = PlaceHolderUtils.toDc(alarmMarker.getProperties());
 					Map<String, Object> replacedTags = Maps.newHashMap();
-					for (Entry<String, Object> entry : tags.entrySet()) {
+					for (Entry<String, Object> entry : alarmMarker.getTags().entrySet()) {
 						String key = replacePlaceHolder(dc, entry.getKey());
 						Object value = replacePlaceHolder(dc, entry.getValue());
 						replacedTags.put(key, value);
 					}
-					tags = replacedTags;
+					alarmEvent.getTags().add(Pair.of(alarmMarker.getName(), replacedTags));
+				} else {
+					alarmEvent.getTags().add(Pair.of(alarmMarker.getName(), Maps.newHashMap()));
 				}
-				alarmEvent.getTags().add(Pair.of(alarmMarker.getName(), tags));
 			}
 		}
+		logger.info("[{}] End mark alarm event", uuid);
 		handlerService.handleAlarm(alarmEvent);
 	}
 
