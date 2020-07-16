@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.model.util;
+package com.louyj.rhttptunnel.server.util;
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
  *
@@ -29,6 +30,9 @@ public class PlaceHolderUtils {
 
 	@SuppressWarnings("unchecked")
 	public static <T> T replacePlaceHolder(DocumentContext evnetDc, T content) {
+		if (evnetDc == null) {
+			return content;
+		}
 		if (!(content instanceof String)) {
 			return content;
 		}

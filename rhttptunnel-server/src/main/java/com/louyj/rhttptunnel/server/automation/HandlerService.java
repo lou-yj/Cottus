@@ -1,6 +1,6 @@
 package com.louyj.rhttptunnel.server.automation;
 
-import static com.louyj.rhttptunnel.model.util.PlaceHolderUtils.replacePlaceHolder;
+import static com.louyj.rhttptunnel.server.util.PlaceHolderUtils.replacePlaceHolder;
 import static org.apache.commons.collections4.CollectionUtils.size;
 
 import java.util.List;
@@ -29,6 +29,7 @@ import com.louyj.rhttptunnel.model.bean.automate.Handler;
 import com.louyj.rhttptunnel.model.message.server.TaskMetricsMessage.ExecuteStatus;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
+import com.louyj.rhttptunnel.server.util.MatchUtils;
 
 /**
  *
@@ -65,10 +66,19 @@ public class HandlerService extends TimerTask {
 			Map<String, String> preventHandlers = Maps.newHashMap();
 			for (Handler handler : automateManager.getHandlers()) {
 				logger.info("[{}] Start eval handler {}", uuid, handler.getName());
-				boolean isMatched = matched(uuid, eventMap, eventDc, handler.isRegexMatch(), handler.getMatched(),
-						handler.getWindowMatched(), handler.getTimeWindowSize());
+				boolean isMatched = MatchUtils.isMatched(handler.isRegexMatch(), eventMap, handler.getMatched(),
+						eventDc);
 				if (isMatched == false) {
 					continue;
+				}
+				if (MapUtils.isNotEmpty(handler.getWindowMatched())) {
+					List<Map<String, Object>> alarmEventWin = automateManager.getAlarmService()
+							.searchLatestEvent(handler.getTimeWindowSize());
+					boolean isWindowMatched = MatchUtils.isWindowMatched(handler.isRegexMatch(), alarmEventWin,
+							handler.getMatched(), eventDc);
+					if (isWindowMatched == false) {
+						continue;
+					}
 				}
 				logger.info("[{}] All condition matched", uuid);
 				String infoUUid = automateManager.nextIndex();
@@ -165,72 +175,6 @@ public class HandlerService extends TimerTask {
 			targetMap.put(replacePlaceHolder(eventDc, entry.getKey()), replacePlaceHolder(eventDc, entry.getValue()));
 		}
 		automateManager.scheduleHandler(handler, alarmEvent, correlationAlarms, alarmHandlerInfo, targetMap);
-	}
-
-	private boolean matched(String uuid, Map<String, Object> eventMap, DocumentContext evnetDc, boolean regexMatch,
-			Map<String, Object> matched, Map<String, Object> windowMatched, int timeWindowSize) {
-		for (Entry<String, Object> entry : matched.entrySet()) {
-			String matchedKey = replacePlaceHolder(evnetDc, entry.getKey());
-			Object matchedValue = replacePlaceHolder(evnetDc, entry.getValue());
-			Object eventValue = eventMap.get(matchedKey);
-			if (isMatched(regexMatch, matchedValue, eventValue) == false) {
-				return false;
-			}
-		}
-		logger.info("[{}] Condition matched", uuid);
-		if (isWindowMatched(uuid, evnetDc, regexMatch, windowMatched, timeWindowSize)) {
-			logger.info("[{}] Window condition matched", uuid);
-			return true;
-		}
-		return false;
-	}
-
-	@SuppressWarnings("unchecked")
-	public boolean isWindowMatched(String uuid, DocumentContext evnetDc, boolean regexMatch,
-			Map<String, Object> windowMatched, int timeWindowSize) {
-		if (MapUtils.isEmpty(windowMatched)) {
-			return true;
-		}
-		Map<String, Object> windowMatchedReplaced = Maps.newHashMap();
-		for (Entry<String, Object> entry : windowMatched.entrySet()) {
-			String matchedKey = replacePlaceHolder(evnetDc, entry.getKey());
-			Object matchedValue = replacePlaceHolder(evnetDc, entry.getValue());
-			windowMatchedReplaced.put(matchedKey, matchedValue);
-		}
-		long timeDeadLine = System.currentTimeMillis() - timeWindowSize * 1000;
-		SqlFieldsQuery sql = new SqlFieldsQuery("SELECT uuid,fields FROM AlarmEvent where alarmTime > ?")
-				.setArgs(timeDeadLine);
-		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
-			for (List<?> row : cursor) {
-				Map<String, Object> windowMap = (Map<String, Object>) row.get(1);
-				boolean allMatched = true;
-				for (Entry<String, Object> entry : windowMatchedReplaced.entrySet()) {
-					String matchedKey = entry.getKey();
-					Object matchedValue = entry.getValue();
-					Object windowValue = windowMap.get(matchedKey);
-					if (isMatched(regexMatch, matchedValue, windowValue) == false) {
-						allMatched = false;
-						break;
-					}
-				}
-				if (allMatched) {
-					logger.info("[{}] Matched window event {}", windowMap);
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private boolean isMatched(boolean regexMatch, Object matchedValue, Object eventValue) {
-		if (matchedValue == null || eventValue == null) {
-			return false;
-		}
-		if (regexMatch) {
-			return String.valueOf(eventValue).matches(String.valueOf(matchedValue));
-		} else {
-			return matchedValue.equals(eventValue);
-		}
 	}
 
 	private Pair<List<AlarmEvent>, List<AlarmHandlerInfo>> parseCorrelationAlarms(SqlFieldsQuery sql1) {

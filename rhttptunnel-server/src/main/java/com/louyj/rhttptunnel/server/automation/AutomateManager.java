@@ -41,16 +41,12 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmInhibitor;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
-import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
-import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorLog;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorTask;
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorTaskRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Handler;
-import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
-import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo.HandlerExecuteInfo;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
@@ -93,8 +89,8 @@ public class AutomateManager implements ISystemClientListener {
 	private static final String AUTOMATE_HANDLER = "automate:handler";
 	private static final String AUTOMATE_ALARM_MARKER = "automate:alarmmarker";
 	private static final String AUTOMATE_ALARM_INHIBITOR = "automate:alarminhibitor";
-	private static final String EXEC_HOST = "HOST";
-	private static final String EXEC_IP = "IP";
+	public static final String EXEC_HOST = "HOST";
+	public static final String EXEC_IP = "IP";
 
 	@Value("${data.dir:/data}")
 	private String dataDir;
@@ -135,6 +131,80 @@ public class AutomateManager implements ISystemClientListener {
 		if (StringUtils.isBlank(defaultAlarmGroup) == false) {
 			this.defaultAlarmGroupKeys = Arrays.asList(defaultAlarmGroup.split(","));
 		}
+	}
+
+	public String getRepoCommitId() {
+		return repoCommitId;
+	}
+
+	public void setRepoCommitId(String repoCommitId) {
+		this.repoCommitId = repoCommitId;
+	}
+
+	public RepoConfig getRepoConfig() {
+		return repoConfig;
+	}
+
+	public void setRepoConfig(RepoConfig repoConfig) {
+		this.repoConfig = repoConfig;
+	}
+
+	public String getDataDir() {
+		return dataDir;
+	}
+
+	public void setDataDir(String dataDir) {
+		this.dataDir = dataDir;
+	}
+
+	public List<Handler> getHandlers() {
+		return handlers;
+	}
+
+	public List<Executor> getExecutors() {
+		return executors;
+	}
+
+	public List<Alarmer> getAlarmers() {
+		return alarmers;
+	}
+
+	public List<AlarmMarker> getAlarmMarkers() {
+		return alarmMarkers;
+	}
+
+	public List<AlarmInhibitor> getAlarmInhibitors() {
+		return alarmInhibitors;
+	}
+
+	public AlarmService getAlarmService() {
+		return alarmService;
+	}
+
+	public Executor getExecutor(String name) {
+		for (Executor executor : executors) {
+			if (StringUtils.equals(executor.getName(), name)) {
+				return executor;
+			}
+		}
+		return null;
+	}
+
+	public Handler getHandler(String id) {
+		for (Handler handler : handlers) {
+			if (StringUtils.equals(handler.getName(), id)) {
+				return handler;
+			}
+		}
+		return null;
+	}
+
+	public IgniteCache<Object, Object> getAlarmCache() {
+		return alarmCache;
+	}
+
+	public IgniteCache<Object, Object> getAuditCache() {
+		return auditCache;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -223,17 +293,6 @@ public class AutomateManager implements ISystemClientListener {
 		updateAlarmers();
 	}
 
-	public void scheduleExecutorTask(Executor executor) throws JsonParseException, JsonMappingException, IOException {
-		String scheduledId = DateTime.now().toString("yyMMddHHmmssSSS");
-		logger.info("Start schedule executor {} task execute mode {} schedule id {}", executor.getName(),
-				executor.getTaskExecuteMode(), scheduledId);
-		List<Pair<List<ClientInfo>, ExecutorTask>> finalTasks = executor.parseFinalTasks(workerSessionManager);
-		ExecutorStatus executorStatus = new ExecutorStatus(executor, finalTasks, scheduledId);
-		logger.info("Total {} tasks for executor {}", finalTasks.size(), executor.getName());
-		scheduleStatusCache.put(scheduleStatusKey(executor.getName(), scheduledId), executorStatus);
-		scheduleNextTask(executorStatus);
-	}
-
 	public List<ExecutorTaskRecord> searchAuditRecords(TaskType type, String executor, String name, int limit) {
 		SqlFieldsQuery sql = new SqlFieldsQuery(
 				"SELECT scheduleId,time,params,sre,status,metrics,message FROM ScheduledTaskAudit info where type=? and executor=? and name = ? order by scheduleId desc limit ?")
@@ -252,25 +311,6 @@ public class AutomateManager implements ISystemClientListener {
 				record.setStatus(rowGet(row, index++));
 				record.setMetrics(rowGet(row, index++));
 				record.setMessage(rowGet(row, index++));
-				result.add(record);
-			}
-		}
-		return result;
-	}
-
-	public List<AlarmTriggeredRecord> searchAlarmRecords(String name, int limit) {
-		SqlFieldsQuery sql = new SqlFieldsQuery(
-				"SELECT uuid,alarmTime,alarmGroup,fields FROM AlarmEvent info where alarmRule=? order by alarmTime desc limit ?")
-						.setArgs(name, limit);
-		List<AlarmTriggeredRecord> result = Lists.newArrayList();
-		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
-			for (List<?> row : cursor) {
-				AlarmTriggeredRecord record = new AlarmTriggeredRecord();
-				int index = 0;
-				record.setUuid(rowGet(row, index++));
-				record.setAlarmTime(rowGet(row, index++));
-				record.setAlarmGroup(rowGet(row, index++));
-				record.setFields(rowGet(row, index++));
 				result.add(record);
 			}
 		}
@@ -299,167 +339,15 @@ public class AutomateManager implements ISystemClientListener {
 		return result;
 	}
 
-	public List<AlarmSilencer> findAvalilAlarmSilencer() {
-		SqlFieldsQuery sql = new SqlFieldsQuery(
-				"SELECT uuid,regexMatch,matched,startTime,endTime FROM AlarmSilencer info where CURRENT_TIMESTAMP(3) >= startTime and CURRENT_TIMESTAMP(3) <= endTime");
-		List<AlarmSilencer> result = Lists.newArrayList();
-		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
-			for (List<?> row : cursor) {
-				int index = 0;
-				AlarmSilencer alarmSilencer = new AlarmSilencer();
-				alarmSilencer.setUuid(rowGet(row, index++));
-				alarmSilencer.setRegexMatch(rowGet(row, index++));
-				alarmSilencer.setMatched(rowGet(row, index++));
-				alarmSilencer.setStartTime(rowGet(row, index++));
-				alarmSilencer.setEndTime(rowGet(row, index++));
-				result.add(alarmSilencer);
-			}
-		}
-		return result;
-	}
-
-	public AlarmTrace findAlarmTrace(String uuid) {
-		AlarmTrace alarmTrace = new AlarmTrace();
-		AlarmEvent alarmEvent = (AlarmEvent) alarmCache.get(uuid);
-		AlarmTriggeredRecord record = new AlarmTriggeredRecord();
-		record.setUuid(alarmEvent.getUuid());
-		record.setAlarmTime(alarmEvent.getAlarmTime());
-		record.setAlarmGroup(alarmEvent.getAlarmGroup());
-		record.setFields(alarmEvent.getFields());
-		record.setTags(alarmEvent.getTags());
-		alarmTrace.setRecord(record);
-
-		AlarmSilencer alarmSilencer = alarmEvent.getAlarmSilencer();
-		com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer alSilencer = jackson.convertValue(alarmSilencer,
-				com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer.class);
-		alarmTrace.setAlarmSilencer(alSilencer);
-		alarmTrace.setAlarmInhibitor(alarmEvent.getAlarmInhibitor());
-
-		SqlFieldsQuery sql = new SqlFieldsQuery(
-				"SELECT alarmId,handlerId,evaluateTime,preventedBy,scheduledTime,params,targetHosts,scheduleId,status,message,correlationAlarmIds FROM AlarmHandlerInfo info where alarmId=? order by evaluateTime")
-						.setArgs(uuid);
-		List<HandlerProcessInfo> handlerInfos = Lists.newArrayList();
-		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
-			for (List<?> row : cursor) {
-				int index = 0;
-				HandlerProcessInfo pinfo = new HandlerProcessInfo();
-				pinfo.setAlarmId(rowGet(row, index++));
-				pinfo.setHandlerId(rowGet(row, index++));
-				pinfo.setEvaluateTime(rowGet(row, index++));
-				pinfo.setPreventedBy(rowGet(row, index++));
-				pinfo.setScheduledTime(rowGet(row, index++));
-				pinfo.setParams(rowGet(row, index++));
-				pinfo.setTargetHosts(rowGet(row, index++));
-				pinfo.setScheduleId(rowGet(row, index++));
-				pinfo.setStatus(rowGet(row, index++));
-				pinfo.setMessage(rowGet(row, index++));
-				List<String> correlationAlarmIds = rowGet(row, index++);
-				List<Map<String, Object>> correlationAlarms = Lists.newArrayList();
-				for (String caid : correlationAlarmIds) {
-					AlarmEvent ae = (AlarmEvent) alarmCache.get(caid);
-					correlationAlarms.add(ae.getFields());
-				}
-				pinfo.setCorrelationAlarms(correlationAlarms);
-				handlerInfos.add(pinfo);
-			}
-		}
-		alarmTrace.setHandlerInfos(handlerInfos);
-		for (HandlerProcessInfo pinfo : handlerInfos) {
-			sql = new SqlFieldsQuery(
-					"SELECT sre,metrics,status,message,stdout,stderr FROM ScheduledTaskAudit audit where scheduleId=? order by time")
-							.setArgs(pinfo.getScheduleId());
-			List<HandlerExecuteInfo> executeInfos = Lists.newArrayList();
-			try (QueryCursor<List<?>> cursor = auditCache.query(sql)) {
-				for (List<?> row : cursor) {
-					int index = 0;
-					HandlerExecuteInfo einfo = new HandlerExecuteInfo();
-					einfo.setSre(rowGet(row, index++));
-					einfo.setMetrics(rowGet(row, index++));
-					einfo.setStatus(rowGet(row, index++));
-					einfo.setMessage(rowGet(row, index++));
-					einfo.setStdout(rowGet(row, index++));
-					einfo.setStderr(rowGet(row, index++));
-
-					Map<String, String> sre = einfo.getSre();
-					einfo.setHost(MapUtils.getString(sre, EXEC_HOST));
-					einfo.setIp(MapUtils.getString(sre, EXEC_IP));
-					executeInfos.add(einfo);
-				}
-				pinfo.setExecuteInfos(executeInfos);
-			}
-		}
-		return alarmTrace;
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T> T rowGet(List<?> row, int index) {
-		return (T) row.get(index);
-	}
-
-	public String getRepoCommitId() {
-		return repoCommitId;
-	}
-
-	public void setRepoCommitId(String repoCommitId) {
-		this.repoCommitId = repoCommitId;
-	}
-
-	public RepoConfig getRepoConfig() {
-		return repoConfig;
-	}
-
-	public void setRepoConfig(RepoConfig repoConfig) {
-		this.repoConfig = repoConfig;
-	}
-
-	public String getDataDir() {
-		return dataDir;
-	}
-
-	public void setDataDir(String dataDir) {
-		this.dataDir = dataDir;
-	}
-
-	public List<Handler> getHandlers() {
-		return handlers;
-	}
-
-	public List<Executor> getExecutors() {
-		return executors;
-	}
-
-	public List<Alarmer> getAlarmers() {
-		return alarmers;
-	}
-
-	public List<AlarmMarker> getAlarmMarkers() {
-		return alarmMarkers;
-	}
-
-	public List<AlarmInhibitor> getAlarmInhibitors() {
-		return alarmInhibitors;
-	}
-
-	public Executor getExecutor(String name) {
-		for (Executor executor : executors) {
-			if (StringUtils.equals(executor.getName(), name)) {
-				return executor;
-			}
-		}
-		return null;
-	}
-
-	public Handler getHandler(String id) {
-		for (Handler handler : handlers) {
-			if (StringUtils.equals(handler.getName(), id)) {
-				return handler;
-			}
-		}
-		return null;
-	}
-
-	public IgniteCache<Object, Object> getAlarmCache() {
-		return alarmCache;
+	public void scheduleExecutorTask(Executor executor) throws JsonParseException, JsonMappingException, IOException {
+		String scheduledId = DateTime.now().toString("yyMMddHHmmssSSS");
+		logger.info("Start schedule executor {} task execute mode {} schedule id {}", executor.getName(),
+				executor.getTaskExecuteMode(), scheduledId);
+		List<Pair<List<ClientInfo>, ExecutorTask>> finalTasks = executor.parseFinalTasks(workerSessionManager);
+		ExecutorStatus executorStatus = new ExecutorStatus(executor, finalTasks, scheduledId);
+		logger.info("Total {} tasks for executor {}", finalTasks.size(), executor.getName());
+		scheduleStatusCache.put(scheduleStatusKey(executor.getName(), scheduledId), executorStatus);
+		scheduleNextTask(executorStatus);
 	}
 
 	@Override
@@ -781,4 +669,8 @@ public class AutomateManager implements ISystemClientListener {
 		taskIndex++;
 	}
 
+	@SuppressWarnings("unchecked")
+	private <T> T rowGet(List<?> row, int index) {
+		return (T) row.get(index);
+	}
 }

@@ -1,7 +1,7 @@
 package com.louyj.rhttptunnel.server.automation;
 
 import static com.google.common.base.Charsets.UTF_8;
-import static com.louyj.rhttptunnel.model.util.PlaceHolderUtils.replacePlaceHolder;
+import static com.louyj.rhttptunnel.server.util.PlaceHolderUtils.replacePlaceHolder;
 
 import java.io.InputStream;
 import java.io.StringReader;
@@ -19,6 +19,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.ignite.cache.query.QueryCursor;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,15 +34,22 @@ import com.espertech.esper.client.EPServiceProviderManager;
 import com.espertech.esper.client.EPStatement;
 import com.espertech.esper.client.EPStatementStateListener;
 import com.espertech.esper.client.annotation.Tag;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.jsonpath.DocumentContext;
 import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmInhibitor;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
+import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
+import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo.HandlerExecuteInfo;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
-import com.louyj.rhttptunnel.model.util.PlaceHolderUtils;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
+import com.louyj.rhttptunnel.server.util.MatchUtils;
+import com.louyj.rhttptunnel.server.util.PlaceHolderUtils;
 
 /**
  *
@@ -61,6 +70,7 @@ public class AlarmService implements EPStatementStateListener {
 	private String esperConfig;
 	private HandlerService handlerService;
 	private AutomateManager automateManager;
+	private ObjectMapper jackson = JsonUtils.jackson();
 
 	public AlarmService(HandlerService handlerService, AutomateManager automateManager) {
 		super();
@@ -166,11 +176,16 @@ public class AlarmService implements EPStatementStateListener {
 		logger.info("[{}] Start mark alarm event", uuid);
 		for (AlarmMarker alarmMarker : automateManager.getAlarmMarkers()) {
 			eventMap = alarmEvent.toMap();
-			boolean matched = isMatched(alarmMarker.isRegexMatch(), eventMap, alarmMarker.getMatched());
+			DocumentContext eventDc = PlaceHolderUtils.toDc(eventMap);
+			boolean matched = MatchUtils.isMatched(alarmMarker.isRegexMatch(), eventMap, alarmMarker.getMatched(),
+					eventDc);
 			if (matched) {
 				logger.info("Marker {} condition matched ", alarmMarker.getName());
 				if (MapUtils.isNotEmpty(alarmMarker.getProperties())) {
-					DocumentContext dc = PlaceHolderUtils.toDc(alarmMarker.getProperties());
+					Map<String, Object> env = Maps.newHashMap();
+					env.putAll(eventMap);
+					env.putAll(alarmMarker.getProperties());
+					DocumentContext dc = PlaceHolderUtils.toDc(env);
 					Map<String, Object> replacedTags = Maps.newHashMap();
 					for (Entry<String, Object> entry : alarmMarker.getTags().entrySet()) {
 						String key = replacePlaceHolder(dc, entry.getKey());
@@ -186,9 +201,11 @@ public class AlarmService implements EPStatementStateListener {
 		logger.info("[{}] End mark alarm event", uuid);
 		logger.info("[{}] Start eval silencers", uuid);
 		eventMap = alarmEvent.toMap();
-		List<AlarmSilencer> alarmSilencers = automateManager.findAvalilAlarmSilencer();
+		DocumentContext eventDc = PlaceHolderUtils.toDc(eventMap);
+		List<AlarmSilencer> alarmSilencers = findAvalilAlarmSilencer();
 		for (AlarmSilencer alarmSilencer : alarmSilencers) {
-			boolean matched = isMatched(alarmSilencer.isRegexMatch(), eventMap, alarmSilencer.getMatched());
+			boolean matched = MatchUtils.isMatched(alarmSilencer.isRegexMatch(), eventMap, alarmSilencer.getMatched(),
+					eventDc);
 			if (matched) {
 				logger.info("[{}] Matches silencer, match condition {} regex {} start time {} end time {}",
 						alarmSilencer.getMatched(), alarmSilencer.isRegexMatch(),
@@ -204,15 +221,15 @@ public class AlarmService implements EPStatementStateListener {
 			return;
 		}
 		logger.info("[{}] Start eval inhibitors", uuid);
-		DocumentContext eventDc = PlaceHolderUtils.toDc(eventMap);
 		for (AlarmInhibitor alarmInhibitor : automateManager.getAlarmInhibitors()) {
 			boolean regexMatch = alarmInhibitor.isRegexMatch();
-			boolean matched = isMatched(regexMatch, eventMap, alarmInhibitor.getMatched());
+			boolean matched = MatchUtils.isMatched(regexMatch, eventMap, alarmInhibitor.getMatched(), eventDc);
 			if (matched == false) {
 				continue;
 			}
-			boolean windowMatched = handlerService.isWindowMatched(uuid, eventDc, regexMatch,
-					alarmInhibitor.getWindowMatched(), alarmInhibitor.getTimeWindowSize());
+			List<Map<String, Object>> latestEvent = searchLatestEvent(alarmInhibitor.getTimeWindowSize());
+			boolean windowMatched = MatchUtils.isWindowMatched(regexMatch, latestEvent,
+					alarmInhibitor.getWindowMatched(), eventDc);
 			if (windowMatched == false) {
 				continue;
 			}
@@ -227,42 +244,130 @@ public class AlarmService implements EPStatementStateListener {
 		handlerService.handleAlarm(alarmEvent);
 	}
 
-	private boolean isMatched(boolean regexMatch, Map<String, Object> eventMap, Map<String, Object> matched) {
-		for (Entry<String, Object> entry : matched.entrySet()) {
-			String key = entry.getKey();
-			Object expect = entry.getValue();
-			Object value = eventMap.get(key);
-			if (expect instanceof List) {
-				if (isMatched(regexMatch, value, (List<?>) expect) == false) {
-					return false;
-				}
-			} else {
-				if (isMatched(regexMatch, value, expect) == false) {
-					return false;
-				}
+	@SuppressWarnings("unchecked")
+	public List<Map<String, Object>> searchLatestEvent(int timeWindowSize) {
+		long timeDeadLine = System.currentTimeMillis() - timeWindowSize * 1000;
+		SqlFieldsQuery sql = new SqlFieldsQuery("SELECT uuid,fields FROM AlarmEvent where alarmTime > ?")
+				.setArgs(timeDeadLine);
+		List<Map<String, Object>> result = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = automateManager.getAlarmCache().query(sql)) {
+			for (List<?> row : cursor) {
+				Map<String, Object> windowMap = (Map<String, Object>) row.get(1);
+				result.add(windowMap);
 			}
 		}
-		return true;
+		return result;
 	}
 
-	private boolean isMatched(boolean regexMatch, Object value, Object expect) {
-		if (value == null) {
-			return false;
-		}
-		if (regexMatch) {
-			return String.valueOf(value).matches(String.valueOf(expect));
-		} else {
-			return String.valueOf(value).equals(String.valueOf(expect));
-		}
-	}
-
-	private boolean isMatched(boolean regexMatch, Object value, List<?> expects) {
-		for (Object expect : expects) {
-			if (isMatched(regexMatch, value, expect)) {
-				return true;
+	public List<AlarmTriggeredRecord> searchAlarmRecords(String name, int limit) {
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT uuid,alarmTime,alarmGroup,fields FROM AlarmEvent info where alarmRule=? order by alarmTime desc limit ?")
+						.setArgs(name, limit);
+		List<AlarmTriggeredRecord> result = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = automateManager.getAlarmCache().query(sql)) {
+			for (List<?> row : cursor) {
+				AlarmTriggeredRecord record = new AlarmTriggeredRecord();
+				int index = 0;
+				record.setUuid(rowGet(row, index++));
+				record.setAlarmTime(rowGet(row, index++));
+				record.setAlarmGroup(rowGet(row, index++));
+				record.setFields(rowGet(row, index++));
+				result.add(record);
 			}
 		}
-		return false;
+		return result;
+	}
+
+	public List<AlarmSilencer> findAvalilAlarmSilencer() {
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT uuid,regexMatch,matched,startTime,endTime FROM AlarmSilencer info where CURRENT_TIMESTAMP(3) >= startTime and CURRENT_TIMESTAMP(3) <= endTime");
+		List<AlarmSilencer> result = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = automateManager.getAlarmCache().query(sql)) {
+			for (List<?> row : cursor) {
+				int index = 0;
+				AlarmSilencer alarmSilencer = new AlarmSilencer();
+				alarmSilencer.setUuid(rowGet(row, index++));
+				alarmSilencer.setRegexMatch(rowGet(row, index++));
+				alarmSilencer.setMatched(rowGet(row, index++));
+				alarmSilencer.setStartTime(rowGet(row, index++));
+				alarmSilencer.setEndTime(rowGet(row, index++));
+				result.add(alarmSilencer);
+			}
+		}
+		return result;
+	}
+
+	public AlarmTrace findAlarmTrace(String uuid) {
+		AlarmTrace alarmTrace = new AlarmTrace();
+		AlarmEvent alarmEvent = (AlarmEvent) automateManager.getAlarmCache().get(uuid);
+		AlarmTriggeredRecord record = new AlarmTriggeredRecord();
+		record.setUuid(alarmEvent.getUuid());
+		record.setAlarmTime(alarmEvent.getAlarmTime());
+		record.setAlarmGroup(alarmEvent.getAlarmGroup());
+		record.setFields(alarmEvent.getFields());
+		record.setTags(alarmEvent.getTags());
+		alarmTrace.setRecord(record);
+
+		AlarmSilencer alarmSilencer = alarmEvent.getAlarmSilencer();
+		com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer alSilencer = jackson.convertValue(alarmSilencer,
+				com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer.class);
+		alarmTrace.setAlarmSilencer(alSilencer);
+		alarmTrace.setAlarmInhibitor(alarmEvent.getAlarmInhibitor());
+
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT alarmId,handlerId,evaluateTime,preventedBy,scheduledTime,params,targetHosts,scheduleId,status,message,correlationAlarmIds FROM AlarmHandlerInfo info where alarmId=? order by evaluateTime")
+						.setArgs(uuid);
+		List<HandlerProcessInfo> handlerInfos = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = automateManager.getAlarmCache().query(sql)) {
+			for (List<?> row : cursor) {
+				int index = 0;
+				HandlerProcessInfo pinfo = new HandlerProcessInfo();
+				pinfo.setAlarmId(rowGet(row, index++));
+				pinfo.setHandlerId(rowGet(row, index++));
+				pinfo.setEvaluateTime(rowGet(row, index++));
+				pinfo.setPreventedBy(rowGet(row, index++));
+				pinfo.setScheduledTime(rowGet(row, index++));
+				pinfo.setParams(rowGet(row, index++));
+				pinfo.setTargetHosts(rowGet(row, index++));
+				pinfo.setScheduleId(rowGet(row, index++));
+				pinfo.setStatus(rowGet(row, index++));
+				pinfo.setMessage(rowGet(row, index++));
+				List<String> correlationAlarmIds = rowGet(row, index++);
+				List<Map<String, Object>> correlationAlarms = Lists.newArrayList();
+				for (String caid : correlationAlarmIds) {
+					AlarmEvent ae = (AlarmEvent) automateManager.getAlarmCache().get(caid);
+					correlationAlarms.add(ae.getFields());
+				}
+				pinfo.setCorrelationAlarms(correlationAlarms);
+				handlerInfos.add(pinfo);
+			}
+		}
+		alarmTrace.setHandlerInfos(handlerInfos);
+		for (HandlerProcessInfo pinfo : handlerInfos) {
+			sql = new SqlFieldsQuery(
+					"SELECT sre,metrics,status,message,stdout,stderr FROM ScheduledTaskAudit audit where scheduleId=? order by time")
+							.setArgs(pinfo.getScheduleId());
+			List<HandlerExecuteInfo> executeInfos = Lists.newArrayList();
+			try (QueryCursor<List<?>> cursor = automateManager.getAuditCache().query(sql)) {
+				for (List<?> row : cursor) {
+					int index = 0;
+					HandlerExecuteInfo einfo = new HandlerExecuteInfo();
+					einfo.setSre(rowGet(row, index++));
+					einfo.setMetrics(rowGet(row, index++));
+					einfo.setStatus(rowGet(row, index++));
+					einfo.setMessage(rowGet(row, index++));
+					einfo.setStdout(rowGet(row, index++));
+					einfo.setStderr(rowGet(row, index++));
+
+					Map<String, String> sre = einfo.getSre();
+					einfo.setHost(MapUtils.getString(sre, AutomateManager.EXEC_HOST));
+					einfo.setIp(MapUtils.getString(sre, AutomateManager.EXEC_IP));
+					executeInfos.add(einfo);
+				}
+				pinfo.setExecuteInfos(executeInfos);
+			}
+		}
+		return alarmTrace;
 	}
 
 	private Configuration getConfiguration(String xml) throws Exception {
@@ -286,4 +391,8 @@ public class AlarmService implements EPStatementStateListener {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	private <T> T rowGet(List<?> row, int index) {
+		return (T) row.get(index);
+	}
 }

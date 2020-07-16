@@ -11,7 +11,7 @@ import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmerRecordsListMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmerRecordsMessage;
-import com.louyj.rhttptunnel.server.automation.AutomateManager;
+import com.louyj.rhttptunnel.server.automation.AlarmService;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -27,7 +27,7 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
 public class AlarmerRecordsHandler implements IClientMessageHandler {
 
 	@Autowired
-	private AutomateManager automateManager;
+	private AlarmService alarmService;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -44,7 +44,7 @@ public class AlarmerRecordsHandler implements IClientMessageHandler {
 			throws Exception {
 		AlarmerRecordsListMessage listMessage = (AlarmerRecordsListMessage) message;
 		String alarmer = listMessage.getName();
-		List<AlarmTriggeredRecord> alarmRecords = automateManager.searchAlarmRecords(alarmer, 100);
+		List<AlarmTriggeredRecord> alarmRecords = alarmService.searchAlarmRecords(alarmer, 100);
 		AlarmerRecordsMessage recordsMessage = new AlarmerRecordsMessage(SERVER, message.getExchangeId());
 		recordsMessage.setRecords(alarmRecords);
 		return recordsMessage;
