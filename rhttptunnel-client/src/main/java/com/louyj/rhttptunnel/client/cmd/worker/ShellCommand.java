@@ -7,14 +7,9 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import java.util.Scanner;
 import java.util.UUID;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jline.reader.EndOfFileException;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -52,7 +47,7 @@ public class ShellCommand extends BaseCommand {
 		if (StringUtils.equalsIgnoreCase(line, "yes") == false) {
 			return "CANCELED";
 		}
-		System.out.println("Try to ask worker work into interactive shell mode");
+		System.out.println("Try to ask worker into interactive shell mode");
 		String exchangeId = UUID.randomUUID().toString();
 		ShellStartMessage shellStartMessage = new ShellStartMessage(CLIENT, exchangeId);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellStartMessage);
@@ -64,13 +59,17 @@ public class ShellCommand extends BaseCommand {
 			System.out.println(resp);
 			return Status.FAILED;
 		}
-		Terminal terminal = TerminalBuilder.builder().nativeSignals(true).signalHandler(Terminal.SignalHandler.SIG_IGN)
-				.build();
-		LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).build();
 		String prompt = "shell:> ";
+		ShellParser shellParser = new ShellParser();
+		boolean isMultiLine = false;
 		try {
 			while (true) {
-				line = lineReader.readLine(prompt);
+				if (isMultiLine) {
+					isMultiLine = false;
+				} else {
+					System.out.print(prompt);
+				}
+				line = sc.nextLine();
 				if (StringUtils.equals(StringUtils.trim(line), "exit")) {
 					ShellEndMessage shellEndMessage = new ShellEndMessage(CLIENT, exchangeId);
 					BaseMessage endMessage = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellEndMessage);
@@ -78,15 +77,17 @@ public class ShellCommand extends BaseCommand {
 					printMessage(echo, System.out);
 					break;
 				}
-				if (StringUtils.endsWith(line, "\\")) {
-					printMessage("Multi line command current not support!", System.out);
-				} else if (StringUtils.isNotBlank(line)) {
-					ShellMessage shellMessage = new ShellMessage(CLIENT, exchangeId);
-					shellMessage.setMessage(line);
-					BaseMessage post = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellMessage);
-					String echo = messagePoller.pollExchangeMessage(post);
-					printMessage(echo, System.out);
+				String parsedLine = shellParser.parse(line);
+				if (parsedLine == null) {
+					System.out.print("> ");
+					isMultiLine = true;
+					continue;
 				}
+				ShellMessage shellMessage = new ShellMessage(CLIENT, exchangeId);
+				shellMessage.setMessage(parsedLine);
+				BaseMessage post = messageExchanger.jsonPost(CLIENT_EXCHANGE, shellMessage);
+				String echo = messagePoller.pollExchangeMessage(post);
+				printMessage(echo, System.out);
 			}
 		} catch (UserInterruptException e) {
 			printMessage("Try to ask worker work exit interactive shell mode", System.out);
@@ -96,7 +97,6 @@ public class ShellCommand extends BaseCommand {
 			printMessage(echo, System.out);
 		} catch (EndOfFileException e) {
 		}
-		IOUtils.closeQuietly(terminal);
 		return "\nExit interactive shell mode";
 	}
 
