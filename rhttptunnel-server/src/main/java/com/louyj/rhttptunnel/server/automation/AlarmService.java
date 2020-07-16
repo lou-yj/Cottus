@@ -19,6 +19,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -34,6 +35,7 @@ import com.espertech.esper.client.annotation.Tag;
 import com.google.common.collect.Maps;
 import com.jayway.jsonpath.DocumentContext;
 import com.louyj.rhttptunnel.model.bean.Pair;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmInhibitor;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
 import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
@@ -182,6 +184,46 @@ public class AlarmService implements EPStatementStateListener {
 			}
 		}
 		logger.info("[{}] End mark alarm event", uuid);
+		logger.info("[{}] Start eval silencers", uuid);
+		eventMap = alarmEvent.toMap();
+		List<AlarmSilencer> alarmSilencers = automateManager.findAvalilAlarmSilencer();
+		for (AlarmSilencer alarmSilencer : alarmSilencers) {
+			boolean matched = isMatched(alarmSilencer.isRegexMatch(), eventMap, alarmSilencer.getMatched());
+			if (matched) {
+				logger.info("[{}] Matches silencer, match condition {} regex {} start time {} end time {}",
+						alarmSilencer.getMatched(), alarmSilencer.isRegexMatch(),
+						new DateTime(alarmSilencer.getStartTime()).toString("yyyy-MM-dd HH:mm:ss"),
+						new DateTime(alarmSilencer.getEndTime()).toString("yyyy-MM-dd HH:mm:ss"));
+				alarmEvent.setAlarmSilencer(alarmSilencer);
+				break;
+			}
+		}
+		logger.info("[{}] End eval silencers", uuid);
+		automateManager.getAlarmCache().put(uuid, alarmEvent);
+		if (alarmEvent.getAlarmSilencer() != null) {
+			return;
+		}
+		logger.info("[{}] Start eval inhibitors", uuid);
+		DocumentContext eventDc = PlaceHolderUtils.toDc(eventMap);
+		for (AlarmInhibitor alarmInhibitor : automateManager.getAlarmInhibitors()) {
+			boolean regexMatch = alarmInhibitor.isRegexMatch();
+			boolean matched = isMatched(regexMatch, eventMap, alarmInhibitor.getMatched());
+			if (matched == false) {
+				continue;
+			}
+			boolean windowMatched = handlerService.isWindowMatched(uuid, eventDc, regexMatch,
+					alarmInhibitor.getWindowMatched(), alarmInhibitor.getTimeWindowSize());
+			if (windowMatched == false) {
+				continue;
+			}
+			logger.info("[{}] Alarm inhibited by inhibitor {}", alarmInhibitor.getName());
+			alarmEvent.setAlarmInhibitor(alarmInhibitor);
+			break;
+		}
+		logger.info("[{}] End eval inhibitors", uuid);
+		if (alarmEvent.getAlarmInhibitor() != null) {
+			return;
+		}
 		handlerService.handleAlarm(alarmEvent);
 	}
 

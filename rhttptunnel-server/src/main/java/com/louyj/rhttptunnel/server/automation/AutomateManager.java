@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmInhibitor;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmMarker;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
@@ -91,6 +92,7 @@ public class AutomateManager implements ISystemClientListener {
 	private static final String AUTOMATE_ALARMER = "automate:alarmer";
 	private static final String AUTOMATE_HANDLER = "automate:handler";
 	private static final String AUTOMATE_ALARM_MARKER = "automate:alarmmarker";
+	private static final String AUTOMATE_ALARM_INHIBITOR = "automate:alarminhibitor";
 	private static final String EXEC_HOST = "HOST";
 	private static final String EXEC_IP = "IP";
 
@@ -121,6 +123,7 @@ public class AutomateManager implements ISystemClientListener {
 	private List<Alarmer> alarmers = Lists.newArrayList();
 	private List<Handler> handlers = Lists.newArrayList();
 	private List<AlarmMarker> alarmMarkers = Lists.newArrayList();
+	private List<AlarmInhibitor> alarmInhibitors = Lists.newArrayList();
 	private AlarmService alarmService;
 	private HandlerService handlerService;
 	private ThreadPoolTaskScheduler taskScheduler;
@@ -148,8 +151,9 @@ public class AutomateManager implements ISystemClientListener {
 				.setIndexedTypes(String.class, ExecutorStatus.class)
 				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10))));
 		alarmCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("alarmCache")
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10)))
-				.setIndexedTypes(String.class, AlarmEvent.class, String.class, AlarmHandlerInfo.class));
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 100)))
+				.setIndexedTypes(String.class, AlarmEvent.class, String.class, AlarmHandlerInfo.class, String.class,
+						AlarmSilencer.class));
 		handlerService = new HandlerService(this, alarmCache);
 		alarmService = new AlarmService(handlerService, this);
 		this.repoConfig = (RepoConfig) configCache.get(CONFIG_REPO);
@@ -157,6 +161,7 @@ public class AutomateManager implements ISystemClientListener {
 		this.alarmers = (List<Alarmer>) configCache.get(AUTOMATE_ALARMER);
 		this.handlers = (List<Handler>) configCache.get(AUTOMATE_HANDLER);
 		this.alarmMarkers = (List<AlarmMarker>) configCache.get(AUTOMATE_ALARM_MARKER);
+		this.alarmInhibitors = (List<AlarmInhibitor>) configCache.get(AUTOMATE_ALARM_INHIBITOR);
 		this.repoCommitId = (String) configCache.get(CONFIG_REPO_COMMITID);
 		updateRuleService();
 	}
@@ -171,15 +176,17 @@ public class AutomateManager implements ISystemClientListener {
 	}
 
 	public void updateRules(List<Executor> executors, List<Alarmer> alarmers, List<Handler> handlers,
-			List<AlarmMarker> alarmMarkers) {
+			List<AlarmMarker> alarmMarkers, List<AlarmInhibitor> alarmInhibitors) {
 		this.executors = executors;
 		this.alarmers = alarmers;
 		this.handlers = handlers;
 		this.alarmMarkers = alarmMarkers;
+		this.alarmInhibitors = alarmInhibitors;
 		configCache.put(AUTOMATE_EXECUTOR, executors);
 		configCache.put(AUTOMATE_ALARMER, alarmers);
 		configCache.put(AUTOMATE_HANDLER, handlers);
 		configCache.put(AUTOMATE_ALARM_MARKER, alarmMarkers);
+		configCache.put(AUTOMATE_ALARM_INHIBITOR, alarmInhibitors);
 		configCache.put(CONFIG_REPO_COMMITID, repoCommitId);
 		updateRuleService();
 	}
@@ -196,6 +203,9 @@ public class AutomateManager implements ISystemClientListener {
 		}
 		if (this.alarmMarkers == null) {
 			this.alarmMarkers = Lists.newArrayList();
+		}
+		if (this.alarmInhibitors == null) {
+			this.alarmInhibitors = Lists.newArrayList();
 		}
 		Collections.sort(handlers, new Comparator<Handler>() {
 			@Override
@@ -289,6 +299,25 @@ public class AutomateManager implements ISystemClientListener {
 		return result;
 	}
 
+	public List<AlarmSilencer> findAvalilAlarmSilencer() {
+		SqlFieldsQuery sql = new SqlFieldsQuery(
+				"SELECT uuid,regexMatch,matched,startTime,endTime FROM AlarmSilencer info where CURRENT_TIMESTAMP(3) >= startTime and CURRENT_TIMESTAMP(3) <= endTime");
+		List<AlarmSilencer> result = Lists.newArrayList();
+		try (QueryCursor<List<?>> cursor = alarmCache.query(sql)) {
+			for (List<?> row : cursor) {
+				int index = 0;
+				AlarmSilencer alarmSilencer = new AlarmSilencer();
+				alarmSilencer.setUuid(rowGet(row, index++));
+				alarmSilencer.setRegexMatch(rowGet(row, index++));
+				alarmSilencer.setMatched(rowGet(row, index++));
+				alarmSilencer.setStartTime(rowGet(row, index++));
+				alarmSilencer.setEndTime(rowGet(row, index++));
+				result.add(alarmSilencer);
+			}
+		}
+		return result;
+	}
+
 	public AlarmTrace findAlarmTrace(String uuid) {
 		AlarmTrace alarmTrace = new AlarmTrace();
 		AlarmEvent alarmEvent = (AlarmEvent) alarmCache.get(uuid);
@@ -299,6 +328,12 @@ public class AutomateManager implements ISystemClientListener {
 		record.setFields(alarmEvent.getFields());
 		record.setTags(alarmEvent.getTags());
 		alarmTrace.setRecord(record);
+
+		AlarmSilencer alarmSilencer = alarmEvent.getAlarmSilencer();
+		com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer alSilencer = jackson.convertValue(alarmSilencer,
+				com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer.class);
+		alarmTrace.setAlarmSilencer(alSilencer);
+		alarmTrace.setAlarmInhibitor(alarmEvent.getAlarmInhibitor());
 
 		SqlFieldsQuery sql = new SqlFieldsQuery(
 				"SELECT alarmId,handlerId,evaluateTime,preventedBy,scheduledTime,params,targetHosts,scheduleId,status,message,correlationAlarmIds FROM AlarmHandlerInfo info where alarmId=? order by evaluateTime")
@@ -401,6 +436,10 @@ public class AutomateManager implements ISystemClientListener {
 		return alarmMarkers;
 	}
 
+	public List<AlarmInhibitor> getAlarmInhibitors() {
+		return alarmInhibitors;
+	}
+
 	public Executor getExecutor(String name) {
 		for (Executor executor : executors) {
 			if (StringUtils.equals(executor.getName(), name)) {
@@ -417,6 +456,10 @@ public class AutomateManager implements ISystemClientListener {
 			}
 		}
 		return null;
+	}
+
+	public IgniteCache<Object, Object> getAlarmCache() {
+		return alarmCache;
 	}
 
 	@Override

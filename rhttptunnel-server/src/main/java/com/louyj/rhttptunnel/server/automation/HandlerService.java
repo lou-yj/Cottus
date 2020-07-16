@@ -59,7 +59,6 @@ public class HandlerService extends TimerTask {
 			Map<String, Object> eventMap = alarmEvent.toMap();
 			String uuid = alarmEvent.getUuid();
 			logger.info("[{}] Start handle alarm event", uuid);
-			alarmCache.put(uuid, alarmEvent);
 			String alarmGroup = alarmEvent.getAlarmGroup();
 			logger.info("[{}] Alarm group {}", uuid, alarmGroup);
 			DocumentContext eventDc = JsonPath.parse(jackson.writeValueAsString(eventMap));
@@ -187,7 +186,7 @@ public class HandlerService extends TimerTask {
 	}
 
 	@SuppressWarnings("unchecked")
-	private boolean isWindowMatched(String uuid, DocumentContext evnetDc, boolean regexMatch,
+	public boolean isWindowMatched(String uuid, DocumentContext evnetDc, boolean regexMatch,
 			Map<String, Object> windowMatched, int timeWindowSize) {
 		if (MapUtils.isEmpty(windowMatched)) {
 			return true;

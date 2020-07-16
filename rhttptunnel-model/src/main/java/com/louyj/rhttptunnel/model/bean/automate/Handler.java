@@ -40,6 +40,10 @@ public class Handler {
 	private List<String> preventHandlers = Lists.newArrayList();
 
 	public void check(File ruleFile, String repoCommitIdPath) {
+		if (StringUtils.isBlank(language)) {
+			String message = String.format("Lanaguage params is blank for handler in file %s", ruleFile.getName());
+			throw new IllegalArgumentException(message);
+		}
 		if (StringUtils.isAllBlank(script, scriptFile)) {
 			String message = String.format("Both script and scriptFile params are blank for handler in file %s",
 					ruleFile.getName());

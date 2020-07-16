@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.bean.Pair;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmInhibitor;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTriggeredRecord;
 import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
@@ -74,6 +76,29 @@ public class AlarmerTraceHandler implements IMessageHandler {
 					addChildNode(markersNode, "Tag Added By Marker " + pair.getLeft(), pair.getRight());
 				}
 				root.addChild(markersNode);
+			}
+		}
+		{
+			AlarmSilencer alarmSilencer = alarmTrace.getAlarmSilencer();
+			if (alarmSilencer != null) {
+				DefaultNode silenceNode = new DefaultNode("Alarm Silencer");
+				addChildNode(silenceNode, "Match Condition", alarmSilencer.getMatched());
+				addChildNode(silenceNode, "Regex", String.valueOf(alarmSilencer.isRegexMatch()));
+				addChildNode(silenceNode, "Start Time", formatTime(alarmSilencer.getStartTime()));
+				addChildNode(silenceNode, "End Time", formatTime(alarmSilencer.getEndTime()));
+				root.addChild(silenceNode);
+			}
+		}
+		{
+			AlarmInhibitor alarmInhibitor = alarmTrace.getAlarmInhibitor();
+			if (alarmInhibitor != null) {
+				DefaultNode inhibitorNode = new DefaultNode("Alarm Inhibitor");
+				addChildNode(inhibitorNode, "Name", alarmInhibitor.getName());
+				addChildNode(inhibitorNode, "Regex", String.valueOf(alarmInhibitor.isRegexMatch()));
+				addChildNode(inhibitorNode, "Match Condition", alarmInhibitor.getMatched());
+				addChildNode(inhibitorNode, "Window Match Condition", alarmInhibitor.getWindowMatched());
+				addChildNode(inhibitorNode, "Time Window Size", String.valueOf(alarmInhibitor.getTimeWindowSize()));
+				root.addChild(inhibitorNode);
 			}
 		}
 		{

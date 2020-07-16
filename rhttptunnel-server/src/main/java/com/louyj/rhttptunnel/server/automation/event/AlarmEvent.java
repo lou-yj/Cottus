@@ -8,7 +8,9 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.bean.Pair;
+import com.louyj.rhttptunnel.model.bean.automate.AlarmInhibitor;
 import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
+import com.louyj.rhttptunnel.server.automation.AlarmSilencer;
 
 /**
  *
@@ -43,6 +45,28 @@ public class AlarmEvent {
 
 	@QuerySqlField
 	private List<HandlerProcessInfo> handlerInfo = Lists.newArrayList();
+
+	@QuerySqlField
+	private AlarmSilencer alarmSilencer;
+
+	@QuerySqlField
+	private AlarmInhibitor alarmInhibitor;
+
+	public AlarmInhibitor getAlarmInhibitor() {
+		return alarmInhibitor;
+	}
+
+	public void setAlarmInhibitor(AlarmInhibitor alarmInhibitor) {
+		this.alarmInhibitor = alarmInhibitor;
+	}
+
+	public AlarmSilencer getAlarmSilencer() {
+		return alarmSilencer;
+	}
+
+	public void setAlarmSilencer(AlarmSilencer alarmSilencer) {
+		this.alarmSilencer = alarmSilencer;
+	}
 
 	public List<HandlerProcessInfo> getHandlerInfo() {
 		return handlerInfo;

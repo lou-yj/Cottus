@@ -15,9 +15,19 @@ public class AutomateRule {
 
 	private List<Alarmer> alarmers;
 
+	private List<AlarmMarker> markers;
+
+	private List<AlarmInhibitor> inhibitors;
+
 	private List<Handler> handlers;
 
-	private List<AlarmMarker> alarmMarkers;
+	public List<AlarmInhibitor> getInhibitors() {
+		return inhibitors;
+	}
+
+	public void setInhibitors(List<AlarmInhibitor> inhibitors) {
+		this.inhibitors = inhibitors;
+	}
 
 	public Executor getExecutor() {
 		return executor;
@@ -43,12 +53,12 @@ public class AutomateRule {
 		this.handlers = handlers;
 	}
 
-	public List<AlarmMarker> getAlarmMarkers() {
-		return alarmMarkers;
+	public List<AlarmMarker> getMarkers() {
+		return markers;
 	}
 
-	public void setAlarmMarkers(List<AlarmMarker> alarmMarkers) {
-		this.alarmMarkers = alarmMarkers;
+	public void setMarkers(List<AlarmMarker> markers) {
+		this.markers = markers;
 	}
 
 }
