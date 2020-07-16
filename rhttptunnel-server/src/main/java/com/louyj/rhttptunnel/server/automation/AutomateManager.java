@@ -446,9 +446,10 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	@SuppressWarnings("unchecked")
 	public void scheduleHandler(Handler handler, AlarmEvent alarmEvent, List<AlarmEvent> alarmEvents,
 			AlarmHandlerInfo alarmHandlerInfo, Map<String, String> targetMap) {
+		String scheduleId = DateTime.now().toString("yyMMddHHmmss");
 		TaskScheduleMessage taskMessage = new TaskScheduleMessage(systemClient.session().getClientInfo());
 		taskMessage.setType(TaskType.HANDLER);
-		taskMessage.setScheduledId(alarmHandlerInfo.getUuid());
+		taskMessage.setScheduledId(scheduleId);
 		taskMessage.setExecutor("handler");
 		taskMessage.setName(handler.getName());
 		taskMessage.setCommitId(getRepoCommitId());
@@ -480,7 +481,7 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 		List<ClientInfo> toWorkers = workerSessionManager.filterWorkerClients(targetMap, Sets.newHashSet());
 		alarmHandlerInfo.setTargetHosts(toWorkers);
 		alarmHandlerInfo.setParams(params);
-		alarmHandlerInfo.setScheduleId(alarmHandlerInfo.getUuid());
+		alarmHandlerInfo.setScheduleId(scheduleId);
 
 		List<String> correlationAlarmIds = Lists.newArrayList();
 		alarmEvents.forEach(e -> correlationAlarmIds.add(e.getUuid()));

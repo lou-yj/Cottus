@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmSilencersMessage;
-import com.louyj.rhttptunnel.model.message.automate.ListAlarmMarkerMessage;
+import com.louyj.rhttptunnel.model.message.automate.ListAlarmSilencerMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.automation.AlarmSilencer;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
@@ -36,7 +36,7 @@ public class ListAlarmSilencersHandler implements IClientMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ListAlarmMarkerMessage.class;
+		return ListAlarmSilencerMessage.class;
 	}
 
 	@Override

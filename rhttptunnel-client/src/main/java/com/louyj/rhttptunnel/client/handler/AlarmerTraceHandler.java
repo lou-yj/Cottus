@@ -59,7 +59,7 @@ public class AlarmerTraceHandler implements IMessageHandler {
 		AlarmTrace alarmTrace = traceMessage.getAlarmTrace();
 		AlarmTriggeredRecord record = alarmTrace.getRecord();
 
-		DefaultNode root = new DefaultNode("Alarm Trace For " + record.getUuid());
+		DefaultNode root = new DefaultNode("Alarm Trace For ID " + record.getUuid());
 		{
 			DefaultNode recordNode = new DefaultNode("Alarm Event");
 			addChildNode(recordNode, "ID", record.getUuid());
