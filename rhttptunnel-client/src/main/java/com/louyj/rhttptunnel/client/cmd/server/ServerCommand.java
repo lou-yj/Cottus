@@ -10,7 +10,6 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
-import com.louyj.rhttptunnel.client.ClientDetector;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.cmd.worker.WorkerManageCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -44,7 +43,6 @@ public class ServerCommand extends BaseCommand {
 		String resp = messagePoller.pollExchangeMessage(response);
 		if (StringUtils.isBlank(resp)) {
 			session.setServerConnected(true);
-			ClientDetector.CLIENT.setUser(userName);
 			resp = workerManageCommand.discover("");
 		}
 		return resp;

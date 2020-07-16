@@ -8,7 +8,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.ClientInfo;
-import com.louyj.rhttptunnel.model.message.ClientInfo.ClientType;
 
 /**
  *
@@ -31,7 +30,6 @@ public class ClientDetector implements InitializingBean {
 		String hostName = localHost.getHostName();
 		CLIENT.setIp(ip);
 		CLIENT.setHost(hostName);
-		CLIENT.setType(ClientType.CLIENT);
 		logger.info("host name {} ip {} ", hostName, ip);
 	}
 

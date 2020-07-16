@@ -2,13 +2,14 @@ package com.louyj.rhttptunnel.worker;
 
 import java.net.InetAddress;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.ClientInfo;
-import com.louyj.rhttptunnel.model.message.ClientInfo.ClientType;
 
 /**
  *
@@ -24,15 +25,29 @@ public class ClientDetector implements InitializingBean {
 
 	public static final ClientInfo CLIENT = new ClientInfo("UNINITED", "UNINITED");
 
+	@Value("${sys.hostname:}")
+	private String hostname;
+
+	@Value("${sys.ip:}")
+	private String ip;
+
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		InetAddress localHost = InetAddress.getLocalHost();
-		String ip = localHost.getHostAddress();
-		String hostName = localHost.getHostName();
-		CLIENT.setIp(ip);
-		CLIENT.setHost(hostName);
-		CLIENT.setType(ClientType.WORKER);
-		logger.info("host name {} ip {} ", hostName, ip);
+		if (StringUtils.isNotBlank(this.ip)) {
+			CLIENT.setIp(this.ip);
+		} else {
+			InetAddress localHost = InetAddress.getLocalHost();
+			String ip = localHost.getHostAddress();
+			CLIENT.setIp(ip);
+		}
+		if (StringUtils.isNotBlank(this.hostname)) {
+			CLIENT.setHost(this.hostname);
+		} else {
+			InetAddress localHost = InetAddress.getLocalHost();
+			String hostName = localHost.getHostName();
+			CLIENT.setHost(hostName);
+		}
+		logger.info("host name {} ip {} ", CLIENT.getHost(), CLIENT.getIp());
 	}
 
 }

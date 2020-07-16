@@ -19,10 +19,6 @@ public class ClientInfo {
 
 	public static final ClientInfo SERVER = new ClientInfo("SERVER", "SERVER");
 
-	public static enum ClientType {
-		WORKER, CLIENT
-	}
-
 	@JsonCreator
 	public ClientInfo(@JsonProperty("host") String host, @JsonProperty("ip") String ip) {
 		super();
@@ -34,29 +30,9 @@ public class ClientInfo {
 
 	private String uptime = DateTime.now().toString("yyyy-MM-dd HH:mm:ss");
 
-	private ClientType type;
-
 	private String host;
 
 	private String ip;
-
-	private String user;
-
-	public ClientType getType() {
-		return type;
-	}
-
-	public void setType(ClientType type) {
-		this.type = type;
-	}
-
-	public String getUser() {
-		return user;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
 
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
