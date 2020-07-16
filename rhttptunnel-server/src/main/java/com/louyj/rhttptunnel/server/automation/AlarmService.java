@@ -211,13 +211,13 @@ public class AlarmService implements EPStatementStateListener {
 						alarmSilencer.getMatched(), alarmSilencer.isRegexMatch(),
 						new DateTime(alarmSilencer.getStartTime()).toString("yyyy-MM-dd HH:mm:ss"),
 						new DateTime(alarmSilencer.getEndTime()).toString("yyyy-MM-dd HH:mm:ss"));
-				alarmEvent.setAlarmSilencer(alarmSilencer);
+				alarmEvent.setAlarmSilencerId(alarmSilencer.getUuid());
 				break;
 			}
 		}
 		logger.info("[{}] End eval silencers", uuid);
 		automateManager.getAlarmCache().put(uuid, alarmEvent);
-		if (alarmEvent.getAlarmSilencer() != null) {
+		if (alarmEvent.getAlarmSilencerId() != null) {
 			return;
 		}
 		logger.info("[{}] Start eval inhibitors", uuid);
@@ -308,10 +308,13 @@ public class AlarmService implements EPStatementStateListener {
 		record.setTags(alarmEvent.getTags());
 		alarmTrace.setRecord(record);
 
-		AlarmSilencer alarmSilencer = alarmEvent.getAlarmSilencer();
-		com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer alSilencer = jackson.convertValue(alarmSilencer,
-				com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer.class);
-		alarmTrace.setAlarmSilencer(alSilencer);
+		String alarmSilencerId = alarmEvent.getAlarmSilencerId();
+		if (alarmSilencerId != null) {
+			AlarmSilencer alarmSilencer = (AlarmSilencer) automateManager.getAlarmCache().get(alarmSilencerId);
+			com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer alSilencer = jackson.convertValue(alarmSilencer,
+					com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer.class);
+			alarmTrace.setAlarmSilencer(alSilencer);
+		}
 		alarmTrace.setAlarmInhibitor(alarmEvent.getAlarmInhibitor());
 
 		SqlFieldsQuery sql = new SqlFieldsQuery(

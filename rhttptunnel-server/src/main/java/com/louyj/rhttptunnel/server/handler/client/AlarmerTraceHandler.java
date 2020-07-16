@@ -11,7 +11,7 @@ import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmerTraceListMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmerTraceMessage;
-import com.louyj.rhttptunnel.server.automation.AlarmService;
+import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -27,7 +27,7 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
 public class AlarmerTraceHandler implements IClientMessageHandler {
 
 	@Autowired
-	private AlarmService alarmService;
+	private AutomateManager automateManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -44,7 +44,7 @@ public class AlarmerTraceHandler implements IClientMessageHandler {
 			throws Exception {
 		AlarmerTraceListMessage listMessage = (AlarmerTraceListMessage) message;
 		String uuid = listMessage.getUuid();
-		AlarmTrace alarmTrace = alarmService.findAlarmTrace(uuid);
+		AlarmTrace alarmTrace = automateManager.getAlarmService().findAlarmTrace(uuid);
 		AlarmerTraceMessage traceMessage = new AlarmerTraceMessage(SERVER, message.getExchangeId());
 		traceMessage.setAlarmTrace(alarmTrace);
 		return traceMessage;

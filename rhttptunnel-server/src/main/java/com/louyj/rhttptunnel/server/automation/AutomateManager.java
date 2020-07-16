@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.PostConstruct;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 
@@ -27,6 +26,7 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -78,7 +78,7 @@ import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
  *
  */
 @Component
-public class AutomateManager implements ISystemClientListener {
+public class AutomateManager implements ISystemClientListener, InitializingBean {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -208,8 +208,8 @@ public class AutomateManager implements ISystemClientListener {
 	}
 
 	@SuppressWarnings("unchecked")
-	@PostConstruct
-	public void init() {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 		indexCounter = ignite.atomicLong("indexCounter", 0, true);
 		taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
@@ -673,4 +673,5 @@ public class AutomateManager implements ISystemClientListener {
 	private <T> T rowGet(List<?> row, int index) {
 		return (T) row.get(index);
 	}
+
 }

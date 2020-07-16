@@ -13,8 +13,8 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmSilencersMessage;
 import com.louyj.rhttptunnel.model.message.automate.ListAlarmMarkerMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
-import com.louyj.rhttptunnel.server.automation.AlarmService;
 import com.louyj.rhttptunnel.server.automation.AlarmSilencer;
+import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -30,7 +30,7 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
 public class ListAlarmSilencersHandler implements IClientMessageHandler {
 
 	@Autowired
-	private AlarmService alarmService;
+	private AutomateManager automateManager;
 
 	private ObjectMapper jackson = JsonUtils.jackson();
 
@@ -48,7 +48,7 @@ public class ListAlarmSilencersHandler implements IClientMessageHandler {
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		AlarmSilencersMessage itemsMessage = new AlarmSilencersMessage(SERVER, message.getExchangeId());
-		List<AlarmSilencer> alarmSilencers = alarmService.findAvalilAlarmSilencers();
+		List<AlarmSilencer> alarmSilencers = automateManager.getAlarmService().findAvalilAlarmSilencers();
 		List<com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer> items = Lists.newArrayList();
 		for (AlarmSilencer alarmSilencer : alarmSilencers) {
 			com.louyj.rhttptunnel.model.bean.automate.AlarmSilencer silencer = jackson.convertValue(alarmSilencer,

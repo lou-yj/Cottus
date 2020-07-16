@@ -10,7 +10,6 @@ import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.bean.automate.AlarmInhibitor;
 import com.louyj.rhttptunnel.model.bean.automate.HandlerProcessInfo;
-import com.louyj.rhttptunnel.server.automation.AlarmSilencer;
 
 /**
  *
@@ -47,7 +46,7 @@ public class AlarmEvent {
 	private List<HandlerProcessInfo> handlerInfo = Lists.newArrayList();
 
 	@QuerySqlField
-	private AlarmSilencer alarmSilencer;
+	private String alarmSilencerId;
 
 	@QuerySqlField
 	private AlarmInhibitor alarmInhibitor;
@@ -60,12 +59,12 @@ public class AlarmEvent {
 		this.alarmInhibitor = alarmInhibitor;
 	}
 
-	public AlarmSilencer getAlarmSilencer() {
-		return alarmSilencer;
+	public String getAlarmSilencerId() {
+		return alarmSilencerId;
 	}
 
-	public void setAlarmSilencer(AlarmSilencer alarmSilencer) {
-		this.alarmSilencer = alarmSilencer;
+	public void setAlarmSilencerId(String alarmSilencerId) {
+		this.alarmSilencerId = alarmSilencerId;
 	}
 
 	public List<HandlerProcessInfo> getHandlerInfo() {
