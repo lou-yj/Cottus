@@ -30,6 +30,7 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.DiscoverMessage;
 import com.louyj.rhttptunnel.model.message.SelectWorkerMessage;
+import com.louyj.rhttptunnel.model.message.ShowWorkerWorkloadMessage;
 import com.louyj.rhttptunnel.model.message.ShutdownMessage;
 import com.louyj.rhttptunnel.model.message.UnSelectWorkerMessage;
 
@@ -144,6 +145,14 @@ public class ControlCommand extends BaseCommand {
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		String resp = messagePoller.pollExchangeMessage(response);
 		return resp;
+	}
+
+	@ShellMethod(value = "show worker workload")
+	@ShellMethodAvailability("workerContext")
+	public String workload() {
+		ShowWorkerWorkloadMessage message = new ShowWorkerWorkloadMessage(CLIENT);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
 	}
 
 	private boolean labelMatches(Map<String, String> labelRule, Map<String, String> matchLabels, Set<String> noLabels) {

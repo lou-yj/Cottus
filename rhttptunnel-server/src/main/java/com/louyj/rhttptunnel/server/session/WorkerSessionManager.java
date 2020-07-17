@@ -111,7 +111,11 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 		}
 		List<WorkerSession> workerSessions = Lists.newArrayList();
 		for (ClientInfo clientInfo : clientInfos) {
-			workerSessions.add(session(clientInfo));
+			WorkerSession session = session(clientInfo);
+			if (session == null) {
+				continue;
+			}
+			workerSessions.add(session);
 		}
 		return workerSessions;
 	}
