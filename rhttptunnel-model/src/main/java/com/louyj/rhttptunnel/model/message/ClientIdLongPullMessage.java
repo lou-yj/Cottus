@@ -14,8 +14,6 @@ import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
 @NoLogMessage
 public class ClientIdLongPullMessage extends BaseMessage {
 
-	private int second = 10;
-
 	@JsonCreator
 	public ClientIdLongPullMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
@@ -23,11 +21,6 @@ public class ClientIdLongPullMessage extends BaseMessage {
 
 	public ClientIdLongPullMessage(ClientInfo client, int second) {
 		super(client);
-		this.second = second;
-	}
-
-	public int getSecond() {
-		return second;
 	}
 
 }

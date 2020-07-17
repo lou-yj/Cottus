@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -27,6 +28,9 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
 @Component
 public class ClientIdLongPullHandler implements IWorkerMessageHandler {
 
+	@Value("${worker.wait:60}")
+	private int workerWait;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
 		return ClientIdLongPullMessage.class;
@@ -35,10 +39,9 @@ public class ClientIdLongPullHandler implements IWorkerMessageHandler {
 	@Override
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		ClientIdLongPullMessage longPullMessage = (ClientIdLongPullMessage) message;
 		BlockingQueue<Set<String>> clientIdQueue = workerSession.getClientIdQueue();
 		try {
-			Set<String> poll = clientIdQueue.poll(longPullMessage.getSecond(), TimeUnit.SECONDS);
+			Set<String> poll = clientIdQueue.poll(workerWait, TimeUnit.SECONDS);
 			if (poll == null) {
 				poll = workerSession.allClientIds();
 			}
