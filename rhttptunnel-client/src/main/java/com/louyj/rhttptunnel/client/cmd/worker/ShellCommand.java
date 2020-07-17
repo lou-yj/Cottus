@@ -16,6 +16,7 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
 
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
+import com.louyj.rhttptunnel.client.cmd.ShellParser;
 import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.shell.ShellEndMessage;

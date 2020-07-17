@@ -1,4 +1,4 @@
-package com.louyj.rhttptunnel.client.cmd.worker;
+package com.louyj.rhttptunnel.client.cmd;
 
 import org.apache.commons.lang3.StringUtils;
 
