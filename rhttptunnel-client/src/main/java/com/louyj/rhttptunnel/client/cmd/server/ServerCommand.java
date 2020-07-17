@@ -11,7 +11,7 @@ import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
-import com.louyj.rhttptunnel.client.cmd.worker.WorkerManageCommand;
+import com.louyj.rhttptunnel.client.cmd.worker.ControlCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
 
@@ -26,7 +26,7 @@ import com.louyj.rhttptunnel.model.message.ConnectMessage;
 public class ServerCommand extends BaseCommand {
 
 	@Autowired
-	private WorkerManageCommand workerManageCommand;
+	private ControlCommand workerManageCommand;
 
 	@ShellMethod(value = "Connect to server")
 	@ShellMethodAvailability("clientContext")

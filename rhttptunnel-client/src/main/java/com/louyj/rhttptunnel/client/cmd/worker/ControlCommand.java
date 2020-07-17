@@ -42,7 +42,7 @@ import com.louyj.rhttptunnel.model.message.UnSelectWorkerMessage;
  */
 @ShellComponent
 @ShellCommandGroup("Worker Manage Commands")
-public class WorkerManageCommand extends BaseCommand {
+public class ControlCommand extends BaseCommand {
 
 	@ShellMethod(value = "Discover workers")
 	@ShellMethodAvailability("serverContext")
