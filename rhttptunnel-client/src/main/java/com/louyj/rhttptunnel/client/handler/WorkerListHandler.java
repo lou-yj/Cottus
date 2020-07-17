@@ -46,12 +46,12 @@ public class WorkerListHandler implements IMessageHandler {
 		WorkerListMessage listMessage = (WorkerListMessage) message;
 		List<WorkerInfo> workers = listMessage.getWorkers();
 		Object[][] data = new Object[workers.size() + 1][];
-		data[0] = new Object[] { "INDEX", "HOST", "IP", "LABELS", "UPTIME" };
+		data[0] = new Object[] { "INDEX", "WORKER ID", "HOST", "IP", "LABELS", "UPTIME" };
 		int index = 1;
 		for (WorkerInfo worker : workers) {
 			ClientInfo clientInfo = worker.getClientInfo();
-			data[index++] = new Object[] { index - 1, clientInfo.getHost(), clientInfo.getIp(),
-					formatMap(worker.getLabels()), clientInfo.getUptime() };
+			data[index++] = new Object[] { index - 1, clientInfo.identify(), clientInfo.getHost(), clientInfo.getIp(),
+					formatMap(worker.getLabels()), formatTime(clientInfo.getUptime()) };
 		}
 		TableModel model = new ArrayTableModel(data);
 		TableBuilder tableBuilder = new TableBuilder(model);

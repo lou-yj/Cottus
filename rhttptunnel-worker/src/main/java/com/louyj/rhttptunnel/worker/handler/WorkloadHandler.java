@@ -18,7 +18,7 @@ import com.louyj.rhttptunnel.model.bean.worker.VmLoadInfo;
 import com.louyj.rhttptunnel.model.bean.worker.Workerload;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ShowWorkerWorkloadMessage;
-import com.louyj.rhttptunnel.model.message.WorkerLoadMessage;
+import com.louyj.rhttptunnel.model.message.WorkerInfoMessage;
 import com.louyj.rhttptunnel.worker.message.ClientWorkerManager;
 
 /**
@@ -66,7 +66,7 @@ public class WorkloadHandler implements IMessageHandler {
 		workerWorkload.setSystemLoadInfo(systemLoadInfo);
 		workerWorkload.setVmLoadInfo(vmLoadInfo);
 
-		WorkerLoadMessage workerLoadMessage = new WorkerLoadMessage(CLIENT, message.getExchangeId());
+		WorkerInfoMessage workerLoadMessage = new WorkerInfoMessage(CLIENT, message.getExchangeId());
 		workerLoadMessage.setWorkload(workerWorkload);
 		return Lists.newArrayList(workerLoadMessage);
 	}

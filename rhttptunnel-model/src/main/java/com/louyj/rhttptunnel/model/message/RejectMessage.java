@@ -32,12 +32,23 @@ public class RejectMessage extends BaseMessage {
 		setExchangeId(exchangeId);
 	}
 
+	private RejectMessage(String clientId, String reason, String exchangeId) {
+		super(null);
+		this.reason = reason;
+		setExchangeId(exchangeId);
+		setClientId(clientId);
+	}
+
 	public String getReason() {
 		return reason;
 	}
 
 	public static RejectMessage creason(ClientInfo client, String exchangeId, String reason) {
 		return new RejectMessage(client, reason, exchangeId);
+	}
+
+	public static RejectMessage creason(String clientId, String exchangeId, String reason) {
+		return new RejectMessage(clientId, reason, exchangeId);
 	}
 
 	public static RejectMessage sreason(String exchangeId, String reason) {

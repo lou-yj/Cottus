@@ -65,6 +65,7 @@ public class ClientWorker extends Thread {
 
 	public void setShouldBreak(boolean shouldBreak) {
 		this.shouldBreak = shouldBreak;
+		logger.info("Client worker {} should break", clientId);
 	}
 
 	private void doRun() throws JsonParseException, JsonMappingException, IOException {

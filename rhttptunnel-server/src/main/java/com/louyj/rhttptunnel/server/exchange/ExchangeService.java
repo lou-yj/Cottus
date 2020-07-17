@@ -29,10 +29,12 @@ import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.AsyncExecAckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
+import com.louyj.rhttptunnel.model.message.RegistryMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
+import com.louyj.rhttptunnel.server.session.ClientInfoManager;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.ClientSessionManager;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -59,6 +61,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	private WorkerSessionManager workerManager;
 	@Autowired
 	private ObjectMapper jackson;
+	@Autowired
+	private ClientInfoManager clientInfoManager;
 
 	private ObjectMapper normalJackson = JsonUtils.jackson();
 
@@ -95,9 +99,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		BaseMessage response = client(request);
 		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
-			ClientInfo client = request.getClient();
-			logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
-					logMessage(request), logMessage(response));
+			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
 		}
 		return serializer(response);
 	}
@@ -108,24 +110,28 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		BaseMessage response = worker(request);
 		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
-			ClientInfo client = request.getClient();
-			logger.info("host {} ip {} [{}]\n{}\n{}", client.getHost(), client.getIp(), request.getExchangeId(),
-					logMessage(request), logMessage(response));
+			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
 		}
 		return serializer(response);
 	}
 
 	public BaseMessage client(BaseMessage message) throws Exception {
 		Class<? extends BaseMessage> type = message.getClass();
-		ClientInfo client = message.getClient();
-		clientManager.update(client, message.getExchangeId());
+		if (type == RegistryMessage.class) {
+			RegistryMessage registryMessage = (RegistryMessage) message;
+			ClientInfo registryClient = registryMessage.getRegistryClient();
+			clientInfoManager.registryClient(registryClient);
+			return message;
+		}
+		String clientId = message.getClientId();
+		clientManager.update(clientId, message.getExchangeId());
 
-		ClientSession clientSession = clientManager.session(client);
+		ClientSession clientSession = clientManager.sessionByCid(clientId);
 		List<WorkerSession> workerSessions = null;
 		if (CollectionUtils.isNotEmpty(message.getToWorkers())) {
 			workerSessions = workerManager.sessions(message.getToWorkers());
 		} else {
-			workerSessions = workerManager.sessions(clientSession.getWorkerInfos());
+			workerSessions = workerManager.sessions(clientSession.getWorkerIds());
 		}
 		IClientMessageHandler handler = clientHandlers.get(type);
 		if (handler == null) {
@@ -133,7 +139,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 				return RejectMessage.sreason(message.getExchangeId(), "Current workers offline or session expired.");
 			}
 			for (WorkerSession workerSession : workerSessions) {
-				workerSession.putMessage(client.identify(), message);
+				workerSession.putMessage(clientId, message);
 			}
 			return AsyncExecAckMessage.sack(message.getExchangeId());
 		} else {
@@ -159,11 +165,17 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 
 	public BaseMessage worker(BaseMessage message) throws Exception {
 		Class<? extends BaseMessage> type = message.getClass();
-		ClientInfo client = message.getClient();
-		workerManager.update(client);
+		if (type == RegistryMessage.class) {
+			RegistryMessage registryMessage = (RegistryMessage) message;
+			ClientInfo registryClient = registryMessage.getRegistryClient();
+			clientInfoManager.registryWorker(registryClient);
+			return message;
+		}
+		String clientId = message.getClientId();
+		workerManager.update(clientId);
 
-		WorkerSession workerSession = workerManager.session(client);
-		ClientSession clientSession = clientManager.session(message.getExchangeId());
+		WorkerSession workerSession = workerManager.session(clientId);
+		ClientSession clientSession = clientManager.sessionByEid(message.getExchangeId());
 
 		IWorkerMessageHandler handler = workerHandlers.get(type);
 		if (handler == null) {
@@ -202,6 +214,22 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			}
 		}
 		return String.format("[%s] %s", msg.getClass().getSimpleName(), normalJackson.writeValueAsString(map));
+	}
+
+	private String logSummary(BaseMessage request, BaseMessage response) {
+		if (request instanceof RegistryMessage) {
+			return "Registry Message";
+		}
+		ClientInfo fromClient = clientInfoManager.findClientInfo(request.getClientId());
+		ClientInfo toClient = clientInfoManager.findClientInfo(response.getClientId());
+		return String.format("%s->%s eid %s", clientHost(fromClient), clientHost(toClient), request.getExchangeId());
+	}
+
+	private String clientHost(ClientInfo clientInfo) {
+		if (clientInfo != null) {
+			return clientInfo.getHost();
+		}
+		return "EXPIRED";
 	}
 
 }

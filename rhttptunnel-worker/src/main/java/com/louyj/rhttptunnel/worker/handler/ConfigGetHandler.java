@@ -35,7 +35,7 @@ public class ConfigGetHandler implements IMessageHandler {
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		ConfigGetMessage configGetMessage = (ConfigGetMessage) message;
 		return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId())
-				.withMessage(configManager.get(message.getClient().identify(), configGetMessage.getKey())));
+				.withMessage(configManager.get(message.getClientId(), configGetMessage.getKey())));
 	}
 
 }

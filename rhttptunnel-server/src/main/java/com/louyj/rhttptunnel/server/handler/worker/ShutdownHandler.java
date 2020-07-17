@@ -32,7 +32,7 @@ public class ShutdownHandler implements IWorkerMessageHandler {
 	@Override
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		workerSessionManager.remove(message.getClient());
+		workerSessionManager.remove(message.getClientId());
 		return AckMessage.sack(message.getExchangeId());
 	}
 

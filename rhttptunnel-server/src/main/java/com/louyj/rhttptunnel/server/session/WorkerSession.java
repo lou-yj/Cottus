@@ -9,7 +9,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *
@@ -24,15 +23,15 @@ public class WorkerSession {
 
 	private long lastTime = System.currentTimeMillis();
 
-	private ClientInfo clientInfo;
+	private String clientId;
 
 	private Map<String, BlockingQueue<BaseMessage>> queues = Maps.newConcurrentMap();
 
 	private BlockingQueue<Set<String>> clientIdQueue = new LinkedBlockingQueue<>();
 
-	public WorkerSession(ClientInfo clientInfo) {
+	public WorkerSession(String clientId) {
 		super();
-		this.clientInfo = clientInfo;
+		this.clientId = clientId;
 	}
 
 	public Set<String> allClientIds() {
@@ -55,12 +54,12 @@ public class WorkerSession {
 		this.lastTime = lastTime;
 	}
 
-	public ClientInfo getClientInfo() {
-		return clientInfo;
+	public String getClientId() {
+		return clientId;
 	}
 
-	public void setClientInfo(ClientInfo clientInfo) {
-		this.clientInfo = clientInfo;
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
 	}
 
 	public BlockingQueue<BaseMessage> getMessageQueue(String clientId) throws InterruptedException {

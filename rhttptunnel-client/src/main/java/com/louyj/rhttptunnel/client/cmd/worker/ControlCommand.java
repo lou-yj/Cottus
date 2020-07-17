@@ -45,7 +45,7 @@ import com.louyj.rhttptunnel.model.message.UnSelectWorkerMessage;
 @ShellCommandGroup("Worker Manage Commands")
 public class ControlCommand extends BaseCommand {
 
-	@ShellMethod(value = "Discover workers")
+	@ShellMethod(value = "Discover workers", key = { "discover", "workers" })
 	@ShellMethodAvailability("serverContext")
 	public String discover(
 			@ShellOption(value = { "-l", "--labels" }, help = "filter labels", defaultValue = "") String labelStr) {
@@ -109,7 +109,9 @@ public class ControlCommand extends BaseCommand {
 			return "No workers selected";
 		}
 		session.setSelectedWorkers(selectedWorkers);
-		SelectWorkerMessage message = new SelectWorkerMessage(CLIENT, selectedWorkers);
+		List<String> selectedWorkerIds = Lists.newArrayList();
+		selectedWorkers.forEach(e -> selectedWorkerIds.add(e.identify()));
+		SelectWorkerMessage message = new SelectWorkerMessage(CLIENT, selectedWorkerIds);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		String status = messagePoller.pollExchangeMessage(response);
 		if (StringUtils.isBlank(status)) {
@@ -147,9 +149,9 @@ public class ControlCommand extends BaseCommand {
 		return resp;
 	}
 
-	@ShellMethod(value = "show worker workload")
+	@ShellMethod(value = "show worker info")
 	@ShellMethodAvailability("workerContext")
-	public String workload() {
+	public String workerInfo() {
 		ShowWorkerWorkloadMessage message = new ShowWorkerWorkloadMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);

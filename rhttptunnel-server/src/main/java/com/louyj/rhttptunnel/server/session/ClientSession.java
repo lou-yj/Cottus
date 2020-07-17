@@ -5,7 +5,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *
@@ -20,9 +19,9 @@ public class ClientSession {
 
 	private long lastTime = System.currentTimeMillis();
 
-	private ClientInfo clientInfo;
+	private String clientId;
 
-	private List<ClientInfo> workerInfos;
+	private List<String> workerIds;
 
 	private String cwd;
 
@@ -36,9 +35,9 @@ public class ClientSession {
 		this.cwd = cwd;
 	}
 
-	public ClientSession(ClientInfo clientInfo) {
+	public ClientSession(String clientId) {
 		super();
-		this.clientInfo = clientInfo;
+		this.clientId = clientId;
 	}
 
 	public long getStartTime() {
@@ -57,20 +56,20 @@ public class ClientSession {
 		this.lastTime = lastTime;
 	}
 
-	public ClientInfo getClientInfo() {
-		return clientInfo;
+	public String getClientId() {
+		return clientId;
 	}
 
-	public void setClientInfo(ClientInfo clientInfo) {
-		this.clientInfo = clientInfo;
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
 	}
 
-	public List<ClientInfo> getWorkerInfos() {
-		return workerInfos;
+	public List<String> getWorkerIds() {
+		return workerIds;
 	}
 
-	public void setWorkerInfos(List<ClientInfo> workerInfos) {
-		this.workerInfos = workerInfos;
+	public void setWorkerIds(List<String> workerIds) {
+		this.workerIds = workerIds;
 	}
 
 	public BlockingQueue<BaseMessage> getMessageQueue() {

@@ -14,6 +14,7 @@ import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.cmd.worker.ControlCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
+import com.louyj.rhttptunnel.model.message.RegistryMessage;
 
 /**
  *
@@ -36,6 +37,15 @@ public class ServerCommand extends BaseCommand {
 			@ShellOption(value = { "-u", "--user" }, help = "user name") String userName,
 			@ShellOption(value = { "-p", "--password" }, help = "password") String password) {
 		messageExchanger.setServerAddress(address);
+		{
+			RegistryMessage registryMessage = new RegistryMessage(CLIENT);
+			registryMessage.setRegistryClient(CLIENT);
+			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, registryMessage);
+			String resp = messagePoller.pollExchangeMessage(response);
+			if (StringUtils.isNotBlank(resp)) {
+				return null;
+			}
+		}
 		ConnectMessage connectMessage = new ConnectMessage(CLIENT);
 		connectMessage.setUser(userName);
 		connectMessage.setPassword(password);

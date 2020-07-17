@@ -54,7 +54,7 @@ public class ShellHandler implements IMessageHandler, IConfigListener {
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		ShellMessage shellMessage = (ShellMessage) message;
-		ShellWrapper shellHolder = shellManager.activeShell(message.getClient().identify());
+		ShellWrapper shellHolder = shellManager.activeShell(message.getClientId());
 		Pair<SubmitStatus, String> submitStatus = shellHolder.submit(shellMessage.getMessage());
 		if (StringUtils.equals(trim(shellMessage.getMessage()), "exit")) {
 			return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId()));

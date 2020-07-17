@@ -2,7 +2,6 @@ package com.louyj.rhttptunnel.client;
 
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -34,11 +33,17 @@ public class HeartBeater extends Thread implements InitializingBean {
 
 	@Override
 	public void run() {
-		String exchangeId = UUID.randomUUID().toString();
 		while (this.isInterrupted() == false) {
+			if (ClientDetector.CLIENT.identify() == null) {
+				try {
+					TimeUnit.SECONDS.sleep(240);
+				} catch (InterruptedException e) {
+				}
+				continue;
+			}
 			try {
 				if (!StringUtils.equals("unknow", messageExchanger.getServerAddress())) {
-					HeartBeatMessage message = new HeartBeatMessage(ClientDetector.CLIENT, exchangeId);
+					HeartBeatMessage message = new HeartBeatMessage(ClientDetector.CLIENT);
 					messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 				}
 			} catch (Exception e) {

@@ -1,8 +1,6 @@
 package com.louyj.rhttptunnel.model.message;
 
-import java.util.UUID;
-
-import org.joda.time.DateTime;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,19 +24,28 @@ public class ClientInfo {
 		this.ip = ip;
 	}
 
-	private String uuid = UUID.randomUUID().toString();
+	private String uuid;
 
-	private String uptime = DateTime.now().toString("yyyy-MM-dd HH:mm:ss");
+	private long uptime = System.currentTimeMillis();
 
 	private String host;
 
 	private String ip;
 
+	private AtomicLong counter = new AtomicLong(0);
+
+	public String nextExchangeId() {
+		if (uuid == null) {
+			return null;
+		}
+		return uuid + ":" + counter.incrementAndGet();
+	}
+
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}
 
-	public String getUptime() {
+	public long getUptime() {
 		return uptime;
 	}
 

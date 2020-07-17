@@ -52,6 +52,7 @@ import com.louyj.rhttptunnel.server.SystemClient;
 import com.louyj.rhttptunnel.server.SystemClient.ISystemClientListener;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
+import com.louyj.rhttptunnel.server.session.ClientInfoManager;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
 import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
@@ -76,6 +77,8 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 	private WorkerSessionManager workerSessionManager;
 	@Autowired
 	private SystemClient systemClient;
+	@Autowired
+	private ClientInfoManager clientInfoManager;
 
 	private Set<String> exchangeIds = Sets.newHashSet();
 	private Map<String, BaseMessage> exchangeResult = Maps.newHashMap();
@@ -136,24 +139,24 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 				if (CollectionUtils.isEmpty(workers)) {
 					throw new RuntimeException("No workers online");
 				}
-				List<ClientInfo> workerClientInfos = Lists.newArrayList();
-				workers.forEach(e -> workerClientInfos.add(e.getClientInfo()));
+				List<String> workerClientIds = Lists.newArrayList();
+				workers.forEach(e -> workerClientIds.add(e.getClientId()));
 				send(tempExchangeIds, clientSession, exchangeId, zipFile.getAbsolutePath(),
-						"repository/" + zipFile.getName(), workerClientInfos);
+						"repository/" + zipFile.getName(), workerClientIds);
 				waitAllWorkerAcked(tempExchangeIds, clientSession, exchangeId);
 				cleanExchangeIds(tempExchangeIds);
 				sendClientMessage(clientSession, exchangeId, "Start send uncompress command all workers");
-				UncompressFileMessage unzipMessage = new UncompressFileMessage(systemClient.session().getClientInfo());
+				UncompressFileMessage unzipMessage = new UncompressFileMessage(systemClient.clientInfo());
 				unzipMessage.setSource("repository/" + zipFile.getName());
 				unzipMessage.setTarget("repository/" + headCommitId);
 				unzipMessage.setType("zip");
 				unzipMessage.setDeleteSource(true);
-				for (ClientInfo toWorker : workerClientInfos) {
+				for (String toWorkerId : workerClientIds) {
 					String uuid = UUID.randomUUID().toString();
 					unzipMessage.setExchangeId(uuid);
 					tempExchangeIds.add(uuid);
 					exchangeIds.add(uuid);
-					systemClient.exchange(unzipMessage, Arrays.asList(toWorker));
+					systemClient.exchange(unzipMessage, Arrays.asList(toWorkerId));
 				}
 				waitAllWorkerAcked(tempExchangeIds, clientSession, exchangeId);
 				cleanExchangeIds(tempExchangeIds);
@@ -222,7 +225,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 				return AckMessage.sack(exchangeId);
 			} catch (Exception e2) {
 				logger.error("", e2);
-				return RejectMessage.creason(message.getClient(), exchangeId,
+				return RejectMessage.creason(SERVER, exchangeId,
 						String.format("Exception %s reason %s", e2.getClass().getName(), e2.getMessage()));
 			}
 		} finally {
@@ -250,11 +253,11 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 			for (String id : tempExchangeIds) {
 				BaseMessage baseMessage = exchangeResult.remove(id);
 				if (baseMessage instanceof AckMessage) {
-					ClientInfo client = baseMessage.getClient();
+					ClientInfo client = clientInfoManager.findClientInfo(baseMessage.getClientId());
 					sendClientMessage(clientSession, exchangeId,
 							String.format("Worker %s[%s] acked", client.getHost(), client.getIp()));
 				} else if (baseMessage instanceof RejectMessage) {
-					ClientInfo client = baseMessage.getClient();
+					ClientInfo client = clientInfoManager.findClientInfo(baseMessage.getClientId());
 					throw new RuntimeException(String.format("Worker reject %s[%s] reason %s", client.getHost(),
 							client.getIp(), ((RejectMessage) baseMessage).getReason()));
 				}
@@ -303,7 +306,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 	}
 
 	public boolean send(Set<String> tempExchangeIds, ClientSession clientSession, String clientExchangeId, String path,
-			String target, List<ClientInfo> toWorkers) throws Exception {
+			String target, List<String> toWorkerIds) throws Exception {
 		File file = new File(path);
 		String targetName = isBlank(target) ? file.getName() : target;
 		long totalSize = file.length();
@@ -329,15 +332,15 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 			} else {
 				currentSize += read;
 			}
-			for (ClientInfo toWorker : toWorkers) {
-				FileDataMessage fileDataMessage = new FileDataMessage(systemClient.session().getClientInfo(),
-						targetName, start, end, data, md5Hex);
+			for (String toWorkerId : toWorkerIds) {
+				FileDataMessage fileDataMessage = new FileDataMessage(systemClient.clientInfo(), targetName, start, end,
+						data, md5Hex);
 				fileDataMessage.setSize(totalSize, currentSize);
 				if (end) {
 					tempExchangeIds.add(fileDataMessage.getExchangeId());
 					exchangeIds.add(fileDataMessage.getExchangeId());
 				}
-				BaseMessage responseMessage = systemClient.exchange(fileDataMessage, Arrays.asList(toWorker));
+				BaseMessage responseMessage = systemClient.exchange(fileDataMessage, Arrays.asList(toWorkerId));
 				if (responseMessage instanceof RejectMessage) {
 					sendClientMessage(clientSession, clientExchangeId, responseMessage);
 					fis.close();
@@ -367,7 +370,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 	}
 
 	@Override
-	public void onSendMessage(BaseMessage message, List<ClientInfo> toWorkers) {
+	public void onSendMessage(BaseMessage message, List<String> toWorkers) {
 
 	}
 

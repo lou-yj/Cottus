@@ -26,6 +26,7 @@ import com.louyj.rhttptunnel.model.message.HeartBeatMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.exchange.ExchangeService;
+import com.louyj.rhttptunnel.server.session.ClientInfoManager;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.ClientSessionManager;
 
@@ -47,7 +48,7 @@ public class SystemClient extends TimerTask {
 		// null is all
 		List<Class<? extends BaseMessage>> listenReceiveMessages();
 
-		void onSendMessage(BaseMessage message, List<ClientInfo> toWorkers);
+		void onSendMessage(BaseMessage message, List<String> toWorkers);
 
 		void onReceiveMessage(BaseMessage message);
 
@@ -61,6 +62,8 @@ public class SystemClient extends TimerTask {
 	private ClientSessionManager clientSessionManager;
 	@Autowired
 	private List<ISystemClientListener> listeners = Lists.newArrayList();
+	@Autowired
+	private ClientInfoManager clientInfoManager;
 
 	private ClientInfo systemClient;
 	private Timer timer;
@@ -71,8 +74,10 @@ public class SystemClient extends TimerTask {
 	public void init() {
 
 		systemClient = new ClientInfo("system", "system");
+		clientInfoManager.registryClient(systemClient);
+
 		timer = new Timer(true);
-		timer.schedule(this, 0, 10_000);
+		timer.schedule(this, 0, 240_000);
 		new Thread() {
 
 			@Override
@@ -106,17 +111,21 @@ public class SystemClient extends TimerTask {
 	}
 
 	public ClientSession session() {
-		return clientSessionManager.session(systemClient);
+		return clientSessionManager.sessionByCid(systemClient.identify());
 	}
 
-	public BaseMessage exchange(BaseMessage message, List<ClientInfo> toWorkers) {
+	public ClientInfo clientInfo() {
+		return systemClient;
+	}
+
+	public BaseMessage exchange(BaseMessage message, List<String> toWorkers) {
 		message = JsonUtils.cloneObject(normalJackson, message);
 		for (ISystemClientListener listener : listeners) {
 			if (listener.listenSendMessages() == null || listener.listenSendMessages().contains(message.getClass())) {
 				listener.onSendMessage(message, toWorkers);
 			}
 		}
-		message.setClient(session().getClientInfo());
+		message.setClientId(session().getClientId());
 		message.setToWorkers(toWorkers);
 		return exchange(message);
 	}

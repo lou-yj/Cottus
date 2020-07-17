@@ -131,7 +131,7 @@ public class MessagePoller implements ApplicationContextAware, InitializingBean 
 			}
 			PrintStream cps = System.out;
 			if (printWorkerInfo)
-				cps = new CustromPrintStream(respMsg.getClient());
+				cps = new CustromPrintStream(session.getSelectedWorker(respMsg.getClientId()));
 			IMessageHandler handler = messageHandlers.get(respMsg.getClass());
 			if (handler == null) {
 				LogUtils.clientError("No message handler for type " + respMsg.getClass().getSimpleName(), cps);

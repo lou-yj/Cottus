@@ -24,6 +24,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +48,8 @@ import com.louyj.rhttptunnel.model.util.JsonUtils;
 @SuppressWarnings("deprecation")
 @Component
 public class MessageExchanger implements InitializingBean, DisposableBean {
+
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	private ObjectMapper jackson = JsonUtils.jacksonWithType();
 
@@ -78,6 +82,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 	public final BaseMessage jsonPost(String endpoint, BaseMessage message) {
 		try {
 			String data = jackson.writeValueAsString(message);
+			logger.debug("Send message {}", data);
 			data = AESEncryptUtils.encrypt(data, defaultKey);
 			HttpEntity httpEntity = new StringEntity(data, UTF_8);
 			HttpPost httpPost = new HttpPost(serverAddress + endpoint);
@@ -89,6 +94,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 				HttpEntity entity = response.getEntity();
 				String json = EntityUtils.toString(entity, UTF_8);
 				json = AESEncryptUtils.decrypt(json, defaultKey);
+				logger.debug("Receive message {}", json);
 				return jackson.readValue(json, BaseMessage.class);
 			} finally {
 				response.close();
@@ -98,7 +104,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 				TimeUnit.SECONDS.sleep(1);
 			} catch (Exception e2) {
 			}
-			return RejectMessage.creason(message.getClient(), message.getExchangeId(),
+			return RejectMessage.creason(message.getClientId(), message.getExchangeId(),
 					"[" + CLIENT_ERROR.reason() + "]" + e.getClass().getSimpleName() + ":" + e.getMessage());
 		}
 	}

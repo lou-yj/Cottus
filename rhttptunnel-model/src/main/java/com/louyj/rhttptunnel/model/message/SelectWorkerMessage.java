@@ -14,21 +14,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class SelectWorkerMessage extends BaseMessage {
 
-	private List<ClientInfo> workers;
+	private List<String> workerIds;
 
 	@JsonCreator
 	public SelectWorkerMessage(@JsonProperty("client") ClientInfo client,
-			@JsonProperty("workers") List<ClientInfo> workers) {
+			@JsonProperty("workers") List<String> workers) {
 		super(client);
-		this.workers = workers;
+		this.workerIds = workers;
 	}
 
-	public List<ClientInfo> getWorkers() {
-		return workers;
+	public List<String> getWorkerIds() {
+		return workerIds;
 	}
 
-	public void setWorkers(List<ClientInfo> workers) {
-		this.workers = workers;
+	public void setWorkerIds(List<String> workers) {
+		this.workerIds = workers;
 	}
 
 }

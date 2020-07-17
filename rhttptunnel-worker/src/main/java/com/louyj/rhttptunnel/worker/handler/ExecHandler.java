@@ -61,7 +61,7 @@ public class ExecHandler implements IMessageHandler {
 		}
 		String cmdLine = "cd '" + dir + "' && bash '" + execMessage.getPath() + "' " + execMessage.getArgs();
 		logger.info("exec {}", cmdLine);
-		ShellWrapper shellHolder = shellManager.activeShell(message.getClient().identify());
+		ShellWrapper shellHolder = shellManager.activeShell(message.getClientId());
 		Pair<SubmitStatus, String> submitStatus = shellHolder.submit(cmdLine);
 		if (submitStatus.getLeft() != SubmitStatus.SUCCESS) {
 			return Lists.newArrayList(RejectMessage.creason(CLIENT, message.getExchangeId(),

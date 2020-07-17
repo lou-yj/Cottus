@@ -12,16 +12,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class LongPullMessage extends BaseMessage {
 
-	private String clientId;
+	private String cid;
 
 	@JsonCreator
-	public LongPullMessage(@JsonProperty("client") ClientInfo client, @JsonProperty("clientId") String clientId) {
+	public LongPullMessage(@JsonProperty("client") ClientInfo client, @JsonProperty("cid") String cid) {
 		super(client);
-		this.clientId = clientId;
+		this.cid = cid;
 	}
 
-	public String getClientId() {
-		return clientId;
+	public String getCid() {
+		return cid;
 	}
 
 }

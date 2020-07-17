@@ -20,7 +20,6 @@ import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.bean.worker.Workerload;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.WorkerLoadMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 
@@ -52,12 +51,9 @@ public class WorkerloadHandler implements IMessageHandler {
 		WorkerLoadMessage loadMessage = (WorkerLoadMessage) message;
 		Workerload workerLoad = loadMessage.getWorkload();
 
-		ClientInfo clientInfo = message.getClient();
-
 		List<String> clientIds = workerLoad.getClientIds();
 
-		DefaultNode root = new DefaultNode(
-				String.format("Worker load for %s[%s]", clientInfo.getHost(), clientInfo.getIp()));
+		DefaultNode root = new DefaultNode("Worker Information");
 		{
 			addChildNode(root, "Connected Clients", clientIds);
 		}

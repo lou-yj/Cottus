@@ -4,6 +4,7 @@ import static com.louyj.rhttptunnel.model.bean.RoleType.NORMAL;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.shell.Availability;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,15 @@ public class ClientSession {
 	private String cwd = "/";
 
 	private boolean debug = true;
+
+	public ClientInfo getSelectedWorker(String clientId) {
+		for (ClientInfo clientInfo : selectedWorkers) {
+			if (StringUtils.equals(clientInfo.identify(), clientId)) {
+				return clientInfo;
+			}
+		}
+		return null;
+	}
 
 	public boolean isDebug() {
 		return debug;

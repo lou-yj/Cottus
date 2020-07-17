@@ -38,23 +38,26 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 
 	@Autowired
 	private WorkerLabelManager workerLabelManager;
+	@Autowired
+	private ClientInfoManager clientInfoManager;
 
 	private Cache<String, WorkerSession> workers = CacheBuilder.newBuilder().softValues()
-			.expireAfterWrite(1, TimeUnit.MINUTES).build();
+			.expireAfterWrite(5, TimeUnit.MINUTES).build();
 
 	public void update(WorkerSession session) {
-		workers.put(session.getClientInfo().identify(), session);
+		workers.put(session.getClientId(), session);
 	}
 
 	public List<WorkerInfo> filterWorkerInfos(Map<String, String> labels, Set<String> noLables) {
 		List<WorkerInfo> workerInfos = Lists.newArrayList();
 		for (WorkerSession worker : workers()) {
-			LabelRule labelRule = workerLabelManager.findRule(worker.getClientInfo());
+			ClientInfo clientInfo = clientInfoManager.findClientInfo(worker.getClientId());
+			LabelRule labelRule = workerLabelManager.findRule(clientInfo);
 			if (labelMatches(labelRule, labels, noLables) == false) {
 				continue;
 			}
 			WorkerInfo info = new WorkerInfo();
-			info.setClientInfo(worker.getClientInfo());
+			info.setClientInfo(clientInfo);
 			info.setLabels(labelRule.getLabels());
 			workerInfos.add(info);
 		}
@@ -64,7 +67,8 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 	public List<WorkerSession> filterWorkerSessions(Map<String, String> labels, Set<String> noLables) {
 		List<WorkerSession> workerInfos = Lists.newArrayList();
 		for (WorkerSession worker : workers()) {
-			LabelRule labelRule = workerLabelManager.findRule(worker.getClientInfo());
+			ClientInfo clientInfo = clientInfoManager.findClientInfo(worker.getClientId());
+			LabelRule labelRule = workerLabelManager.findRule(clientInfo);
 			if (labelMatches(labelRule, labels, noLables) == false) {
 				continue;
 			}
@@ -76,42 +80,43 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 	public List<ClientInfo> filterWorkerClients(Map<String, String> labels, Set<String> noLables) {
 		List<ClientInfo> workerInfos = Lists.newArrayList();
 		for (WorkerSession worker : workers()) {
-			LabelRule labelRule = workerLabelManager.findRule(worker.getClientInfo());
+			ClientInfo clientInfo = clientInfoManager.findClientInfo(worker.getClientId());
+			LabelRule labelRule = workerLabelManager.findRule(clientInfo);
 			if (labelMatches(labelRule, labels, noLables) == false) {
 				continue;
 			}
-			workerInfos.add(worker.getClientInfo());
+			workerInfos.add(clientInfo);
 		}
 		return workerInfos;
 	}
 
-	public void update(ClientInfo client) {
-		WorkerSession session = workers.getIfPresent(client.identify());
+	public void update(String clientId) {
+		WorkerSession session = workers.getIfPresent(clientId);
 		if (session == null) {
-			session = new WorkerSession(client);
+			session = new WorkerSession(clientId);
 		}
 		session.setLastTime(System.currentTimeMillis());
-		workers.put(client.identify(), session);
+		workers.put(clientId, session);
 	}
 
 	public Collection<WorkerSession> workers() {
 		return workers.asMap().values();
 	}
 
-	public WorkerSession session(ClientInfo clientInfo) {
-		if (clientInfo == null) {
+	public WorkerSession session(String clientId) {
+		if (clientId == null) {
 			return null;
 		}
-		return workers.getIfPresent(clientInfo.identify());
+		return workers.getIfPresent(clientId);
 	}
 
-	public List<WorkerSession> sessions(List<ClientInfo> clientInfos) {
-		if (clientInfos == null) {
+	public List<WorkerSession> sessions(List<String> clientIds) {
+		if (clientIds == null) {
 			return Lists.newArrayList();
 		}
 		List<WorkerSession> workerSessions = Lists.newArrayList();
-		for (ClientInfo clientInfo : clientInfos) {
-			WorkerSession session = session(clientInfo);
+		for (String clientId : clientIds) {
+			WorkerSession session = session(clientId);
 			if (session == null) {
 				continue;
 			}
@@ -120,8 +125,8 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 		return workerSessions;
 	}
 
-	public void remove(ClientInfo clientInfo) {
-		workers.invalidate(clientInfo.identify());
+	public void remove(String clientId) {
+		workers.invalidate(clientId);
 	}
 
 	public void onClientRemove(String clientId) {

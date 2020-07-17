@@ -13,7 +13,6 @@ import com.google.common.cache.RemovalCause;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableSet;
-import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
  *
@@ -29,33 +28,34 @@ public class ClientSessionManager implements RemovalListener<String, ClientSessi
 	private WorkerSessionManager workerSessionManager;
 
 	private Cache<String, ClientSession> clients = CacheBuilder.newBuilder().softValues()
-			.expireAfterWrite(1, TimeUnit.MINUTES).removalListener(this).build();
+			.expireAfterWrite(5, TimeUnit.MINUTES).removalListener(this).build();
 
 	private Cache<String, String> exchanges = CacheBuilder.newBuilder().softValues().expireAfterWrite(1, TimeUnit.HOURS)
 			.build();
 
-	public void update(ClientInfo client, String exchangeId) {
-		ClientSession session = clients.getIfPresent(client.identify());
+	public boolean update(String clientId, String exchangeId) {
+		ClientSession session = clients.getIfPresent(clientId);
 		if (session == null) {
-			session = new ClientSession(client);
+			session = new ClientSession(clientId);
 		}
 		session.setLastTime(System.currentTimeMillis());
-		clients.put(client.identify(), session);
-		exchanges.put(exchangeId, client.identify());
+		clients.put(clientId, session);
+		exchanges.put(exchangeId, clientId);
+		return true;
 	}
 
 	public Collection<ClientSession> workers() {
 		return clients.asMap().values();
 	}
 
-	public ClientSession session(ClientInfo clientInfo) {
-		if (clientInfo == null) {
+	public ClientSession sessionByCid(String clientId) {
+		if (clientId == null) {
 			return null;
 		}
-		return clients.getIfPresent(clientInfo.identify());
+		return clients.getIfPresent(clientId);
 	}
 
-	public ClientSession session(String exchangeId) {
+	public ClientSession sessionByEid(String exchangeId) {
 		String identiry = exchanges.getIfPresent(exchangeId);
 		if (identiry == null) {
 			return null;

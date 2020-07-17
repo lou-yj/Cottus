@@ -43,7 +43,7 @@ public class LongPullHandler implements IWorkerMessageHandler {
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		LongPullMessage longPullMessage = (LongPullMessage) message;
-		BlockingQueue<BaseMessage> messageQueue = workerSession.getMessageQueue(longPullMessage.getClientId());
+		BlockingQueue<BaseMessage> messageQueue = workerSession.getMessageQueue(longPullMessage.getCid());
 		try {
 			BaseMessage poll = messageQueue.poll(workerWait, TimeUnit.SECONDS);
 			if (poll != null) {

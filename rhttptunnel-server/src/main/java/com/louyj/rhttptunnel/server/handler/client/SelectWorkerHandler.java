@@ -35,7 +35,7 @@ public class SelectWorkerHandler implements IClientMessageHandler {
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		SelectWorkerMessage selectWorkerMessage = (SelectWorkerMessage) message;
-		clientSession.setWorkerInfos(selectWorkerMessage.getWorkers());
+		clientSession.setWorkerIds(selectWorkerMessage.getWorkerIds());
 		return AckMessage.sack(message.getExchangeId());
 	}
 

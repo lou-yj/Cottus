@@ -7,8 +7,10 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.label.UpdateLabelMessage;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
+import com.louyj.rhttptunnel.server.session.ClientInfoManager;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
 import com.louyj.rhttptunnel.server.workerlabel.HostInfo;
@@ -27,6 +29,8 @@ public class UpdateLabelsHandler implements IClientMessageHandler {
 
 	@Autowired
 	private WorkerLabelManager workerLabelManager;
+	@Autowired
+	private ClientInfoManager clientInfoManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -43,11 +47,11 @@ public class UpdateLabelsHandler implements IClientMessageHandler {
 			throws Exception {
 		UpdateLabelMessage updateLabelMessage = (UpdateLabelMessage) message;
 		for (WorkerSession workerSession : workerSessions) {
-			LabelRule labelRule = workerLabelManager.findRule(workerSession.getClientInfo());
+			ClientInfo clientInfo = clientInfoManager.findClientInfo(workerSession.getClientId());
+			LabelRule labelRule = workerLabelManager.findRule(clientInfo);
 			if (labelRule == null) {
 				labelRule = new LabelRule();
-				labelRule.setHostInfo(
-						new HostInfo(workerSession.getClientInfo().getHost(), workerSession.getClientInfo().getIp()));
+				labelRule.setHostInfo(new HostInfo(clientInfo.getHost(), clientInfo.getIp()));
 			}
 			for (String labelName : updateLabelMessage.getDelLabels()) {
 				labelRule.getLabels().remove(labelName);

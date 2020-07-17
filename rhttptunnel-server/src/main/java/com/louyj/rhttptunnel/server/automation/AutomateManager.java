@@ -66,6 +66,7 @@ import com.louyj.rhttptunnel.server.SystemClient.ISystemClientListener;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
 import com.louyj.rhttptunnel.server.automation.event.ExecStatusEvent;
 import com.louyj.rhttptunnel.server.automation.event.MetricsEvent;
+import com.louyj.rhttptunnel.server.session.ClientInfoManager;
 import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
 import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
 import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
@@ -102,6 +103,8 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	private WorkerSessionManager workerSessionManager;
 	@Autowired
 	private WorkerLabelManager workerLabelManager;
+	@Autowired
+	private ClientInfoManager clientInfoManager;
 
 	private List<String> defaultAlarmGroupKeys = Lists.newArrayList();
 
@@ -210,7 +213,7 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		indexCounter = ignite.atomicLong("indexCounter", 0, true);
+		indexCounter = ignite.atomicLong("automageIndexCounter", 0, true);
 		taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
 		configCache = ignite.getOrCreateCache("automate");
@@ -361,22 +364,23 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	}
 
 	@Override
-	public void onSendMessage(BaseMessage message, List<ClientInfo> toWorkers) {
+	public void onSendMessage(BaseMessage message, List<String> toWorkerIds) {
 		if (message instanceof TaskScheduleMessage) {
 			TaskScheduleMessage taskMessage = (TaskScheduleMessage) message;
 			long millis = DateTime.now().getMillis();
-			for (ClientInfo toWorker : toWorkers) {
+			for (String toWorkerId : toWorkerIds) {
+				ClientInfo clientInfo = clientInfoManager.findClientInfo(toWorkerId);
 				ScheduledTaskAudit taskAudit = new ScheduledTaskAudit();
 				taskAudit.setExecutor(taskMessage.getExecutor());
 				taskAudit.setName(taskMessage.getName());
 				taskAudit.setTime(millis);
-				taskAudit.getSre().put(EXEC_HOST, toWorker.getHost());
-				taskAudit.getSre().put(EXEC_IP, toWorker.getIp());
+				taskAudit.getSre().put(EXEC_HOST, clientInfo.getHost());
+				taskAudit.getSre().put(EXEC_IP, clientInfo.getIp());
 				taskAudit.setStatus(ExecuteStatus.SCHEDULED);
 				taskAudit.setParams(taskMessage.getParams());
 				taskAudit.setScheduleId(taskMessage.getScheduledId());
 				taskAudit.setType(taskMessage.getType());
-				String key = auditTaskKey(taskMessage, toWorker);
+				String key = auditTaskKey(taskMessage, clientInfo);
 				auditCache.put(key, taskAudit);
 			}
 		}
@@ -400,8 +404,8 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	public void onReceiveMessage(BaseMessage message) {
 		if (message instanceof TaskMetricsMessage) {
 			TaskMetricsMessage metricsMessage = (TaskMetricsMessage) message;
-			ClientInfo toWorker = metricsMessage.getClient();
-			String key = auditTaskKey(metricsMessage, toWorker);
+			ClientInfo clientInfo = clientInfoManager.findClientInfo(message.getClientId());
+			String key = auditTaskKey(metricsMessage, clientInfo);
 			ScheduledTaskAudit taskAudit = (ScheduledTaskAudit) auditCache.get(key);
 			if (taskAudit == null) {
 				logger.warn("Executor audit is null for {}", JsonUtils.gson().toJson(message));
@@ -412,8 +416,8 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 			alarmService.sendEvent(MetricsEvent.make(taskAudit, metricsMessage));
 		} else if (message instanceof TaskLogMessage) {
 			TaskLogMessage logMessage = (TaskLogMessage) message;
-			ClientInfo toWorker = logMessage.getClient();
-			String key = auditTaskKey(logMessage, toWorker);
+			ClientInfo clientInfo = clientInfoManager.findClientInfo(message.getClientId());
+			String key = auditTaskKey(logMessage, clientInfo);
 			ScheduledTaskAudit taskAudit = (ScheduledTaskAudit) auditCache.get(key);
 			if (taskAudit == null) {
 				logger.warn("Executor audit is null for {}", JsonUtils.gson().toJson(message));
@@ -424,8 +428,8 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 			auditCache.put(key, taskAudit);
 		} else if (message instanceof TaskAckMessage) {
 			TaskAckMessage ackMessage = (TaskAckMessage) message;
-			ClientInfo toWorker = ackMessage.getClient();
-			String key = auditTaskKey(ackMessage, toWorker);
+			ClientInfo clientInfo = clientInfoManager.findClientInfo(message.getClientId());
+			String key = auditTaskKey(ackMessage, clientInfo);
 			ScheduledTaskAudit taskAudit = (ScheduledTaskAudit) auditCache.get(key);
 			if (taskAudit == null) {
 				logger.warn("Executor audit is null for {}", JsonUtils.gson().toJson(message));
@@ -447,7 +451,7 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	public void scheduleHandler(Handler handler, AlarmEvent alarmEvent, List<AlarmEvent> alarmEvents,
 			AlarmHandlerInfo alarmHandlerInfo, Map<String, String> targetMap) {
 		String scheduleId = DateTime.now().toString("yyMMddHHmmss");
-		TaskScheduleMessage taskMessage = new TaskScheduleMessage(systemClient.session().getClientInfo());
+		TaskScheduleMessage taskMessage = new TaskScheduleMessage(systemClient.clientInfo());
 		taskMessage.setType(TaskType.HANDLER);
 		taskMessage.setScheduledId(scheduleId);
 		taskMessage.setExecutor("handler");
@@ -504,7 +508,7 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 			} else {
 				taskMessage.setLabels(Maps.newHashMap());
 			}
-			systemClient.exchange(taskMessage, Arrays.asList(toWorker));
+			systemClient.exchange(taskMessage, Arrays.asList(toWorker.identify()));
 		}
 		alarmHandlerInfo.setHandled(true);
 		alarmHandlerInfo.setStatus(ExecuteStatus.SCHEDULED);
@@ -650,8 +654,8 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 		toWorkers.forEach(e -> workerText.add(e.getHost()));
 		logger.info("Start schedule task {} executor {}, matched workers {}", taskIndex, executor.getName(),
 				workerText);
-		TaskScheduleMessage taskMessage = executor.toMessage(executorStatus.getScheduledId(),
-				systemClient.session().getClientInfo(), task, repoCommitId, taskIndex);
+		TaskScheduleMessage taskMessage = executor.toMessage(executorStatus.getScheduledId(), systemClient.clientInfo(),
+				task, repoCommitId, taskIndex);
 		if (CollectionUtils.isEmpty(toWorkers)) {
 			noWorkerAudit(taskMessage);
 			return;
@@ -663,7 +667,7 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 			} else {
 				taskMessage.setLabels(Maps.newHashMap());
 			}
-			systemClient.exchange(taskMessage, Arrays.asList(toWorker));
+			systemClient.exchange(taskMessage, Arrays.asList(toWorker.identify()));
 		}
 		executorStatus.getTaskStatus().set(taskIndex, SCHEDULED);
 		executorStatus.setStatus(SCHEDULED);

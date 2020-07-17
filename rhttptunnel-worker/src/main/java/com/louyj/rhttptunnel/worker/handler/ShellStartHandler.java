@@ -33,7 +33,7 @@ public class ShellStartHandler implements IMessageHandler {
 
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
-		shellManager.activeShell(message.getClient().identify());
+		shellManager.activeShell(message.getClientId());
 		return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId()).withMessage("Worker ready"));
 	}
 

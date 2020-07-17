@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientIdLongPullMessage;
+import com.louyj.rhttptunnel.model.message.RegistryMessage;
 import com.louyj.rhttptunnel.worker.ClientDetector;
 
 /**
@@ -40,6 +41,13 @@ public class ClientDiscover extends Thread implements InitializingBean {
 
 	@Override
 	public void run() {
+		RegistryMessage registryMessage = new RegistryMessage(ClientDetector.CLIENT);
+		registryMessage.setRegistryClient(ClientDetector.CLIENT);
+		BaseMessage message = messageExchanger.jsonPost(WORKER_EXCHANGE, registryMessage);
+		if ((message instanceof RegistryMessage) == false) {
+			throw new RuntimeException("Registry failed");
+		}
+		MessageUtils.handle(message);
 		while (true) {
 			try {
 				doRun();

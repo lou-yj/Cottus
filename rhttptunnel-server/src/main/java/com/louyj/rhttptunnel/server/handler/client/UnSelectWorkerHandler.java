@@ -34,7 +34,7 @@ public class UnSelectWorkerHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		clientSession.setWorkerInfos(null);
+		clientSession.setWorkerIds(null);
 		return AckMessage.sack(message.getExchangeId());
 	}
 

@@ -34,7 +34,7 @@ public class ConfigSetHandler implements IMessageHandler {
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		ConfigSetMessage configSetMessage = (ConfigSetMessage) message;
-		configManager.set(message.getClient().identify(), configSetMessage.getKey(), configSetMessage.getValue());
+		configManager.set(message.getClientId(), configSetMessage.getKey(), configSetMessage.getValue());
 		return Lists.newArrayList(AckMessage.cack(CLIENT, message.getExchangeId()));
 	}
 
