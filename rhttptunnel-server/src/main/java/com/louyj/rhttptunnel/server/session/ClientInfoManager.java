@@ -22,15 +22,13 @@ public class ClientInfoManager {
 	private Ignite ignite;
 
 	private IgniteCache<Object, Object> clientInfoCache;
-	private IgniteAtomicLong indexCounter;
+	private IgniteAtomicLong clientIndexCounter;
 
 	@PostConstruct
 	public void init() {
 		clientInfoCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("clientInfoCache")
 				.setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 100))));
-		indexCounter = ignite.atomicLong("ClientIdIndexCounter", 0, true);
-		ClientInfo.SERVER.setUuid("s:0");
-		clientInfoCache.put(ClientInfo.SERVER.identify(), ClientInfo.SERVER);
+		clientIndexCounter = ignite.atomicLong("clientIndexCounter", 0, true);
 	}
 
 	public ClientInfo findClientInfo(String clientId) {
@@ -39,13 +37,13 @@ public class ClientInfoManager {
 	}
 
 	public void registryClient(ClientInfo clientInfo) {
-		String id = "c:" + indexCounter.incrementAndGet();
+		String id = "c:" + clientIndexCounter.incrementAndGet();
 		clientInfo.setUuid(id);
 		clientInfoCache.put(clientInfo.identify(), clientInfo);
 	}
 
 	public void registryWorker(ClientInfo clientInfo) {
-		String id = "w:" + indexCounter.incrementAndGet();
+		String id = "w:" + clientIndexCounter.incrementAndGet();
 		clientInfo.setUuid(id);
 		clientInfoCache.put(clientInfo.identify(), clientInfo);
 	}

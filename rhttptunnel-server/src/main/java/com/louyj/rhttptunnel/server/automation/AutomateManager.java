@@ -20,6 +20,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteCluster;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -343,6 +344,10 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	}
 
 	public void scheduleExecutorTask(Executor executor) throws JsonParseException, JsonMappingException, IOException {
+		if (!isMaster()) {
+			logger.debug("Current node is not master node, skip schedule");
+			return;
+		}
 		String scheduledId = DateTime.now().toString("yyMMddHHmmssSSS");
 		logger.info("Start schedule executor {} task execute mode {} schedule id {}", executor.getName(),
 				executor.getTaskExecuteMode(), scheduledId);
@@ -351,6 +356,11 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 		logger.info("Total {} tasks for executor {}", finalTasks.size(), executor.getName());
 		scheduleStatusCache.put(scheduleStatusKey(executor.getName(), scheduledId), executorStatus);
 		scheduleNextTask(executorStatus);
+	}
+
+	public boolean isMaster() {
+		IgniteCluster cluster = ignite.cluster();
+		return cluster.forOldest().node().id().equals(cluster.localNode().id());
 	}
 
 	@Override
