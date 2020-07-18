@@ -1,14 +1,8 @@
 package com.louyj.rhttptunnel.server.session;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.louyj.rhttptunnel.model.message.BaseMessage;
 
 /**
  *
@@ -23,19 +17,17 @@ public class WorkerSession {
 
 	private long lastTime = System.currentTimeMillis();
 
-	private String clientId;
+	private String workerId;
 
-	private Map<String, BlockingQueue<BaseMessage>> queues = Maps.newConcurrentMap();
-
-	private BlockingQueue<Set<String>> clientIdQueue = new LinkedBlockingQueue<>();
+	private Set<String> clientIds = Sets.newHashSet();
 
 	public WorkerSession(String clientId) {
 		super();
-		this.clientId = clientId;
+		this.workerId = clientId;
 	}
 
 	public Set<String> allClientIds() {
-		return Sets.newHashSet(queues.keySet());
+		return clientIds;
 	}
 
 	public long getStartTime() {
@@ -54,39 +46,24 @@ public class WorkerSession {
 		this.lastTime = lastTime;
 	}
 
-	public String getClientId() {
-		return clientId;
+	public String getWorkerId() {
+		return workerId;
 	}
 
-	public void setClientId(String clientId) {
-		this.clientId = clientId;
+	public void setWorkerId(String workerId) {
+		this.workerId = workerId;
 	}
 
-	public BlockingQueue<BaseMessage> getMessageQueue(String clientId) throws InterruptedException {
-		return getQueue(clientId);
+	public void onClientRemove(WorkerSessionManager workerSessionManager, String clientId) throws InterruptedException {
+		clientIds.remove(clientId);
+		workerSessionManager.getNotifyQueue(this).put(clientIds);
+		workerSessionManager.getQueue(this, clientId).close();
 	}
 
-	public void putMessage(String clientId, BaseMessage message) throws InterruptedException {
-		getQueue(clientId).put(message);
-	}
-
-	public BlockingQueue<Set<String>> getClientIdQueue() {
-		return clientIdQueue;
-	}
-
-	private synchronized BlockingQueue<BaseMessage> getQueue(String clientId) throws InterruptedException {
-		BlockingQueue<BaseMessage> messageQueue = queues.get(clientId);
-		if (messageQueue == null) {
-			messageQueue = new LinkedBlockingDeque<BaseMessage>(50);
-			queues.put(clientId, messageQueue);
-			clientIdQueue.put(queues.keySet());
+	public void destory(WorkerSessionManager workerSessionManager) throws InterruptedException {
+		for (String clientId : clientIds) {
+			workerSessionManager.getQueue(this, clientId).close();
 		}
-		return messageQueue;
-	}
-
-	public void onClientRemove(String clientId) throws InterruptedException {
-		queues.remove(clientId);
-		clientIdQueue.put(queues.keySet());
 	}
 
 }

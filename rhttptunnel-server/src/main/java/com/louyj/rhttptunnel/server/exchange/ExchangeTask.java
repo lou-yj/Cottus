@@ -9,7 +9,9 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
+import com.louyj.rhttptunnel.server.session.ClientSessionManager;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
+import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
 
 /**
  *
@@ -26,27 +28,34 @@ public class ExchangeTask implements Runnable {
 	private ClientSession clientSession;
 	private WorkerSession workerSession;
 	private BaseMessage message;
+	private ClientSessionManager clientSessionManager;
+	private WorkerSessionManager workerSessionManager;
 
 	public ExchangeTask(IClientMessageHandler handler, ClientSession clientSession, WorkerSession workerSession,
-			BaseMessage message) {
+			BaseMessage message, ClientSessionManager clientSessionManager, WorkerSessionManager workerSessionManager) {
 		super();
 		this.handler = handler;
 		this.clientSession = clientSession;
 		this.workerSession = workerSession;
 		this.message = message;
+		this.clientSessionManager = clientSessionManager;
+		this.workerSessionManager = workerSessionManager;
 	}
 
 	@Override
 	public void run() {
 		try {
 			BaseMessage baseMessage = handler.handle(Arrays.asList(workerSession), clientSession, message);
+			clientSessionManager.update(clientSession);
+			workerSessionManager.update(workerSession);
 			if (baseMessage != null) {
-				clientSession.getMessageQueue().add(baseMessage);
+				clientSessionManager.putMessage(clientSession.getClientId(), baseMessage);
 			}
 		} catch (Exception e) {
 			logger.error("Exceptioned exchange id {}", message.getExchangeId(), e);
-			clientSession.getMessageQueue().add(RejectMessage.sreason(message.getExchangeId(),
-					"Exception " + e.getClass().getSimpleName() + ":" + e.getMessage()));
+			RejectMessage rejectMessage = RejectMessage.sreason(message.getExchangeId(),
+					"Exception " + e.getClass().getSimpleName() + ":" + e.getMessage());
+			clientSessionManager.putMessage(clientSession.getClientId(), rejectMessage);
 		}
 	}
 

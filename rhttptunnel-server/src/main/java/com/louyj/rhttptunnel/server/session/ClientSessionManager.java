@@ -1,18 +1,20 @@
 package com.louyj.rhttptunnel.server.session;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
+import javax.annotation.PostConstruct;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteQueue;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.CollectionConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalCause;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableSet;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
 
 /**
  *
@@ -22,62 +24,78 @@ import com.google.common.collect.ImmutableSet;
  *
  */
 @Component
-public class ClientSessionManager implements RemovalListener<String, ClientSession> {
+public class ClientSessionManager {
+
+	static final String CLIENT_CACHE = "clientCache";
 
 	@Autowired
-	private WorkerSessionManager workerSessionManager;
+	private Ignite ignite;
 
-	private Cache<String, ClientSession> clients = CacheBuilder.newBuilder().softValues()
-			.expireAfterWrite(5, TimeUnit.MINUTES).removalListener(this).build();
+	private IgniteCache<String, ClientSession> clientCache;
+	private IgniteCache<String, String> exchangeCache;
+	private CollectionConfiguration colCfg;
 
-	private Cache<String, String> exchanges = CacheBuilder.newBuilder().softValues().expireAfterWrite(1, TimeUnit.HOURS)
-			.build();
+	@PostConstruct
+	public void init() {
+		clientCache = ignite.getOrCreateCache(new CacheConfiguration<String, ClientSession>().setName(CLIENT_CACHE)
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 5))));
+		exchangeCache = ignite.getOrCreateCache(new CacheConfiguration<String, String>().setName("exchangeCache")
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.HOURS, 1))));
+		colCfg = new CollectionConfiguration();
+		colCfg.setCollocated(true);
+		colCfg.setBackups(1);
+	}
+
+	public void putMessage(String clientId, BaseMessage message) {
+		getQueue(clientId).put(message);
+	}
+
+	public BaseMessage pollMessage(String clientId, int time, TimeUnit unit) {
+		return getQueue(clientId).poll(time, unit);
+	}
+
+	IgniteQueue<BaseMessage> getQueue(String clientId) {
+		return ignite.<BaseMessage>queue("client:" + clientId, 100, colCfg);
+	}
 
 	public boolean update(String clientId, String exchangeId) {
-		ClientSession session = clients.getIfPresent(clientId);
+		ClientSession session = clientCache.get(clientId);
 		if (session == null) {
 			session = new ClientSession(clientId);
 		}
 		session.setLastTime(System.currentTimeMillis());
-		clients.put(clientId, session);
-		exchanges.put(exchangeId, clientId);
+		session.getExchangeIds().add(exchangeId);
+		clientCache.put(clientId, session);
+		exchangeCache.put(exchangeId, clientId);
 		return true;
 	}
 
-	public Collection<ClientSession> workers() {
-		return clients.asMap().values();
+	public void update(ClientSession clientSession) {
+		if (clientSession == null) {
+			return;
+		}
+		clientCache.put(clientSession.getClientId(), clientSession);
 	}
 
 	public ClientSession sessionByCid(String clientId) {
 		if (clientId == null) {
 			return null;
 		}
-		return clients.getIfPresent(clientId);
+		return clientCache.get(clientId);
 	}
 
 	public ClientSession sessionByEid(String exchangeId) {
-		String identiry = exchanges.getIfPresent(exchangeId);
+		String identiry = exchangeCache.get(exchangeId);
 		if (identiry == null) {
 			return null;
 		}
-		return clients.getIfPresent(identiry);
+		return clientCache.get(identiry);
 	}
 
-	public void clientExit(String identify) {
-		workerSessionManager.onClientRemove(identify);
-		for (String exchangeId : ImmutableSet.copyOf(exchanges.asMap().keySet())) {
-			String clientId = exchanges.getIfPresent(exchangeId);
-			if (StringUtils.equals(clientId, identify)) {
-				exchanges.invalidate(exchangeId);
-			}
-		}
-	}
-
-	@Override
-	public void onRemoval(RemovalNotification<String, ClientSession> notification) {
-		RemovalCause removalCause = notification.getCause();
-		if (RemovalCause.EXPIRED.equals(removalCause)) {
-			clientExit(notification.getKey());
+	public void clientExit(String identify, ClientSession session) {
+		clientCache.remove(identify);
+		for (String exchangeId : session.getExchangeIds()) {
+			exchangeCache.remove(exchangeId);
 		}
 	}
 

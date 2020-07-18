@@ -1,10 +1,9 @@
 package com.louyj.rhttptunnel.server.session;
 
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.Set;
 
-import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.google.common.collect.Sets;
 
 /**
  *
@@ -25,7 +24,15 @@ public class ClientSession {
 
 	private String cwd;
 
-	private BlockingQueue<BaseMessage> messageQueue = new LinkedBlockingDeque<BaseMessage>(100);
+	private Set<String> exchangeIds = Sets.newHashSet();
+
+	public Set<String> getExchangeIds() {
+		return exchangeIds;
+	}
+
+	public void setExchangeIds(Set<String> exchangeIds) {
+		this.exchangeIds = exchangeIds;
+	}
 
 	public String getCwd() {
 		return cwd;
@@ -70,18 +77,6 @@ public class ClientSession {
 
 	public void setWorkerIds(List<String> workerIds) {
 		this.workerIds = workerIds;
-	}
-
-	public BlockingQueue<BaseMessage> getMessageQueue() {
-		return messageQueue;
-	}
-
-	public void setMessageQueue(BlockingQueue<BaseMessage> messageQueue) {
-		this.messageQueue = messageQueue;
-	}
-
-	public void putMessage(BaseMessage message) throws InterruptedException {
-		this.messageQueue.put(message);
 	}
 
 }

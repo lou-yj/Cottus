@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -89,8 +88,8 @@ public class SystemClient extends TimerTask {
 							TimeUnit.SECONDS.sleep(1);
 							continue;
 						}
-						BlockingQueue<BaseMessage> messageQueue = clientSession.getMessageQueue();
-						BaseMessage message = messageQueue.poll(1, TimeUnit.SECONDS);
+						BaseMessage message = clientSessionManager.pollMessage(clientSession.getClientId(), 1,
+								TimeUnit.SECONDS);
 						if (message == null) {
 							continue;
 						}

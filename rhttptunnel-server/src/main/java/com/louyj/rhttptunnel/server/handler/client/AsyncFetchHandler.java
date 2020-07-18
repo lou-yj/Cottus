@@ -8,6 +8,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.NoContentMessage;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
+import com.louyj.rhttptunnel.server.session.ClientSessionManager;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
 
 /**
@@ -33,6 +35,9 @@ public class AsyncFetchHandler implements IClientMessageHandler {
 	@Value("${client.wait:60}")
 	private int clientWait;
 
+	@Autowired
+	private ClientSessionManager clientSessionManager;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
 		return AsyncFetchMessage.class;
@@ -47,7 +52,7 @@ public class AsyncFetchHandler implements IClientMessageHandler {
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		while (true) {
-			BaseMessage poll = clientSession.getMessageQueue().poll(clientWait, SECONDS);
+			BaseMessage poll = clientSessionManager.pollMessage(clientSession.getClientId(), clientWait, SECONDS);
 			if (poll != null) {
 				if (StringUtils.equals(message.getExchangeId(), poll.getExchangeId())) {
 					return poll;

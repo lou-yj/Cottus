@@ -39,7 +39,8 @@ public class ExitHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		clientSessionManager.clientExit(message.getClientId());
+		ClientSession session = clientSessionManager.sessionByCid(message.getClientId());
+		clientSessionManager.clientExit(message.getClientId(), session);
 		return AckMessage.sack(message.getExchangeId());
 	}
 

@@ -54,6 +54,7 @@ import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientInfoManager;
 import com.louyj.rhttptunnel.server.session.ClientSession;
+import com.louyj.rhttptunnel.server.session.ClientSessionManager;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
 import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
 
@@ -79,6 +80,8 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 	private SystemClient systemClient;
 	@Autowired
 	private ClientInfoManager clientInfoManager;
+	@Autowired
+	private ClientSessionManager clientSessionManager;
 
 	private Set<String> exchangeIds = Sets.newHashSet();
 	private Map<String, BaseMessage> exchangeResult = Maps.newHashMap();
@@ -140,7 +143,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 					throw new RuntimeException("No workers online");
 				}
 				List<String> workerClientIds = Lists.newArrayList();
-				workers.forEach(e -> workerClientIds.add(e.getClientId()));
+				workers.forEach(e -> workerClientIds.add(e.getWorkerId()));
 				send(tempExchangeIds, clientSession, exchangeId, zipFile.getAbsolutePath(),
 						"repository/" + zipFile.getName(), workerClientIds);
 				waitAllWorkerAcked(tempExchangeIds, clientSession, exchangeId);
@@ -293,7 +296,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 		logger.info(content);
 		RepoUpdateMessage amMessage = new RepoUpdateMessage(SERVER, exchangeId);
 		amMessage.setMessage(content);
-		clientSession.getMessageQueue().put(amMessage);
+		clientSessionManager.putMessage(clientSession.getClientId(), amMessage);
 	}
 
 	private void sendClientMessage(ClientSession clientSession, String exchangeId, BaseMessage message)
@@ -302,7 +305,7 @@ public class RepoUpdateHandler implements IClientMessageHandler, ISystemClientLi
 			return;
 		}
 		message.setExchangeId(exchangeId);
-		clientSession.getMessageQueue().put(message);
+		clientSessionManager.putMessage(clientSession.getClientId(), message);
 	}
 
 	public boolean send(Set<String> tempExchangeIds, ClientSession clientSession, String clientExchangeId, String path,

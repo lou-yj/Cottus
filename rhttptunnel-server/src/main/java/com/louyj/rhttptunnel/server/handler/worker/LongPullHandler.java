@@ -3,11 +3,11 @@ package com.louyj.rhttptunnel.server.handler.worker;
 import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 import static com.louyj.rhttptunnel.model.message.consts.RejectReason.INTERRUPT;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +18,7 @@ import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
+import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
 
 /**
  *
@@ -33,6 +34,8 @@ public class LongPullHandler implements IWorkerMessageHandler {
 
 	@Value("${worker.wait:60}")
 	private int workerWait;
+	@Autowired
+	private WorkerSessionManager workerSessionManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -43,9 +46,9 @@ public class LongPullHandler implements IWorkerMessageHandler {
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		LongPullMessage longPullMessage = (LongPullMessage) message;
-		BlockingQueue<BaseMessage> messageQueue = workerSession.getMessageQueue(longPullMessage.getCid());
 		try {
-			BaseMessage poll = messageQueue.poll(workerWait, TimeUnit.SECONDS);
+			BaseMessage poll = workerSessionManager.pollMessage(workerSession, longPullMessage.getCid(), workerWait,
+					TimeUnit.SECONDS);
 			if (poll != null) {
 				return poll;
 			}

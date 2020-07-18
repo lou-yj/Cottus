@@ -65,9 +65,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	private ClientInfoManager clientInfoManager;
 
 	private ObjectMapper normalJackson = JsonUtils.jackson();
-
 	private ExecutorService executorService;
-
 	private Map<Class<? extends BaseMessage>, IClientMessageHandler> clientHandlers;
 	private Map<Class<? extends BaseMessage>, IWorkerMessageHandler> workerHandlers;
 
@@ -139,7 +137,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 				return RejectMessage.sreason(message.getExchangeId(), "Current workers offline or session expired.");
 			}
 			for (WorkerSession workerSession : workerSessions) {
-				workerSession.putMessage(clientId, message);
+				workerManager.putMessage(workerSession, clientId, message);
 			}
 			return AsyncExecAckMessage.sack(message.getExchangeId());
 		} else {
@@ -149,16 +147,21 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			if (handler.asyncMode()) {
 				if (CollectionUtils.isNotEmpty(workerSessions)) {
 					for (WorkerSession workerSession : workerSessions) {
-						ExchangeTask task = new ExchangeTask(handler, clientSession, workerSession, message);
+						ExchangeTask task = new ExchangeTask(handler, clientSession, workerSession, message,
+								clientManager, workerManager);
 						executorService.execute(task);
 					}
 				} else {
-					ExchangeTask task = new ExchangeTask(handler, clientSession, null, message);
+					ExchangeTask task = new ExchangeTask(handler, clientSession, null, message, clientManager,
+							workerManager);
 					executorService.execute(task);
 				}
 				return AsyncExecAckMessage.sack(message.getExchangeId());
 			} else {
-				return handler.handle(workerSessions, clientSession, message);
+				BaseMessage handle = handler.handle(workerSessions, clientSession, message);
+				clientManager.update(clientSession);
+				workerManager.update(workerSessions);
+				return handle;
 			}
 		}
 	}
@@ -182,10 +185,13 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			if (clientSession == null) {
 				return RejectMessage.sreason(message.getExchangeId(), "Current client offline or session expired.");
 			}
-			clientSession.putMessage(message);
+			clientManager.putMessage(clientSession.getClientId(), message);
 			return AckMessage.sack(message.getExchangeId());
 		} else {
-			return handler.handle(workerSession, clientSession, message);
+			BaseMessage handle = handler.handle(workerSession, clientSession, message);
+			workerManager.update(workerSession);
+			clientManager.update(clientSession);
+			return handle;
 		}
 
 	}
