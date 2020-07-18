@@ -14,6 +14,7 @@ import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.cmd.worker.ControlCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
+import com.louyj.rhttptunnel.model.message.ListServersMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
 
 /**
@@ -56,6 +57,14 @@ public class ServerCommand extends BaseCommand {
 			resp = workerManageCommand.discover("");
 		}
 		return resp;
+	}
+
+	@ShellMethod(value = "list servers")
+	@ShellMethodAvailability("serverContext")
+	public String servers() {
+		ListServersMessage listServersMessage = new ListServersMessage(CLIENT);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, listServersMessage);
+		return messagePoller.pollExchangeMessage(response);
 	}
 
 }

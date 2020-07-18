@@ -42,7 +42,7 @@ public class ClientSessionManager {
 		exchangeCache = ignite.getOrCreateCache(new CacheConfiguration<String, String>().setName("exchangeCache")
 				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.HOURS, 1))));
 		colCfg = new CollectionConfiguration();
-		colCfg.setCollocated(true);
+//		colCfg.setCollocated(true);
 		colCfg.setBackups(1);
 	}
 

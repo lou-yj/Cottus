@@ -61,7 +61,7 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 		workerCache = ignite.getOrCreateCache(new CacheConfiguration<String, WorkerSession>().setName(CLIENT_CACHE)
 				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 5))));
 		colCfg = new CollectionConfiguration();
-		colCfg.setCollocated(true);
+//		colCfg.setCollocated(true);
 		colCfg.setBackups(1);
 	}
 

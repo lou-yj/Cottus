@@ -35,6 +35,8 @@ public class IgniteRegistry {
 		Ignite ignite = Ignition.start(cfg);
 		IgniteCluster cluster = ignite.cluster();
 		cluster.active(true);
+		cluster.baselineAutoAdjustEnabled(true);
+		cluster.baselineAutoAdjustTimeout(60_000);
 		return ignite;
 	}
 
