@@ -151,10 +151,21 @@ public class ControlCommand extends BaseCommand {
 
 	@ShellMethod(value = "show worker info")
 	@ShellMethodAvailability("workerContext")
-	public String workerInfo() {
+	public String workerinfo() {
 		ShowWorkerWorkloadMessage message = new ShowWorkerWorkloadMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
+	}
+
+	@ShellMethod(value = "show selected workers")
+	@ShellMethodAvailability("workerContext")
+	public String selected() {
+		List<ClientInfo> selectedWorkers = session.getSelectedWorkers();
+		for (ClientInfo ci : selectedWorkers) {
+			LogUtils.printMessage(String.format("worker %s[%s] id %s", ci.getHost(), ci.getIp(), ci.identify()),
+					System.out);
+		}
+		return null;
 	}
 
 	private boolean labelMatches(Map<String, String> labelRule, Map<String, String> matchLabels, Set<String> noLabels) {

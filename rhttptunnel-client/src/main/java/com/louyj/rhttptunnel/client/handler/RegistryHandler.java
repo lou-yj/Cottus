@@ -28,7 +28,7 @@ public class RegistryHandler implements IMessageHandler {
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		RegistryMessage registryMessage = (RegistryMessage) message;
 		ClientDetector.CLIENT.setUuid(registryMessage.getRegistryClient().identify());
-		writer.println("Client identify " + ClientDetector.CLIENT.identify());
+//		writer.println("Client identify " + ClientDetector.CLIENT.identify());
 		throw new EndOfMessageException();
 	}
 
