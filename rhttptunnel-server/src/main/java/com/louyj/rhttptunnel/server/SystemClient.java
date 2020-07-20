@@ -103,6 +103,10 @@ public class SystemClient extends TimerTask {
 					} catch (InterruptedException e) {
 					} catch (Exception e) {
 						logger.error("", e);
+						try {
+							TimeUnit.SECONDS.sleep(1);
+						} catch (InterruptedException e1) {
+						}
 					}
 				}
 			}
