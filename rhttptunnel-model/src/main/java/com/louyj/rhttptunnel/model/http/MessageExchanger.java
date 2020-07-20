@@ -65,9 +65,9 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 	private CloseableHttpClient httpclient;
 	private RequestConfig requestConfig;
 
-	@Value("http.socketTimeout:600000")
+	@Value("${http.socketTimeout:600000}")
 	private int socketTimeout;
-	@Value("http.connectTimeout:5000")
+	@Value("${http.connectTimeout:5000}")
 	private int connectTimeout;
 
 	@Value("${bootstrap.servers:}")
