@@ -80,7 +80,7 @@ public class IgniteRegistry {
 
 	<K, V> CacheConfiguration<K, V> cacheConfig(String name, Class<?>... indexedTypes) {
 		CacheConfiguration<K, V> configuration = new CacheConfiguration<K, V>().setName(name).setBackups(backups)
-				.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
+				.setWriteSynchronizationMode(CacheWriteSynchronizationMode.PRIMARY_SYNC);
 		if (indexedTypes.length > 0) {
 			configuration.setIndexedTypes(indexedTypes);
 		}

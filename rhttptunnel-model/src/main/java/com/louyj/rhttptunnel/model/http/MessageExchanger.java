@@ -103,10 +103,10 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			if (baseMessage != null) {
 				return baseMessage;
 			}
-//			System.out.println(String.format("Server %s commucation failed, try another",
-//					serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()))));
 			currentServerIndex++;
 		}
+		logger.debug(String.format("Server %s commucation failed, try another",
+				serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()))));
 		return RejectMessage.creason(message.getClientId(), message.getExchangeId(),
 				"[" + CLIENT_ERROR.reason() + "] All servers not available");
 	}
@@ -136,6 +136,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 				response.close();
 			}
 		} catch (ConnectTimeoutException | SocketException e) {
+			logger.debug("", e);
 			try {
 				TimeUnit.SECONDS.sleep(1);
 			} catch (Exception e2) {
