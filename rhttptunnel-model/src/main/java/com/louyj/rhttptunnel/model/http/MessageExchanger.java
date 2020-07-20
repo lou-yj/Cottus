@@ -88,7 +88,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 		}).build();
 		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER);
 		httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-		requestConfig = RequestConfig.custom().setSocketTimeout(600000).setConnectTimeout(5000).build();
+		requestConfig = RequestConfig.custom().setSocketTimeout(10_000).setConnectTimeout(5_000).build();
 	}
 
 	public final BaseMessage jsonPost(String endpoint, BaseMessage message) {
@@ -124,7 +124,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 				HttpEntity entity = response.getEntity();
 				String json = EntityUtils.toString(entity, UTF_8);
 				json = AESEncryptUtils.decrypt(json, defaultKey);
-				logger.debug("Receive message {}", json);
+				logger.debug("Receive response {}", json);
 				return jackson.readValue(json, BaseMessage.class);
 			} finally {
 				response.close();

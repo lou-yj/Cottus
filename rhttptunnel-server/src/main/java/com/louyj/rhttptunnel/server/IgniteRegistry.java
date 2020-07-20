@@ -12,6 +12,7 @@ import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCluster;
 import org.apache.ignite.IgniteQueue;
+import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.CollectionConfiguration;
@@ -78,7 +79,8 @@ public class IgniteRegistry {
 	}
 
 	<K, V> CacheConfiguration<K, V> cacheConfig(String name, Class<?>... indexedTypes) {
-		CacheConfiguration<K, V> configuration = new CacheConfiguration<K, V>().setName(name).setBackups(backups);
+		CacheConfiguration<K, V> configuration = new CacheConfiguration<K, V>().setName(name).setBackups(backups)
+				.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
 		if (indexedTypes.length > 0) {
 			configuration.setIndexedTypes(indexedTypes);
 		}
