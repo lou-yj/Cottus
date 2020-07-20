@@ -7,6 +7,10 @@ import org.springframework.context.annotation.Import;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
+ * 
+ * java -Dbootstrap.servers=http://localhost:18081 -cp
+ * dependency/*:rhttptunnel-worker-1.0-SNAPSHOT.jar
+ * com.louyj.rhttptunnel.worker.RHttpTunnelWorker
  *
  * Created on 2020年3月14日
  *

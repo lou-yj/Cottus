@@ -27,6 +27,7 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,10 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 	private int socketTimeout;
 	@Value("${http.connectTimeout:5000}")
 	private int connectTimeout;
+	@Value("${http.maxPoolSize:200}")
+	private int maxPoolSize;
+	@Value("${http.maxPerRoute:50}")
+	private int maxPerRoute;
 
 	@Value("${bootstrap.servers:}")
 	public void setBootstrapAddress(String serverAddress) {
@@ -92,7 +97,10 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			}
 		}).build();
 		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER);
-		httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+		PoolingHttpClientConnectionManager poolingConnManager = new PoolingHttpClientConnectionManager();
+		poolingConnManager.setMaxTotal(maxPoolSize);
+		poolingConnManager.setDefaultMaxPerRoute(maxPerRoute);
+		httpclient = HttpClients.custom().setConnectionManager(poolingConnManager).setSSLSocketFactory(sslsf).build();
 		requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout).setConnectTimeout(connectTimeout)
 				.build();
 	}
