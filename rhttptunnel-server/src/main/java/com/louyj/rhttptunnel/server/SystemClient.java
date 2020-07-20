@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -21,8 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
-import com.louyj.rhttptunnel.model.message.HeartBeatMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.ServerEventLongPullMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.server.exchange.ExchangeService;
 import com.louyj.rhttptunnel.server.session.ClientInfoManager;
@@ -66,7 +65,6 @@ public class SystemClient extends TimerTask {
 
 	private ClientInfo systemClient;
 	private Timer timer;
-	private String exchangeId = UUID.randomUUID().toString();
 	private ObjectMapper normalJackson = JsonUtils.jackson();
 
 	@PostConstruct
@@ -135,7 +133,7 @@ public class SystemClient extends TimerTask {
 
 	@Override
 	public void run() {
-		HeartBeatMessage message = new HeartBeatMessage(systemClient, exchangeId);
+		ServerEventLongPullMessage message = new ServerEventLongPullMessage(systemClient);
 		exchange(message);
 	}
 

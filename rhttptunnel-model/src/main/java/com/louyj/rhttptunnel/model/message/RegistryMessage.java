@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.model.message;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -13,6 +15,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class RegistryMessage extends BaseMessage {
 
 	private ClientInfo registryClient;
+
+	private List<String> servers;
 
 	@JsonCreator
 	public RegistryMessage(@JsonProperty("client") ClientInfo client) {
@@ -30,6 +34,14 @@ public class RegistryMessage extends BaseMessage {
 
 	public void setRegistryClient(ClientInfo registryClient) {
 		this.registryClient = registryClient;
+	}
+
+	public List<String> getServers() {
+		return servers;
+	}
+
+	public void setServers(List<String> servers) {
+		this.servers = servers;
 	}
 
 }

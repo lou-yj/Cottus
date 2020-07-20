@@ -11,9 +11,11 @@ import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cluster.ClusterNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.bean.ServerInfo;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 @Component
@@ -22,8 +24,11 @@ public class ServerRegistry {
 	@Autowired
 	private IgniteRegistry igniteRegistry;
 
+	@Value("${server.url}")
+	private String serverUrl;
+
 	private IgniteAtomicLong serverIndexCounter;
-	private IgniteCache<Object, ClientInfo> serverInfoCache;
+	private IgniteCache<Object, ServerInfo> serverInfoCache;
 
 	@PostConstruct
 	public void init() throws UnknownHostException {
@@ -36,23 +41,33 @@ public class ServerRegistry {
 		serverIndexCounter = igniteRegistry.atomicLong("serverIndexCounter", 0, true);
 		ClientInfo.SERVER.setUuid("s:" + serverIndexCounter.incrementAndGet());
 		Object consistentId = igniteRegistry.localId();
-		serverInfoCache.put(consistentId, ClientInfo.SERVER);
+
+		ServerInfo serverInfo = new ServerInfo();
+		serverInfo.setClientInfo(ClientInfo.SERVER);
+		serverInfo.setUrl(serverUrl);
+		serverInfoCache.put(consistentId, serverInfo);
 	}
 
-	public List<ClientInfo> servers() {
+	public List<ServerInfo> servers() {
 		Collection<ClusterNode> nodes = igniteRegistry.nodes();
-		List<ClientInfo> result = Lists.newArrayList();
+		List<ServerInfo> result = Lists.newArrayList();
 		for (ClusterNode node : nodes) {
 			Object consistentId = node.consistentId();
-			ClientInfo clientInfo = serverInfoCache.get(consistentId);
-			result.add(clientInfo);
+			ServerInfo serverInfo = serverInfoCache.get(consistentId);
+			result.add(serverInfo);
 		}
 		return result;
 	}
 
+	public List<String> serverUrls() {
+		List<String> serverUrls = Lists.newArrayList();
+		servers().forEach(e -> serverUrls.add(e.getUrl()));
+		return serverUrls;
+	}
+
 	public String masterId() {
 		Object consistentId = igniteRegistry.oldestId();
-		ClientInfo clientInfo = serverInfoCache.get(consistentId);
-		return clientInfo.identify();
+		ServerInfo serverInfo = serverInfoCache.get(consistentId);
+		return serverInfo.getClientInfo().identify();
 	}
 }

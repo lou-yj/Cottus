@@ -32,6 +32,7 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
+import com.louyj.rhttptunnel.server.ServerRegistry;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientInfoManager;
@@ -63,6 +64,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	private ObjectMapper jackson;
 	@Autowired
 	private ClientInfoManager clientInfoManager;
+	@Autowired
+	private ServerRegistry serverRegistry;
 
 	private ObjectMapper normalJackson = JsonUtils.jackson();
 	private ExecutorService executorService;
@@ -119,6 +122,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			RegistryMessage registryMessage = (RegistryMessage) message;
 			ClientInfo registryClient = registryMessage.getRegistryClient();
 			clientInfoManager.registryClient(registryClient);
+			registryMessage.setServers(serverRegistry.serverUrls());
 			return message;
 		}
 		String clientId = message.getClientId();
@@ -172,6 +176,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			RegistryMessage registryMessage = (RegistryMessage) message;
 			ClientInfo registryClient = registryMessage.getRegistryClient();
 			clientInfoManager.registryWorker(registryClient);
+			registryMessage.setServers(serverRegistry.serverUrls());
 			return message;
 		}
 		String clientId = message.getClientId();

@@ -12,16 +12,15 @@ import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
  *
  */
 @NoLogMessage
-public class HeartBeatMessage extends BaseMessage {
+public class ServerEventLongPullMessage extends BaseMessage {
 
 	@JsonCreator
-	public HeartBeatMessage(@JsonProperty("client") ClientInfo client) {
+	public ServerEventLongPullMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
 	}
 
-	public HeartBeatMessage(ClientInfo client, String exchangeId) {
+	public ServerEventLongPullMessage(ClientInfo client, int second) {
 		super(client);
-		setExchangeId(exchangeId);
 	}
 
 }

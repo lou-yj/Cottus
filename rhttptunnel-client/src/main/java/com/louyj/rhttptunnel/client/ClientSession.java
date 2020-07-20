@@ -49,6 +49,17 @@ public class ClientSession {
 		return null;
 	}
 
+	public void removeSelectedWorker(String wid) {
+		List<ClientInfo> selectedWorkers = Lists.newArrayList();
+		for (ClientInfo ci : this.selectedWorkers) {
+			if (StringUtils.equals(ci.identify(), wid)) {
+				continue;
+			}
+			selectedWorkers.add(ci);
+		}
+		this.selectedWorkers = selectedWorkers;
+	}
+
 	public boolean isDebug() {
 		return debug;
 	}

@@ -6,17 +6,21 @@ import static com.louyj.rhttptunnel.model.util.AESEncryptUtils.defaultKey;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 
+import java.net.SocketException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -32,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import com.google.common.net.MediaType;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
@@ -53,11 +58,26 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 
 	private ObjectMapper jackson = JsonUtils.jacksonWithType();
 
-	@Value("${server.location:unknow}")
-	private String serverAddress;
+	private List<String> bootstrapServers = Lists.newArrayList();
+	private List<String> serverAddresses = Lists.newArrayList();
+	private int currentServerIndex = 0;
 
 	private CloseableHttpClient httpclient;
 	private RequestConfig requestConfig;
+
+	@Value("${bootstrap.servers:}")
+	public void setBootstrapAddress(String serverAddress) {
+		this.bootstrapServers = Lists.newArrayList(serverAddress.split(","));
+		this.serverAddresses = this.bootstrapServers;
+	}
+
+	public void setServerAddresses(List<String> serverAddresses) {
+		this.serverAddresses = serverAddresses;
+	}
+
+	public boolean isServerConnected() {
+		return CollectionUtils.isNotEmpty(serverAddresses);
+	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -71,16 +91,26 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 		requestConfig = RequestConfig.custom().setSocketTimeout(600000).setConnectTimeout(5000).build();
 	}
 
-	public String getServerAddress() {
-		return serverAddress;
-	}
-
-	public void setServerAddress(String serverAddress) {
-		this.serverAddress = serverAddress;
-	}
-
 	public final BaseMessage jsonPost(String endpoint, BaseMessage message) {
+		for (int i = 0; i < serverAddresses.size(); i++) {
+			BaseMessage baseMessage = jsonPostOnce(endpoint, message);
+			if (baseMessage != null) {
+				return baseMessage;
+			}
+//			System.out.println(String.format("Server %s commucation failed, try another",
+//					serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()))));
+			currentServerIndex++;
+		}
+		return RejectMessage.creason(message.getClientId(), message.getExchangeId(),
+				"[" + CLIENT_ERROR.reason() + "] All servers not available");
+	}
+
+	private final BaseMessage jsonPostOnce(String endpoint, BaseMessage message) {
 		try {
+			if (CollectionUtils.isEmpty(serverAddresses)) {
+				throw new RuntimeException("No server available");
+			}
+			String serverAddress = serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()));
 			String data = jackson.writeValueAsString(message);
 			logger.debug("Send message {}", data);
 			data = AESEncryptUtils.encrypt(data, defaultKey);
@@ -99,6 +129,12 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			} finally {
 				response.close();
 			}
+		} catch (ConnectTimeoutException | SocketException e) {
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (Exception e2) {
+			}
+			return null;
 		} catch (Exception e) {
 			try {
 				TimeUnit.SECONDS.sleep(1);

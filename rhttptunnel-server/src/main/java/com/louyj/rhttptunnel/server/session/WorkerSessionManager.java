@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.server.session;
 
+import static com.louyj.rhttptunnel.model.message.consts.NotifyEventType.CLIENTS_CHANGED;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +23,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.bean.WorkerInfo;
 import com.louyj.rhttptunnel.model.bean.automate.IWorkerClientFilter;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
+import com.louyj.rhttptunnel.model.message.consts.NotifyEventType;
 import com.louyj.rhttptunnel.server.IgniteRegistry;
 import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
 import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
@@ -63,13 +67,14 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 	IgniteQueue<BaseMessage> getQueue(WorkerSession workerSession, String clientId) throws InterruptedException {
 		if (workerSession.allClientIds().contains(clientId) == false) {
 			workerSession.allClientIds().add(clientId);
-			getNotifyQueue(workerSession).put(workerSession.allClientIds());
+			getNotifyQueue(workerSession).put(Pair.of(CLIENTS_CHANGED, workerSession.allClientIds()));
 		}
 		return igniteRegistry.<BaseMessage>queue("worker:" + workerSession.getWorkerId() + ":" + clientId, 100);
 	}
 
-	public IgniteQueue<Set<String>> getNotifyQueue(WorkerSession workerSession) throws InterruptedException {
-		return igniteRegistry.<Set<String>>queue("workernotify:" + workerSession.getWorkerId(), 100);
+	public IgniteQueue<Pair<NotifyEventType, Object>> getNotifyQueue(WorkerSession workerSession)
+			throws InterruptedException {
+		return igniteRegistry.<Pair<NotifyEventType, Object>>queue("workernotify:" + workerSession.getWorkerId(), 100);
 	}
 
 	public void putMessage(WorkerSession workerSession, String clientId, BaseMessage message)

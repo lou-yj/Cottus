@@ -1,19 +1,21 @@
 package com.louyj.rhttptunnel.server.handler.worker;
 
+import static com.louyj.rhttptunnel.model.message.ClientInfo.SERVER;
 import static com.louyj.rhttptunnel.model.message.consts.RejectReason.INTERRUPT;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ClientIdLongPullMessage;
-import com.louyj.rhttptunnel.model.message.ClientIdMessage;
-import com.louyj.rhttptunnel.model.message.ClientInfo;
+import com.louyj.rhttptunnel.model.message.NoContentMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.ServerEventLongPullMessage;
+import com.louyj.rhttptunnel.model.message.ServerEventMessage;
+import com.louyj.rhttptunnel.model.message.consts.NotifyEventType;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -26,8 +28,8 @@ import com.louyj.rhttptunnel.server.session.WorkerSessionManager;
  * @author Louyj
  *
  */
-@Component
-public class ClientIdLongPullHandler implements IWorkerMessageHandler {
+@Component("workerServerEventLongPullHandler")
+public class ServerEventLongPullHandler implements IWorkerMessageHandler {
 
 	@Value("${worker.wait:60}")
 	private int workerWait;
@@ -37,20 +39,22 @@ public class ClientIdLongPullHandler implements IWorkerMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ClientIdLongPullMessage.class;
+		return ServerEventLongPullMessage.class;
 	}
 
 	@Override
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		try {
-			Set<String> poll = workerSessionManager.getNotifyQueue(workerSession).poll(workerWait, TimeUnit.SECONDS);
-			if (poll == null) {
-				poll = workerSession.allClientIds();
+			Pair<NotifyEventType, Object> poll = workerSessionManager.getNotifyQueue(workerSession).poll(workerWait,
+					TimeUnit.SECONDS);
+			if (poll != null) {
+				ServerEventMessage serverEventMessage = new ServerEventMessage(SERVER, message.getExchangeId());
+				serverEventMessage.setType(poll.getLeft());
+				serverEventMessage.setEvent(poll.getRight());
+				return serverEventMessage;
 			}
-			ClientIdMessage clientIdMessage = new ClientIdMessage(ClientInfo.SERVER, message.getExchangeId());
-			clientIdMessage.setClientIds(poll);
-			return clientIdMessage;
+			return new NoContentMessage(SERVER, message.getExchangeId());
 		} catch (InterruptedException e) {
 			return RejectMessage.sreason(message.getExchangeId(), INTERRUPT.reason());
 		}

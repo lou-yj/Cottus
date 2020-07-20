@@ -2,11 +2,13 @@ package com.louyj.rhttptunnel.worker.message;
 
 import static com.louyj.rhttptunnel.model.http.Endpoints.WORKER_EXCHANGE;
 import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +44,8 @@ public class MessageUtils implements ApplicationContextAware, InitializingBean {
 	private static MessageExchanger messageExchanger;
 	private static Map<Class<? extends BaseMessage>, IMessageHandler> messageHandlers;
 
-	private static ExecutorService executorService = Executors.newCachedThreadPool();
+	private static ExecutorService executorService = new ThreadPoolExecutor(10, 500, 300L, SECONDS,
+			new SynchronousQueue<Runnable>());
 
 	public static Map<Class<? extends BaseMessage>, IMessageHandler> getMessageHandlers() {
 		return messageHandlers;

@@ -20,7 +20,7 @@ public class ClientCommand extends BaseCommand {
 
 	@ShellMethod(value = "show client id")
 	@ShellMethodAvailability("serverContext")
-	public String id() {
+	public String cid() {
 		LogUtils.printMessage(ClientDetector.CLIENT.identify(), System.out);
 		return null;
 	}

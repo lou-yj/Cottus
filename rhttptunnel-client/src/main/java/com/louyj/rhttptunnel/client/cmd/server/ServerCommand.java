@@ -35,12 +35,11 @@ public class ServerCommand extends BaseCommand {
 
 	@ShellMethod(value = "Connect to servers")
 	@ShellMethodAvailability("clientContext")
-	public String connect(
-			@ShellOption(value = { "-s",
-					"--server" }, help = "server address", defaultValue = "http://localhost:18080") String address,
+	public String connect(@ShellOption(value = { "-s",
+			"--server" }, help = "bootstrap server address", defaultValue = "http://localhost:18080") String address,
 			@ShellOption(value = { "-u", "--user" }, help = "user name") String userName,
 			@ShellOption(value = { "-p", "--password" }, help = "password") String password) {
-		messageExchanger.setServerAddress(address);
+		messageExchanger.setBootstrapAddress(address);
 		{
 			RegistryMessage registryMessage = new RegistryMessage(CLIENT);
 			registryMessage.setRegistryClient(CLIENT);
@@ -65,7 +64,7 @@ public class ServerCommand extends BaseCommand {
 	@ShellMethod(value = "Disconnect from servers")
 	@ShellMethodAvailability("serverContext")
 	public String disconnect() {
-		if (!StringUtils.equals("unknow", messageExchanger.getServerAddress())) {
+		if (messageExchanger.isServerConnected()) {
 			ExitMessage message = new ExitMessage(ClientDetector.CLIENT);
 			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 			messagePoller.pollExchangeMessage(response);

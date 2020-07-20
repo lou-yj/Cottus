@@ -2,7 +2,6 @@ package com.louyj.rhttptunnel.client.cmd.builtin;
 
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
@@ -25,7 +24,7 @@ public class ExitCommand extends BaseCommand implements Quit.Command {
 	@ShellMethod(value = "Exit the shell.", key = { "quit", "exit" })
 	@ShellMethodAvailability("notWorkerContext")
 	public void quit() {
-		if (!StringUtils.equals("unknow", messageExchanger.getServerAddress())) {
+		if (messageExchanger.isServerConnected()) {
 			ExitMessage message = new ExitMessage(ClientDetector.CLIENT);
 			messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		}

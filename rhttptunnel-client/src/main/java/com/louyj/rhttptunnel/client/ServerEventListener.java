@@ -4,13 +4,13 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
-import com.louyj.rhttptunnel.model.message.HeartBeatMessage;
+import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.ServerEventLongPullMessage;
 
 /**
  *
@@ -20,10 +20,12 @@ import com.louyj.rhttptunnel.model.message.HeartBeatMessage;
  *
  */
 @Component
-public class HeartBeater extends Thread implements InitializingBean {
+public class ServerEventListener extends Thread implements InitializingBean {
 
 	@Autowired
 	private MessageExchanger messageExchanger;
+	@Autowired
+	private MessagePoller messagePoller;
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -36,21 +38,22 @@ public class HeartBeater extends Thread implements InitializingBean {
 		while (this.isInterrupted() == false) {
 			if (ClientDetector.CLIENT.identify() == null) {
 				try {
-					TimeUnit.SECONDS.sleep(240);
+					TimeUnit.SECONDS.sleep(5);
 				} catch (InterruptedException e) {
 				}
 				continue;
 			}
 			try {
-				if (!StringUtils.equals("unknow", messageExchanger.getServerAddress())) {
-					HeartBeatMessage message = new HeartBeatMessage(ClientDetector.CLIENT);
-					messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+				if (messageExchanger.isServerConnected()) {
+					ServerEventLongPullMessage message = new ServerEventLongPullMessage(ClientDetector.CLIENT);
+					BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+					messagePoller.pollExchangeMessage(response);
 				}
 			} catch (Exception e) {
-			}
-			try {
-				TimeUnit.SECONDS.sleep(10);
-			} catch (InterruptedException e) {
+				try {
+					TimeUnit.SECONDS.sleep(5);
+				} catch (InterruptedException ex) {
+				}
 			}
 		}
 	}

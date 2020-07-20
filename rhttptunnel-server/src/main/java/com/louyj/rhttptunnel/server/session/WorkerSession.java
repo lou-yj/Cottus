@@ -3,6 +3,8 @@ package com.louyj.rhttptunnel.server.session;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.bean.Pair;
+import com.louyj.rhttptunnel.model.message.consts.NotifyEventType;
 
 /**
  *
@@ -56,7 +58,7 @@ public class WorkerSession {
 
 	public void onClientRemove(WorkerSessionManager workerSessionManager, String clientId) throws InterruptedException {
 		clientIds.remove(clientId);
-		workerSessionManager.getNotifyQueue(this).put(clientIds);
+		workerSessionManager.getNotifyQueue(this).put(Pair.of(NotifyEventType.CLIENTS_CHANGED, clientIds));
 		workerSessionManager.getQueue(this, clientId).close();
 	}
 

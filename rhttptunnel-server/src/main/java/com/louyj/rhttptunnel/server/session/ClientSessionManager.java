@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.model.message.consts.NotifyEventType;
 import com.louyj.rhttptunnel.server.IgniteRegistry;
 
 /**
@@ -39,6 +41,11 @@ public class ClientSessionManager {
 	public void init() {
 		clientCache = igniteRegistry.getOrCreateCache(CLIENT_CACHE, clientSessionTimeout, TimeUnit.SECONDS);
 		exchangeCache = igniteRegistry.getOrCreateCache("exchangeCache", clientExchangeTimeout, TimeUnit.SECONDS);
+	}
+
+	public IgniteQueue<Pair<NotifyEventType, Object>> getNotifyQueue(ClientSession clientSession)
+			throws InterruptedException {
+		return igniteRegistry.<Pair<NotifyEventType, Object>>queue("clientnotify:" + clientSession.getClientId(), 100);
 	}
 
 	public void putMessage(String clientId, BaseMessage message) {

@@ -15,8 +15,9 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ClientIdLongPullMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.message.ServerEventLongPullMessage;
+import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.worker.ClientDetector;
 
 /**
@@ -27,7 +28,7 @@ import com.louyj.rhttptunnel.worker.ClientDetector;
  *
  */
 @Component
-public class ClientDiscover extends Thread implements InitializingBean {
+public class ServerEventListener extends Thread implements InitializingBean {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -45,6 +46,7 @@ public class ClientDiscover extends Thread implements InitializingBean {
 		registryMessage.setRegistryClient(ClientDetector.CLIENT);
 		BaseMessage message = messageExchanger.jsonPost(WORKER_EXCHANGE, registryMessage);
 		if ((message instanceof RegistryMessage) == false) {
+			logger.warn("Registry failed with response {}", JsonUtils.gson().toJson(message));
 			throw new RuntimeException("Registry failed");
 		}
 		MessageUtils.handle(message);
@@ -62,7 +64,7 @@ public class ClientDiscover extends Thread implements InitializingBean {
 	}
 
 	private void doRun() throws JsonParseException, JsonMappingException, IOException {
-		ClientIdLongPullMessage longPullMessage = new ClientIdLongPullMessage(ClientDetector.CLIENT);
+		ServerEventLongPullMessage longPullMessage = new ServerEventLongPullMessage(ClientDetector.CLIENT);
 		BaseMessage message = messageExchanger.jsonPost(WORKER_EXCHANGE, longPullMessage);
 		MessageUtils.handle(message);
 	}

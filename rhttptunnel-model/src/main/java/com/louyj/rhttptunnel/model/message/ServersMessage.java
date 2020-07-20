@@ -5,6 +5,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.bean.ServerInfo;
 
 /**
  *
@@ -15,7 +16,7 @@ import com.google.common.collect.Lists;
  */
 public class ServersMessage extends BaseMessage {
 
-	private List<ClientInfo> servers = Lists.newArrayList();
+	private List<ServerInfo> servers = Lists.newArrayList();
 
 	private String master;
 
@@ -37,11 +38,11 @@ public class ServersMessage extends BaseMessage {
 		this.master = master;
 	}
 
-	public List<ClientInfo> getServers() {
+	public List<ServerInfo> getServers() {
 		return servers;
 	}
 
-	public void setServers(List<ClientInfo> servers) {
+	public void setServers(List<ServerInfo> servers) {
 		this.servers = servers;
 	}
 

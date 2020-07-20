@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
+import com.louyj.rhttptunnel.model.bean.ServerInfo;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.ServersMessage;
@@ -44,14 +45,15 @@ public class ServersHandler implements IMessageHandler {
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		ServersMessage listMessage = (ServersMessage) message;
-		List<ClientInfo> servers = listMessage.getServers();
+		List<ServerInfo> servers = listMessage.getServers();
 		Object[][] data = new Object[servers.size() + 1][];
-		data[0] = new Object[] { "SERVER ID", "HOST", "IP", "ROLE", "UPTIME" };
+		data[0] = new Object[] { "SERVER ID", "HOST", "IP", "ROLE", "UPTIME", "URL" };
 		int index = 1;
-		for (ClientInfo server : servers) {
-			String role = StringUtils.equals(listMessage.getMaster(), server.identify()) ? "MASTER" : "SLAVE";
-			data[index++] = new Object[] { server.identify(), server.getHost(), server.getIp(), role,
-					formatTime(server.getUptime()) };
+		for (ServerInfo server : servers) {
+			ClientInfo clientInfo = server.getClientInfo();
+			String role = StringUtils.equals(listMessage.getMaster(), clientInfo.identify()) ? "MASTER" : "SLAVE";
+			data[index++] = new Object[] { clientInfo.identify(), clientInfo.getHost(), clientInfo.getIp(), role,
+					formatTime(clientInfo.getUptime()), server.getUrl() };
 		}
 		TableModel model = new ArrayTableModel(data);
 		TableBuilder tableBuilder = new TableBuilder(model);
