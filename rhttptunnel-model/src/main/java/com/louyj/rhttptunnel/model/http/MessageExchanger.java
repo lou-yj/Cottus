@@ -65,6 +65,11 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 	private CloseableHttpClient httpclient;
 	private RequestConfig requestConfig;
 
+	@Value("http.socketTimeout:600000")
+	private int socketTimeout;
+	@Value("http.connectTimeout:5000")
+	private int connectTimeout;
+
 	@Value("${bootstrap.servers:}")
 	public void setBootstrapAddress(String serverAddress) {
 		this.bootstrapServers = Lists.newArrayList(serverAddress.split(","));
@@ -88,7 +93,8 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 		}).build();
 		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER);
 		httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-		requestConfig = RequestConfig.custom().setSocketTimeout(10_000).setConnectTimeout(5_000).build();
+		requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout).setConnectTimeout(connectTimeout)
+				.build();
 	}
 
 	public final BaseMessage jsonPost(String endpoint, BaseMessage message) {
