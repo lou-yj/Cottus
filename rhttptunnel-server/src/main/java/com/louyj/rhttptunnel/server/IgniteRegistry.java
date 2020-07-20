@@ -89,7 +89,7 @@ public class IgniteRegistry {
 	<K, V> CacheConfiguration<K, V> cacheConfig(String name, int durationAmount, TimeUnit unit,
 			Class<?>... indexedTypes) {
 		return (CacheConfiguration<K, V>) cacheConfig(name, indexedTypes)
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10)));
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(unit, durationAmount)));
 	}
 
 }
