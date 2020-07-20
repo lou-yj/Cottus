@@ -7,11 +7,9 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
-import org.apache.ignite.configuration.CacheConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
+import com.louyj.rhttptunnel.server.IgniteRegistry;
 
 @Component
 public class WorkerLabelManager {
@@ -27,14 +26,13 @@ public class WorkerLabelManager {
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Autowired
-	private Ignite ignite;
+	private IgniteRegistry igniteRegistry;
 
 	private IgniteCache<Object, Object> cache;
 
 	@PostConstruct
 	public void setup() {
-		cache = ignite.getOrCreateCache(
-				new CacheConfiguration<>().setName("workerlabels").setIndexedTypes(String.class, LabelRule.class));
+		cache = igniteRegistry.getOrCreateCache("workerlabels", String.class, LabelRule.class);
 	}
 
 	public void registryRule(LabelRule rule) {

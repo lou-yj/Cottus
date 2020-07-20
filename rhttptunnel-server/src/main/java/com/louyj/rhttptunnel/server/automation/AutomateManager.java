@@ -10,20 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.cache.expiry.CreatedExpiryPolicy;
-import javax.cache.expiry.Duration;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteCluster;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
-import org.apache.ignite.configuration.CacheConfiguration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +56,7 @@ import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.MetricsTyp
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.ScriptContentType;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
+import com.louyj.rhttptunnel.server.IgniteRegistry;
 import com.louyj.rhttptunnel.server.SystemClient;
 import com.louyj.rhttptunnel.server.SystemClient.ISystemClientListener;
 import com.louyj.rhttptunnel.server.automation.event.AlarmEvent;
@@ -97,7 +92,7 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	@Value("${data.dir:/data}")
 	private String dataDir;
 	@Autowired
-	private Ignite ignite;
+	private IgniteRegistry igniteRegistry;
 	@Autowired
 	private SystemClient systemClient;
 	@Autowired
@@ -214,20 +209,16 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		indexCounter = ignite.atomicLong("automageIndexCounter", 0, true);
+		indexCounter = igniteRegistry.atomicLong("automageIndexCounter", 0, true);
 		taskScheduler = new ThreadPoolTaskScheduler();
 		taskScheduler.setPoolSize(10);
-		configCache = ignite.getOrCreateCache("automate");
-		auditCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("automateAudit")
-				.setIndexedTypes(String.class, ScheduledTaskAudit.class)
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10))));
-		scheduleStatusCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("automateScheduleStatus")
-				.setIndexedTypes(String.class, ExecutorStatus.class)
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10))));
-		alarmCache = ignite.getOrCreateCache(new CacheConfiguration<>().setName("alarmCache")
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 100)))
-				.setIndexedTypes(String.class, AlarmEvent.class, String.class, AlarmHandlerInfo.class, String.class,
-						AlarmSilencer.class));
+		configCache = igniteRegistry.getOrCreateCache("automate");
+		auditCache = igniteRegistry.getOrCreateCache("automateAudit", 10, TimeUnit.DAYS, String.class,
+				ScheduledTaskAudit.class);
+		scheduleStatusCache = igniteRegistry.getOrCreateCache("automateScheduleStatus", 10, TimeUnit.DAYS, String.class,
+				ExecutorStatus.class);
+		alarmCache = igniteRegistry.getOrCreateCache("alarmCache", 100, TimeUnit.DAYS, String.class, AlarmEvent.class,
+				String.class, AlarmHandlerInfo.class, String.class, AlarmSilencer.class);
 		handlerService = new HandlerService(this, alarmCache);
 		alarmService = new AlarmService(handlerService, this);
 		this.repoConfig = (RepoConfig) configCache.get(CONFIG_REPO);
@@ -344,7 +335,7 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 	}
 
 	public void scheduleExecutorTask(Executor executor) throws JsonParseException, JsonMappingException, IOException {
-		if (!isMaster()) {
+		if (igniteRegistry.isMaster()) {
 			logger.debug("Current node is not master node, skip schedule");
 			return;
 		}
@@ -356,11 +347,6 @@ public class AutomateManager implements ISystemClientListener, InitializingBean 
 		logger.info("Total {} tasks for executor {}", finalTasks.size(), executor.getName());
 		scheduleStatusCache.put(scheduleStatusKey(executor.getName(), scheduledId), executorStatus);
 		scheduleNextTask(executorStatus);
-	}
-
-	public boolean isMaster() {
-		IgniteCluster cluster = ignite.cluster();
-		return cluster.forOldest().node().id().equals(cluster.localNode().id());
 	}
 
 	@Override

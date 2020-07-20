@@ -3,7 +3,6 @@ package com.louyj.rhttptunnel.server.session;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ignite.Ignite;
 import org.apache.ignite.events.CacheEvent;
 import org.apache.ignite.events.EventType;
 import org.apache.ignite.lang.IgnitePredicate;
@@ -11,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.louyj.rhttptunnel.server.IgniteRegistry;
 
 @Component
 public class IgniteExpireListener implements IgnitePredicate<CacheEvent> {
@@ -20,7 +21,7 @@ public class IgniteExpireListener implements IgnitePredicate<CacheEvent> {
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Autowired
-	private Ignite ignite;
+	private IgniteRegistry igniteRegistry;
 	@Autowired
 	private ClientSessionManager clientSessionManager;
 	@Autowired
@@ -28,7 +29,7 @@ public class IgniteExpireListener implements IgnitePredicate<CacheEvent> {
 
 	@PostConstruct
 	public void init() {
-		ignite.events().localListen(this, EventType.EVT_CACHE_OBJECT_REMOVED);
+		igniteRegistry.localListen(this, EventType.EVT_CACHE_OBJECT_REMOVED);
 	}
 
 	@Override

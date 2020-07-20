@@ -1,43 +1,95 @@
 package com.louyj.rhttptunnel.server;
 
-import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteCluster;
-import org.apache.ignite.Ignition;
-import org.apache.ignite.configuration.DataStorageConfiguration;
-import org.apache.ignite.configuration.IgniteConfiguration;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
-@Configuration
+import javax.annotation.PostConstruct;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteAtomicLong;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteCluster;
+import org.apache.ignite.IgniteQueue;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.CollectionConfiguration;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.lang.IgnitePredicate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
 public class IgniteRegistry {
 
-	@Value("${data.dir:/data}")
-	private String dataDir;
+	@Value("${cache.backups:1}")
+	private int backups;
 
-	@Value("${ignite.localhost.bind:127.0.0.1}")
-	private String localhostBind;
+	@Autowired
+	private Ignite ignite;
 
-	@Bean
-	public Ignite ignite() {
-		System.setProperty("IGNITE_NO_ASCII", "true");
-		System.setProperty("IGNITE_QUIET", "true");
-		IgniteConfiguration cfg = new IgniteConfiguration();
-		cfg.setWorkDirectory(dataDir + "/ignite");
-		cfg.setClientMode(false);
-		cfg.setPeerClassLoadingEnabled(true);
-		cfg.setLocalHost(localhostBind);
-		cfg.setMetricsLogFrequency(0);
+	private CollectionConfiguration colCfg;
 
-		DataStorageConfiguration dscfg = new DataStorageConfiguration();
-		dscfg.getDefaultDataRegionConfiguration().setPersistenceEnabled(true);
-		cfg.setDataStorageConfiguration(dscfg);
-		Ignite ignite = Ignition.start(cfg);
+	@PostConstruct
+	public void init() {
+		colCfg = new CollectionConfiguration();
+		colCfg.setCollocated(true);
+		colCfg.setBackups(1);
+	}
+
+	public <K, V> IgniteCache<K, V> getOrCreateCache(String name, Class<?>... indexedTypes) {
+		return ignite.getOrCreateCache(cacheConfig(name, indexedTypes));
+	}
+
+	public <K, V> IgniteCache<K, V> getOrCreateCache(String name, int durationAmount, TimeUnit unit,
+			Class<?>... indexedTypes) {
+		return ignite.getOrCreateCache(cacheConfig(name, durationAmount, unit, indexedTypes));
+	}
+
+	public IgniteAtomicLong atomicLong(String name, long initVal, boolean create) {
+		return ignite.atomicLong(name, initVal, create);
+	}
+
+	public boolean isMaster() {
 		IgniteCluster cluster = ignite.cluster();
-		cluster.active(true);
-		cluster.baselineAutoAdjustEnabled(true);
-		cluster.baselineAutoAdjustTimeout(60_000);
-		return ignite;
+		return cluster.forOldest().node().id().equals(cluster.localNode().id());
+	}
+
+	public <T> IgniteQueue<T> queue(String name, int cap) {
+		return ignite.<T>queue(name, cap, colCfg);
+	}
+
+	public void localListen(IgnitePredicate<? extends Event> lsnr, int... types) {
+		ignite.events().localListen(lsnr, types);
+	}
+
+	public Object localId() {
+		return ignite.cluster().localNode().consistentId();
+	}
+
+	public Collection<ClusterNode> nodes() {
+		return ignite.cluster().nodes();
+	}
+
+	public Object oldestId() {
+		return ignite.cluster().forOldest().node().consistentId();
+	}
+
+	<K, V> CacheConfiguration<K, V> cacheConfig(String name, Class<?>... indexedTypes) {
+		CacheConfiguration<K, V> configuration = new CacheConfiguration<K, V>().setName(name).setBackups(backups);
+		if (indexedTypes.length > 0) {
+			configuration.setIndexedTypes(indexedTypes);
+		}
+		return configuration;
+	}
+
+	@SuppressWarnings("unchecked")
+	<K, V> CacheConfiguration<K, V> cacheConfig(String name, int durationAmount, TimeUnit unit,
+			Class<?>... indexedTypes) {
+		return (CacheConfiguration<K, V>) cacheConfig(name, indexedTypes)
+				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.DAYS, 10)));
 	}
 
 }

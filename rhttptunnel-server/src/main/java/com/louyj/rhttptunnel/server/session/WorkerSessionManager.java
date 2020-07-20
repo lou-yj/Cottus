@@ -8,20 +8,16 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
-import javax.cache.expiry.CreatedExpiryPolicy;
-import javax.cache.expiry.Duration;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteQueue;
-import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.configuration.CollectionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
@@ -29,6 +25,7 @@ import com.louyj.rhttptunnel.model.bean.WorkerInfo;
 import com.louyj.rhttptunnel.model.bean.automate.IWorkerClientFilter;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
+import com.louyj.rhttptunnel.server.IgniteRegistry;
 import com.louyj.rhttptunnel.server.workerlabel.LabelRule;
 import com.louyj.rhttptunnel.server.workerlabel.WorkerLabelManager;
 
@@ -46,23 +43,21 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 
 	static final String CLIENT_CACHE = "workerCache";
 
+	@Value("${worker.session.timeout:120}")
+	private int workerSessionTimeout = 120;
+
 	@Autowired
 	private WorkerLabelManager workerLabelManager;
 	@Autowired
 	private ClientInfoManager clientInfoManager;
 	@Autowired
-	private Ignite ignite;
+	private IgniteRegistry igniteRegistry;
 
 	private IgniteCache<String, WorkerSession> workerCache;
-	private CollectionConfiguration colCfg;
 
 	@PostConstruct
 	public void init() {
-		workerCache = ignite.getOrCreateCache(new CacheConfiguration<String, WorkerSession>().setName(CLIENT_CACHE)
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 5))));
-		colCfg = new CollectionConfiguration();
-//		colCfg.setCollocated(true);
-		colCfg.setBackups(1);
+		workerCache = igniteRegistry.getOrCreateCache(CLIENT_CACHE, workerSessionTimeout, TimeUnit.SECONDS);
 	}
 
 	IgniteQueue<BaseMessage> getQueue(WorkerSession workerSession, String clientId) throws InterruptedException {
@@ -70,11 +65,11 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 			workerSession.allClientIds().add(clientId);
 			getNotifyQueue(workerSession).put(workerSession.allClientIds());
 		}
-		return ignite.<BaseMessage>queue("worker:" + workerSession.getWorkerId() + ":" + clientId, 100, colCfg);
+		return igniteRegistry.<BaseMessage>queue("worker:" + workerSession.getWorkerId() + ":" + clientId, 100);
 	}
 
 	public IgniteQueue<Set<String>> getNotifyQueue(WorkerSession workerSession) throws InterruptedException {
-		return ignite.<Set<String>>queue("workernotify:" + workerSession.getWorkerId(), 100, colCfg);
+		return igniteRegistry.<Set<String>>queue("workernotify:" + workerSession.getWorkerId(), 100);
 	}
 
 	public void putMessage(WorkerSession workerSession, String clientId, BaseMessage message)

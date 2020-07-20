@@ -3,18 +3,15 @@ package com.louyj.rhttptunnel.server.session;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
-import javax.cache.expiry.CreatedExpiryPolicy;
-import javax.cache.expiry.Duration;
 
-import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteQueue;
-import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.configuration.CollectionConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
+import com.louyj.rhttptunnel.server.IgniteRegistry;
 
 /**
  *
@@ -28,22 +25,20 @@ public class ClientSessionManager {
 
 	static final String CLIENT_CACHE = "clientCache";
 
+	@Value("${client.session.timeout:120}")
+	private int clientSessionTimeout = 120;
+	@Value("${client.exchange.timeout:3600}")
+	private int clientExchangeTimeout = 3600;
 	@Autowired
-	private Ignite ignite;
+	private IgniteRegistry igniteRegistry;
 
 	private IgniteCache<String, ClientSession> clientCache;
 	private IgniteCache<String, String> exchangeCache;
-	private CollectionConfiguration colCfg;
 
 	@PostConstruct
 	public void init() {
-		clientCache = ignite.getOrCreateCache(new CacheConfiguration<String, ClientSession>().setName(CLIENT_CACHE)
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 5))));
-		exchangeCache = ignite.getOrCreateCache(new CacheConfiguration<String, String>().setName("exchangeCache")
-				.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.HOURS, 1))));
-		colCfg = new CollectionConfiguration();
-//		colCfg.setCollocated(true);
-		colCfg.setBackups(1);
+		clientCache = igniteRegistry.getOrCreateCache(CLIENT_CACHE, clientSessionTimeout, TimeUnit.SECONDS);
+		exchangeCache = igniteRegistry.getOrCreateCache("exchangeCache", clientExchangeTimeout, TimeUnit.SECONDS);
 	}
 
 	public void putMessage(String clientId, BaseMessage message) {
@@ -55,7 +50,7 @@ public class ClientSessionManager {
 	}
 
 	IgniteQueue<BaseMessage> getQueue(String clientId) {
-		return ignite.<BaseMessage>queue("client:" + clientId, 100, colCfg);
+		return igniteRegistry.queue("client:" + clientId, 100);
 	}
 
 	public boolean update(String clientId, String exchangeId) {

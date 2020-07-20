@@ -7,7 +7,6 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cluster.ClusterNode;
@@ -21,7 +20,7 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
 public class ServerRegistry {
 
 	@Autowired
-	private Ignite ignite;
+	private IgniteRegistry igniteRegistry;
 
 	private IgniteAtomicLong serverIndexCounter;
 	private IgniteCache<Object, ClientInfo> serverInfoCache;
@@ -33,15 +32,15 @@ public class ServerRegistry {
 		String hostName = localHost.getHostName();
 		ClientInfo.SERVER.setHost(hostName);
 		ClientInfo.SERVER.setIp(ip);
-		serverInfoCache = ignite.getOrCreateCache("serverInfoCache");
-		serverIndexCounter = ignite.atomicLong("serverIndexCounter", 0, true);
+		serverInfoCache = igniteRegistry.getOrCreateCache("serverInfoCache");
+		serverIndexCounter = igniteRegistry.atomicLong("serverIndexCounter", 0, true);
 		ClientInfo.SERVER.setUuid("s:" + serverIndexCounter.incrementAndGet());
-		Object consistentId = ignite.cluster().localNode().id();
+		Object consistentId = igniteRegistry.localId();
 		serverInfoCache.put(consistentId, ClientInfo.SERVER);
 	}
 
 	public List<ClientInfo> servers() {
-		Collection<ClusterNode> nodes = ignite.cluster().nodes();
+		Collection<ClusterNode> nodes = igniteRegistry.nodes();
 		List<ClientInfo> result = Lists.newArrayList();
 		for (ClusterNode node : nodes) {
 			Object consistentId = node.consistentId();
@@ -52,7 +51,7 @@ public class ServerRegistry {
 	}
 
 	public String masterId() {
-		Object consistentId = ignite.cluster().forOldest().node().id();
+		Object consistentId = igniteRegistry.oldestId();
 		ClientInfo clientInfo = serverInfoCache.get(consistentId);
 		return clientInfo.identify();
 	}
