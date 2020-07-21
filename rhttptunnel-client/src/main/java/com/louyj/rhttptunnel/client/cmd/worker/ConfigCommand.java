@@ -26,10 +26,19 @@ import com.louyj.rhttptunnel.model.message.config.ConfigSetMessage;
 @ShellCommandGroup("Worker Config Commands")
 public class ConfigCommand extends BaseCommand {
 
+	@ShellMethod(value = "List config from server or worker")
+	@ShellMethodAvailability("workerContext")
+	public String configList() {
+		ConfigGetMessage message = new ConfigGetMessage(CLIENT);
+		message.setKey("");
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
 	@ShellMethod(value = "Get config from server or worker")
 	@ShellMethodAvailability("workerContext")
-	public String configGet(@ShellOption(value = { "-k",
-			"--key" }, help = "config key, show all keys if not set", defaultValue = "") String key) {
+	public String configGet(
+			@ShellOption(value = { "-k", "--key" }, help = "config key, show all keys if not set") String key) {
 		ConfigGetMessage message = new ConfigGetMessage(CLIENT);
 		message.setKey(key);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
