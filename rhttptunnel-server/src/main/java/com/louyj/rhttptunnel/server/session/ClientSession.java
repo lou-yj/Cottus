@@ -26,6 +26,16 @@ public class ClientSession {
 
 	private Set<String> exchangeIds = Sets.newHashSet();
 
+	private String userName;
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
 	public Set<String> getExchangeIds() {
 		return exchangeIds;
 	}

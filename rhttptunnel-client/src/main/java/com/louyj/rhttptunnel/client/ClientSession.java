@@ -10,6 +10,7 @@ import org.springframework.shell.Availability;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.bean.Permission;
 import com.louyj.rhttptunnel.model.bean.RoleType;
 import com.louyj.rhttptunnel.model.bean.WorkerInfo;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
@@ -31,7 +32,7 @@ public class ClientSession {
 	private List<WorkerInfo> discoverWorkers = Lists.newArrayList();
 	private String discoverWorkerText;
 	private List<ClientInfo> selectedWorkers;
-	private RoleType role = RoleType.NORMAL;
+	private Permission permission;
 
 	@Value("${java.io.tmpdir}")
 	private String workDirectory;
@@ -39,6 +40,14 @@ public class ClientSession {
 	private String cwd = "/";
 
 	private boolean debug = true;
+
+	public Permission getPermission() {
+		return permission;
+	}
+
+	public void setPermission(Permission permission) {
+		this.permission = permission;
+	}
 
 	public ClientInfo getSelectedWorker(String clientId) {
 		for (ClientInfo clientInfo : selectedWorkers) {
@@ -84,14 +93,6 @@ public class ClientSession {
 		return discoverWorkerText;
 	}
 
-	public RoleType getRole() {
-		return role;
-	}
-
-	public void setRole(RoleType role) {
-		this.role = role;
-	}
-
 	public List<WorkerInfo> getDiscoverWorkers() {
 		return discoverWorkers;
 	}
@@ -133,9 +134,6 @@ public class ClientSession {
 	}
 
 	public Availability serverCmdAvailability(RoleType roleType) {
-		if (role.getLevel() < roleType.getLevel()) {
-			return Availability.unavailable("Permission deny.");
-		}
 		if (inUnconnectedMode()) {
 			return Availability.unavailable("Current command not available when unconnected mode.");
 		}
@@ -150,9 +148,6 @@ public class ClientSession {
 	}
 
 	public Availability notWorkerCmdAvailability(RoleType roleType) {
-		if (role.getLevel() < roleType.getLevel()) {
-			return Availability.unavailable("Permission deny.");
-		}
 		if (inWorkerMode()) {
 			return Availability.unavailable("Current command not available when connected to worker");
 		}
@@ -164,9 +159,6 @@ public class ClientSession {
 	}
 
 	public Availability workerCmdAvailability(RoleType roleType) {
-		if (role.getLevel() < roleType.getLevel()) {
-			return Availability.unavailable("Permission deny.");
-		}
 		if (inUnconnectedMode()) {
 			return Availability.unavailable("Current command not available when unconnected mode.");
 		}
@@ -181,9 +173,6 @@ public class ClientSession {
 	}
 
 	public Availability clientCmdAvailability(RoleType roleType) {
-		if (role.getLevel() < roleType.getLevel()) {
-			return Availability.unavailable("Permission deny.");
-		}
 		if (inWorkerMode()) {
 			return Availability.unavailable("Current command not available when connected to worker.");
 		}

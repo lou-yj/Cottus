@@ -5,7 +5,6 @@ import org.springframework.shell.Availability;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.MessagePoller;
-import com.louyj.rhttptunnel.model.bean.RoleType;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
@@ -26,81 +25,39 @@ public abstract class BaseCommand {
 	@Autowired
 	protected MessageExchanger messageExchanger;
 
-	public Availability workerAdminContext() {
-		if (checkPermission(RoleType.ADMIN) && session.inWorkerMode()) {
-			return Availability.available();
-		}
-		return Availability.unavailable("of bad context");
-	}
-
 	public Availability workerContext() {
-		if (checkPermission(RoleType.NORMAL) && session.inWorkerMode()) {
-			return Availability.available();
-		}
-		return Availability.unavailable("of bad context");
-	}
-
-	public Availability serverAdminContext() {
-		if (checkPermission(RoleType.ADMIN) && session.inServerMode()) {
+		if (session.inWorkerMode()) {
 			return Availability.available();
 		}
 		return Availability.unavailable("of bad context");
 	}
 
 	public Availability serverContext() {
-		if (checkPermission(RoleType.NORMAL) && session.inServerMode()) {
-			return Availability.available();
-		}
-		return Availability.unavailable("of bad context");
-	}
-
-	public Availability clientAdminContext() {
-		if (checkPermission(RoleType.ADMIN) && session.inUnconnectedMode()) {
+		if (session.inServerMode()) {
 			return Availability.available();
 		}
 		return Availability.unavailable("of bad context");
 	}
 
 	public Availability clientContext() {
-		if (checkPermission(RoleType.NORMAL) && session.inUnconnectedMode()) {
-			return Availability.available();
-		}
-		return Availability.unavailable("of bad context");
-	}
-
-	public Availability notWorkerAdminContext() {
-		if (checkPermission(RoleType.ADMIN) && session.inWorkerMode() == false) {
+		if (session.inUnconnectedMode()) {
 			return Availability.available();
 		}
 		return Availability.unavailable("of bad context");
 	}
 
 	public Availability notWorkerContext() {
-		if (checkPermission(RoleType.NORMAL) && session.inWorkerMode() == false) {
-			return Availability.available();
-		}
-		return Availability.unavailable("of bad context");
-	}
-
-	public Availability connectAdminContext() {
-		if (checkPermission(RoleType.ADMIN) && session.inUnconnectedMode() == false) {
+		if (session.inWorkerMode() == false) {
 			return Availability.available();
 		}
 		return Availability.unavailable("of bad context");
 	}
 
 	public Availability connectContext() {
-		if (checkPermission(RoleType.NORMAL) && session.inUnconnectedMode() == false) {
+		if (session.inUnconnectedMode() == false) {
 			return Availability.available();
 		}
 		return Availability.unavailable("of bad context");
-	}
-
-	protected boolean checkPermission(RoleType roleType) {
-		if (session.getRole().getLevel() < roleType.getLevel()) {
-			return false;
-		}
-		return true;
 	}
 
 }

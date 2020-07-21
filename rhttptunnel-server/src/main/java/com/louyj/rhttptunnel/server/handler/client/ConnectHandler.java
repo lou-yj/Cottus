@@ -7,15 +7,15 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.louyj.rhttptunnel.model.bean.RoleType;
+import com.louyj.rhttptunnel.model.bean.Permission;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.message.auth.RoleMessage;
+import com.louyj.rhttptunnel.server.auth.UserPermissionManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
-import com.louyj.rhttptunnel.server.user.UserManager;
 
 /**
  *
@@ -28,7 +28,7 @@ import com.louyj.rhttptunnel.server.user.UserManager;
 public class ConnectHandler implements IClientMessageHandler {
 
 	@Autowired
-	private UserManager userManager;
+	private UserPermissionManager userManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -44,10 +44,10 @@ public class ConnectHandler implements IClientMessageHandler {
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		ConnectMessage connectMessage = (ConnectMessage) message;
-		RoleType roleType = userManager.verify(connectMessage.getUser(), connectMessage.getPassword());
-		if (roleType != null) {
+		Permission permission = userManager.verify(connectMessage.getUser(), connectMessage.getPassword());
+		if (permission != null) {
 			RoleMessage roleMessage = new RoleMessage(SERVER, message.getExchangeId());
-			roleMessage.setRole(roleType);
+			roleMessage.setPermission(permission);
 			return roleMessage;
 		}
 		return RejectMessage.sreason(message.getExchangeId(), "Auth failed");

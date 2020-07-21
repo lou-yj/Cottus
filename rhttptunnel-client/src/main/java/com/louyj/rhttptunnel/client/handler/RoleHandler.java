@@ -30,7 +30,7 @@ public class RoleHandler implements IMessageHandler {
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		RoleMessage roleMessage = (RoleMessage) message;
-		clientSession.setRole(roleMessage.getRole());
+		clientSession.setPermission(roleMessage.getPermission());
 	}
 
 }

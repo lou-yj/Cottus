@@ -104,7 +104,7 @@ public class CustomShell extends Shell {
 	}
 
 	public void checkPermission(Method method, String command) {
-		System.out.println(String.format("command %s method %s", command, method.getName()));
+//		System.out.println(String.format("command %s method %s", command, method.getName()));
 	}
 
 	private boolean noInput(Input input) {
