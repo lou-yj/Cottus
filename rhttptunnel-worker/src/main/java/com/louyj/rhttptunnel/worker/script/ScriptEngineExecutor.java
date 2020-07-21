@@ -11,10 +11,16 @@ import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
 import org.python.jsr223.PyScriptEngineFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Maps;
+import com.louyj.rhttptunnel.worker.script.builtin.BuildInScriptEngineFactory;
+import com.louyj.rhttptunnel.worker.script.builtin.IBuildInExecutor;
 import com.louyj.rhttptunnel.worker.script.shell.ShellScriptEngineFactory;
 
 import bsh.engine.BshScriptEngineFactory;
@@ -27,7 +33,9 @@ import bsh.engine.BshScriptEngineFactory;
  *
  */
 @Component
-public class ScriptEngineExecutor implements InitializingBean {
+public class ScriptEngineExecutor implements InitializingBean, ApplicationContextAware {
+
+	private ApplicationContext applicationContext;
 
 	@Value("${work.directory}")
 	private String workDirectory;
@@ -55,6 +63,12 @@ public class ScriptEngineExecutor implements InitializingBean {
 
 		ShellScriptEngineFactory shell = new ShellScriptEngineFactory(workDirectory);
 		engineManager.registerEngineName("shell", shell);
+
+		Map<String, IBuildInExecutor> beans = applicationContext.getBeansOfType(IBuildInExecutor.class);
+		Map<String, IBuildInExecutor> buildInExecutors = Maps.newHashMap();
+		beans.values().forEach(b -> buildInExecutors.put(b.name(), b));
+		BuildInScriptEngineFactory buildIn = new BuildInScriptEngineFactory(buildInExecutors);
+		engineManager.registerEngineName("buildin", buildIn);
 	}
 
 	public EvalResult eval(String language, String script, Map<String, Object> env, boolean collectStdLog)
@@ -82,6 +96,11 @@ public class ScriptEngineExecutor implements InitializingBean {
 		result.setStdout(writer);
 		result.setStderr(errwriter);
 		return result;
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
 	}
 
 }
