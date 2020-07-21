@@ -5,12 +5,14 @@ import static com.louyj.rhttptunnel.worker.ClientDetector.CLIENT;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.config.IConfigListener;
 import com.louyj.rhttptunnel.model.http.Endpoints;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.AckMessage;
@@ -25,12 +27,16 @@ import com.louyj.rhttptunnel.model.message.ShutdownMessage;
  *
  */
 @Component
-public class ShutdownHandler implements IMessageHandler {
+public class ShutdownHandler implements IMessageHandler, IConfigListener {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
+	private static final String REMOTE_SHUTDOWN_ENABLE = "remote.shutdown.enable";
+
 	@Autowired
 	private MessageExchanger messageExchanger;
+
+	private boolean remoteShutdownEnable = false;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
@@ -57,6 +63,21 @@ public class ShutdownHandler implements IMessageHandler {
 		}.start();
 		return Lists.newArrayList(
 				AckMessage.cack(CLIENT, message.getExchangeId()).withMessage("Worker VM will exit in 10 seconds."));
+	}
+
+	@Override
+	public List<String> keys() {
+		return Lists.newArrayList(REMOTE_SHUTDOWN_ENABLE);
+	}
+
+	@Override
+	public String value(String clientId, String key) {
+		return String.valueOf(remoteShutdownEnable);
+	}
+
+	@Override
+	public void onChanged(String clientId, String key, String value) {
+		remoteShutdownEnable = BooleanUtils.toBoolean(value);
 	}
 
 }

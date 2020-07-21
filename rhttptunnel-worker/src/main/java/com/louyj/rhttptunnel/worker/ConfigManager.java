@@ -6,6 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.louyj.rhttptunnel.model.config.IConfigListener;
+
 /**
  *
  * Created on 2020年3月26日
@@ -46,16 +48,6 @@ public class ConfigManager {
 				listener.onChanged(clientId, key, value);
 			}
 		}
-	}
-
-	public static interface IConfigListener {
-
-		List<String> keys();
-
-		String value(String clientId, String key);
-
-		void onChanged(String clientId, String key, String value);
-
 	}
 
 }

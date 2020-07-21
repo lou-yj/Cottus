@@ -10,10 +10,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
-public class ShowWorkerWorkloadMessage extends BaseMessage {
+public class ShowWorkerInfoMessage extends BaseMessage {
 
 	@JsonCreator
-	public ShowWorkerWorkloadMessage(@JsonProperty("client") ClientInfo client) {
+	public ShowWorkerInfoMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
 	}
 

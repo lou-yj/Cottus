@@ -7,6 +7,9 @@ import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 
 import java.net.SocketException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -16,6 +19,8 @@ import javax.net.ssl.SSLContext;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -39,6 +44,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.net.MediaType;
+import com.louyj.rhttptunnel.model.config.IConfigListener;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.util.AESEncryptUtils;
@@ -53,12 +59,17 @@ import com.louyj.rhttptunnel.model.util.JsonUtils;
  */
 @SuppressWarnings("deprecation")
 @Component
-public class MessageExchanger implements InitializingBean, DisposableBean {
+public class MessageExchanger implements InitializingBean, DisposableBean, IConfigListener {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
-	private ObjectMapper jackson = JsonUtils.jacksonWithType();
+	private static final String HTTP_SOCKET_TIMEOUT = "http.socketTimeout";
+	private static final String HTTP_CONNECT_TIMEOUT = "http.connectTimeout";
+	private static final String HTTP_MAX_POOL_SIZE = "http.maxPoolSize";
+	private static final String HTTP_MAX_PER_ROUTE = "http.maxPerRoute";
+	private static final String HTTP_VERBOSE = "http.verbose";
 
+	private ObjectMapper jackson = JsonUtils.jacksonWithType();
 	private List<String> bootstrapServers = Lists.newArrayList();
 	private List<String> serverAddresses = Lists.newArrayList();
 	private int currentServerIndex = 0;
@@ -74,6 +85,8 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 	private int maxPoolSize;
 	@Value("${http.maxPerRoute:50}")
 	private int maxPerRoute;
+
+	private boolean verbose = false;
 
 	@Value("${bootstrap.servers:}")
 	public void setBootstrapAddress(String serverAddress) {
@@ -91,6 +104,10 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		initHttpClient();
+	}
+
+	private void initHttpClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
 		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
 			public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 				return true;
@@ -100,9 +117,16 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 		PoolingHttpClientConnectionManager poolingConnManager = new PoolingHttpClientConnectionManager();
 		poolingConnManager.setMaxTotal(maxPoolSize);
 		poolingConnManager.setDefaultMaxPerRoute(maxPerRoute);
-		httpclient = HttpClients.custom().setConnectionManager(poolingConnManager).setSSLSocketFactory(sslsf).build();
-		requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout).setConnectTimeout(connectTimeout)
-				.build();
+		CloseableHttpClient httpclient = HttpClients.custom().setConnectionManager(poolingConnManager)
+				.setSSLSocketFactory(sslsf).build();
+		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout)
+				.setConnectTimeout(connectTimeout).build();
+		CloseableHttpClient httpclientOld = this.httpclient;
+		this.httpclient = httpclient;
+		this.requestConfig = requestConfig;
+		if (httpclientOld != null) {
+			IOUtils.closeQuietly(httpclientOld);
+		}
 	}
 
 	public final BaseMessage jsonPost(String endpoint, BaseMessage message) {
@@ -113,8 +137,10 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			}
 			currentServerIndex++;
 		}
-		logger.debug(String.format("Server %s commucation failed, try another",
-				serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()))));
+		if (verbose) {
+			logger.info(String.format("Server %s commucation failed, try another",
+					serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()))));
+		}
 		return RejectMessage.creason(message.getClientId(), message.getExchangeId(),
 				"[" + CLIENT_ERROR.reason() + "] All servers not available");
 	}
@@ -126,7 +152,9 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 			}
 			String serverAddress = serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()));
 			String data = jackson.writeValueAsString(message);
-			logger.debug("Send message {}", data);
+			if (verbose) {
+				logger.info("Send message {}", data);
+			}
 			data = AESEncryptUtils.encrypt(data, defaultKey);
 			HttpEntity httpEntity = new StringEntity(data, UTF_8);
 			HttpPost httpPost = new HttpPost(serverAddress + endpoint);
@@ -138,19 +166,26 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 				HttpEntity entity = response.getEntity();
 				String json = EntityUtils.toString(entity, UTF_8);
 				json = AESEncryptUtils.decrypt(json, defaultKey);
-				logger.debug("Receive response {}", json);
+				if (verbose) {
+					logger.info("Receive response {}", json);
+				}
 				return jackson.readValue(json, BaseMessage.class);
 			} finally {
 				response.close();
 			}
 		} catch (ConnectTimeoutException | SocketException e) {
-			logger.debug("", e);
+			if (verbose) {
+				logger.error("", e);
+			}
 			try {
 				TimeUnit.SECONDS.sleep(1);
 			} catch (Exception e2) {
 			}
 			return null;
 		} catch (Exception e) {
+			if (verbose) {
+				logger.error("", e);
+			}
 			try {
 				TimeUnit.SECONDS.sleep(1);
 			} catch (Exception e2) {
@@ -163,6 +198,63 @@ public class MessageExchanger implements InitializingBean, DisposableBean {
 	@Override
 	public void destroy() throws Exception {
 		IOUtils.closeQuietly(httpclient);
+	}
+
+	@Override
+	public List<String> keys() {
+		return Lists.newArrayList(HTTP_CONNECT_TIMEOUT, HTTP_MAX_PER_ROUTE, HTTP_MAX_POOL_SIZE, HTTP_SOCKET_TIMEOUT,
+				HTTP_VERBOSE);
+	}
+
+	@Override
+	public String value(String clientId, String key) {
+		switch (key) {
+		case HTTP_CONNECT_TIMEOUT:
+			return String.valueOf(this.connectTimeout);
+		case HTTP_MAX_PER_ROUTE:
+			return String.valueOf(this.maxPerRoute);
+		case HTTP_MAX_POOL_SIZE:
+			return String.valueOf(this.maxPoolSize);
+		case HTTP_SOCKET_TIMEOUT:
+			return String.valueOf(this.socketTimeout);
+		case HTTP_VERBOSE:
+			return String.valueOf(this.verbose);
+		default:
+			break;
+		}
+		return null;
+	}
+
+	@Override
+	public void onChanged(String clientId, String key, String value) {
+		try {
+			switch (key) {
+			case HTTP_CONNECT_TIMEOUT:
+				this.connectTimeout = NumberUtils.toInt(value, this.connectTimeout);
+				initHttpClient();
+				break;
+			case HTTP_MAX_PER_ROUTE:
+				this.maxPerRoute = NumberUtils.toInt(value, this.maxPerRoute);
+				initHttpClient();
+				break;
+			case HTTP_MAX_POOL_SIZE:
+				this.maxPoolSize = NumberUtils.toInt(value, this.maxPoolSize);
+				initHttpClient();
+				break;
+			case HTTP_SOCKET_TIMEOUT:
+				this.socketTimeout = NumberUtils.toInt(value, this.socketTimeout);
+				initHttpClient();
+				break;
+			case HTTP_VERBOSE:
+				this.verbose = BooleanUtils.toBoolean(value);
+			default:
+				break;
+			}
+		} catch (Exception e) {
+			if (verbose) {
+				logger.error("", e);
+			}
+		}
 	}
 
 }

@@ -30,7 +30,7 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.DiscoverMessage;
 import com.louyj.rhttptunnel.model.message.SelectWorkerMessage;
-import com.louyj.rhttptunnel.model.message.ShowWorkerWorkloadMessage;
+import com.louyj.rhttptunnel.model.message.ShowWorkerInfoMessage;
 import com.louyj.rhttptunnel.model.message.ShutdownMessage;
 import com.louyj.rhttptunnel.model.message.UnSelectWorkerMessage;
 
@@ -152,7 +152,7 @@ public class ControlCommand extends BaseCommand {
 	@ShellMethod(value = "show worker info")
 	@ShellMethodAvailability("workerContext")
 	public String workerinfo() {
-		ShowWorkerWorkloadMessage message = new ShowWorkerWorkloadMessage(CLIENT);
+		ShowWorkerInfoMessage message = new ShowWorkerInfoMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}

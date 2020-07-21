@@ -8,6 +8,7 @@ import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.util.List;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +17,9 @@ import com.louyj.rhttptunnel.model.bean.worker.MemoryInfo;
 import com.louyj.rhttptunnel.model.bean.worker.SystemLoadInfo;
 import com.louyj.rhttptunnel.model.bean.worker.VmLoadInfo;
 import com.louyj.rhttptunnel.model.bean.worker.Workerload;
+import com.louyj.rhttptunnel.model.config.IConfigListener;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.ShowWorkerWorkloadMessage;
+import com.louyj.rhttptunnel.model.message.ShowWorkerInfoMessage;
 import com.louyj.rhttptunnel.model.message.WorkerInfoMessage;
 import com.louyj.rhttptunnel.worker.message.ClientWorkerManager;
 
@@ -29,14 +31,18 @@ import com.louyj.rhttptunnel.worker.message.ClientWorkerManager;
  *
  */
 @Component
-public class WorkloadHandler implements IMessageHandler {
+public class WorkerInfoHandler implements IMessageHandler, IConfigListener {
+
+	private static final String REMOTE_SHUTDOWN_ENABLE = "workerinfo.system.properties";
 
 	@Autowired
 	private ClientWorkerManager clientWorkerManager;
 
+	private boolean systemProperties = false;
+
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ShowWorkerWorkloadMessage.class;
+		return ShowWorkerInfoMessage.class;
 	}
 
 	@Override
@@ -57,7 +63,9 @@ public class WorkloadHandler implements IMessageHandler {
 		vmLoadInfo.setVendor(rtBean.getVmVendor());
 		vmLoadInfo.setUptime(rtBean.getUptime());
 		vmLoadInfo.setStartTime(rtBean.getStartTime());
-		vmLoadInfo.setSystemProperties(rtBean.getSystemProperties());
+		if (systemProperties) {
+			vmLoadInfo.setSystemProperties(rtBean.getSystemProperties());
+		}
 		vmLoadInfo.setHeapMemoryUsage(MemoryInfo.of(memBean.getHeapMemoryUsage()));
 		vmLoadInfo.setNonHeapMemoryUsage(MemoryInfo.of(memBean.getNonHeapMemoryUsage()));
 
@@ -69,6 +77,21 @@ public class WorkloadHandler implements IMessageHandler {
 		WorkerInfoMessage workerLoadMessage = new WorkerInfoMessage(CLIENT, message.getExchangeId());
 		workerLoadMessage.setWorkload(workerWorkload);
 		return Lists.newArrayList(workerLoadMessage);
+	}
+
+	@Override
+	public List<String> keys() {
+		return Lists.newArrayList(REMOTE_SHUTDOWN_ENABLE);
+	}
+
+	@Override
+	public String value(String clientId, String key) {
+		return String.valueOf(systemProperties);
+	}
+
+	@Override
+	public void onChanged(String clientId, String key, String value) {
+		systemProperties = BooleanUtils.toBoolean(value);
 	}
 
 }

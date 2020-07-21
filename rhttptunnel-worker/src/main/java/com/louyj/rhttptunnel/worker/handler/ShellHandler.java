@@ -17,13 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.config.IConfigListener;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
 import com.louyj.rhttptunnel.model.message.shell.ShellMessage;
 import com.louyj.rhttptunnel.model.message.shell.ShellResultMessage;
-import com.louyj.rhttptunnel.worker.ConfigManager.IConfigListener;
 import com.louyj.rhttptunnel.worker.shell.ShellManager;
 import com.louyj.rhttptunnel.worker.shell.ShellWrapper;
 import com.louyj.rhttptunnel.worker.shell.ShellWrapper.ShellOutput;
