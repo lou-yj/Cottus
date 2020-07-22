@@ -44,8 +44,12 @@ public class RsaUtils {
 		KeyPair kp = keyGen.genKeyPair();
 		Key pub = kp.getPublic();
 		Key pvt = kp.getPrivate();
-//		return Pair.of(Base64.encodeBase64String(pvt.getEncoded()), Base64.encodeBase64String(pub.getEncoded()));
 		return Pair.of(pvt, pub);
+	}
+
+	public static Pair<String, String> stringKeyPair(Pair<Key, Key> pair) {
+		return Pair.of(Base64.encodeBase64String(pair.getLeft().getEncoded()),
+				Base64.encodeBase64String(pair.getRight().getEncoded()));
 	}
 
 	public static String sign(String body, String privateKey) throws GeneralSecurityException {
