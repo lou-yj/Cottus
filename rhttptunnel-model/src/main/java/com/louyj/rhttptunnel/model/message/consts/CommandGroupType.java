@@ -9,6 +9,8 @@ package com.louyj.rhttptunnel.model.message.consts;
  */
 public enum CommandGroupType {
 
+	CORE_SUPER_ADMIN,
+
 	CORE_ADMIN, CORE_NORMAL,
 
 	CORE_PERM_MGR, CORE_PERM,
