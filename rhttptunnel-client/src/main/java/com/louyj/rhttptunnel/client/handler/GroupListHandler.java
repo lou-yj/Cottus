@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
-import com.louyj.rhttptunnel.model.bean.User;
+import com.louyj.rhttptunnel.model.bean.Group;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.user.UserListMessage;
+import com.louyj.rhttptunnel.model.message.user.GroupListMessage;
 
 /**
  *
@@ -27,7 +27,7 @@ import com.louyj.rhttptunnel.model.message.user.UserListMessage;
  *
  */
 @Component
-public class UsersHandler implements IMessageHandler {
+public class GroupListHandler implements IMessageHandler {
 
 	@Autowired
 	protected ClientSession session;
@@ -38,26 +38,27 @@ public class UsersHandler implements IMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return UserListMessage.class;
+		return GroupListMessage.class;
 	}
 
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
-		UserListMessage usersMessage = (UserListMessage) message;
-		List<User> users = usersMessage.getUsers();
-		Collections.reverse(users);
-		Object[][] data = new Object[users.size() + 1][];
-		data[0] = new Object[] { "NAME", "GROUPS" };
+		GroupListMessage usersMessage = (GroupListMessage) message;
+		List<Group> groups = usersMessage.getGroups();
+		Collections.reverse(groups);
+		Object[][] data = new Object[groups.size() + 1][];
+		data[0] = new Object[] { "NAME", "SUB GROUPS", "SUB COMMANDS" };
 		int index = 1;
-		for (User user : users) {
-			data[index++] = new Object[] { user.getName(), formatCollection(user.getGroups()) };
+		for (Group group : groups) {
+			data[index++] = new Object[] { group.getName(), formatCollection(group.getGroups()),
+					formatCollection(group.getCommands()) };
 		}
 		TableModel model = new ArrayTableModel(data);
 		TableBuilder tableBuilder = new TableBuilder(model);
 		tableBuilder.addHeaderBorder(BorderStyle.fancy_double);
 		tableBuilder.addFullBorder(BorderStyle.fancy_light);
 		writer.println(tableBuilder.build().render(terminal.getWidth()));
-		writer.println("Found " + users.size() + " Users");
+		writer.println("Found " + groups.size() + " Groups");
 		throw new EndOfMessageException();
 	}
 

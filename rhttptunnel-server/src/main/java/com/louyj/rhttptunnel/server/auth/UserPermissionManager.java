@@ -47,6 +47,10 @@ public class UserPermissionManager {
 		return null;
 	}
 
+	public boolean userExists(String name) {
+		return userById(name) != null;
+	}
+
 	public Permission permission(User user) {
 		Permission permission = new Permission();
 		Set<String> groups = user.getGroups();
@@ -88,6 +92,20 @@ public class UserPermissionManager {
 
 	public void upsertUser(User user) {
 		userPermissionCache.put("user:" + user.getName(), user);
+	}
+
+	public Group groupById(String name) {
+		if (StringUtils.isBlank(name)) {
+			return null;
+		}
+		return (Group) userPermissionCache.get("group:" + name);
+	}
+
+	public User userById(String name) {
+		if (StringUtils.isBlank(name)) {
+			return null;
+		}
+		return (User) userPermissionCache.get("user:" + name);
 	}
 
 	public List<Group> groups() {

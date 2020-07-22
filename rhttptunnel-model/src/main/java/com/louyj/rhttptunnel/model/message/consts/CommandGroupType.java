@@ -31,4 +31,6 @@ public enum CommandGroupType {
 
 	CORE_WORKERFS,
 
+	CORE_USER_MGR,
+
 }

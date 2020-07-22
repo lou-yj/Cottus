@@ -14,11 +14,11 @@ import org.springframework.shell.standard.ShellOption;
 import com.google.common.collect.Sets;
 import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
-import com.louyj.rhttptunnel.model.bean.User;
+import com.louyj.rhttptunnel.model.bean.Group;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.user.UserAddMessage;
-import com.louyj.rhttptunnel.model.message.user.UserDelMessage;
-import com.louyj.rhttptunnel.model.message.user.UserListMessage;
+import com.louyj.rhttptunnel.model.message.user.GroupDelMessage;
+import com.louyj.rhttptunnel.model.message.user.GroupListMessage;
+import com.louyj.rhttptunnel.model.message.user.GroupUpsertMessage;
 
 /**
  *
@@ -28,42 +28,42 @@ import com.louyj.rhttptunnel.model.message.user.UserListMessage;
  *
  */
 @ShellComponent
-public class UserCommand extends BaseCommand {
+public class GroupCommand extends BaseCommand {
 
 	@CommandGroups({ CORE_USER_MGR, CORE_ADMIN })
-	@ShellMethod(value = "List users")
+	@ShellMethod(value = "List groups")
 	@ShellMethodAvailability("serverContext")
-	public String userList() {
-		UserListMessage message = new UserListMessage(CLIENT);
+	public String groupList() {
+		GroupListMessage message = new GroupListMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}
 
 	@CommandGroups({ CORE_USER_MGR, CORE_ADMIN })
-	@ShellMethod(value = "add user")
+	@ShellMethod(value = "add or update group")
 	@ShellMethodAvailability("serverContext")
-	public String userAdd(@ShellOption(value = { "-n", "--name" }, help = "user name") String userName,
-			@ShellOption(value = { "-p", "--password" }, help = "password") String password,
-			@ShellOption(value = { "-g", "--group" }, help = "groups", defaultValue = "CORE_NORMAL") String groups) {
-		if (!(StringUtils.isNoneBlank(userName) && StringUtils.isNotBlank(password))) {
-			return "User name or password is invalidate";
+	public String groupUpsert(@ShellOption(value = { "-n", "--name" }, help = "group name") String groupName,
+			@ShellOption(value = { "-g", "--group" }, help = "sub groups", defaultValue = "CORE_NORMAL") String groups,
+			@ShellOption(value = { "-c", "--commands" }, help = "sub commands") String commands) {
+		if (!(StringUtils.isNoneBlank(groupName))) {
+			return "Group name is invalidate";
 		}
-		User user = new User();
-		user.setName(userName);
-		user.setPassword(password);
-		user.setGroups(Sets.newHashSet(groups.split(",")));
-		UserAddMessage message = new UserAddMessage(CLIENT);
-		message.setUser(user);
+		Group group = new Group();
+		group.setName(groupName);
+		group.setGroups(Sets.newHashSet(groups.split(",")));
+		group.setCommands(Sets.newHashSet(commands.split(",")));
+		GroupUpsertMessage message = new GroupUpsertMessage(CLIENT);
+		message.setGroup(group);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}
 
 	@CommandGroups({ CORE_USER_MGR, CORE_ADMIN })
-	@ShellMethod(value = "delete user")
+	@ShellMethod(value = "delete group")
 	@ShellMethodAvailability("serverContext")
-	public String userDel(@ShellOption(value = { "-n", "--name" }, help = "user name") String userName) {
-		UserDelMessage message = new UserDelMessage(CLIENT);
-		message.setUserName(userName);
+	public String groupDel(@ShellOption(value = { "-n", "--name" }, help = "group name") String groupName) {
+		GroupDelMessage message = new GroupDelMessage(CLIENT);
+		message.setGroupName(groupName);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}
