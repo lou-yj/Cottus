@@ -2,6 +2,10 @@ package com.louyj.rhttptunnel.client.cmd.worker;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_WORKER_MGR;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_WORKER;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +26,7 @@ import org.springframework.shell.standard.ShellOption;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.consts.Status;
 import com.louyj.rhttptunnel.client.util.LogUtils;
@@ -45,6 +50,7 @@ import com.louyj.rhttptunnel.model.message.UnSelectWorkerMessage;
 @ShellCommandGroup("Worker Manage Commands")
 public class ControlCommand extends BaseCommand {
 
+	@CommandGroups({ CORE_WORKER, CORE_NORMAL })
 	@ShellMethod(value = "Discover workers", key = { "discover", "workers" })
 	@ShellMethodAvailability("serverContext")
 	public String discover(
@@ -66,6 +72,7 @@ public class ControlCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_WORKER, CORE_NORMAL })
 	@ShellMethod(value = "Select worker")
 	@ShellMethodAvailability("serverContext")
 	public String select(@ShellOption(value = { "-i",
@@ -120,6 +127,7 @@ public class ControlCommand extends BaseCommand {
 		return status;
 	}
 
+	@CommandGroups({ CORE_WORKER, CORE_NORMAL })
 	@ShellMethod(value = "exit to selected worker")
 	@ShellMethodAvailability("workerContext")
 	public String unselect() {
@@ -131,9 +139,10 @@ public class ControlCommand extends BaseCommand {
 		return status;
 	}
 
+	@CommandGroups({ CORE_WORKER_MGR, CORE_ADMIN })
 	@SuppressWarnings("resource")
 	@ShellMethod(value = "Shutdown remote worker!!!")
-	@ShellMethodAvailability("workerAdminContext")
+	@ShellMethodAvailability("workerContext")
 	public String shutdown() {
 		System.out.println("WARNNING REMOTE WORKER WILL BE SHUTDOWN!!!");
 		System.out.print("Enter yes to continue(yes/no)?");
@@ -149,6 +158,7 @@ public class ControlCommand extends BaseCommand {
 		return resp;
 	}
 
+	@CommandGroups({ CORE_WORKER, CORE_NORMAL })
 	@ShellMethod(value = "show worker info")
 	@ShellMethodAvailability("workerContext")
 	public String workerinfo() {
@@ -157,6 +167,7 @@ public class ControlCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_WORKER, CORE_NORMAL })
 	@ShellMethod(value = "show selected workers")
 	@ShellMethodAvailability("workerContext")
 	public String selected() {

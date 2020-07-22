@@ -2,12 +2,15 @@ package com.louyj.rhttptunnel.client.cmd.automate;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ALARMER;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
 
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
+import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmerRecordsListMessage;
@@ -27,6 +30,7 @@ import com.louyj.rhttptunnel.model.message.automate.ListAlarmersMessage;
 @ShellComponent
 public class AlarmerCommand extends BaseCommand {
 
+	@CommandGroups({ CORE_ALARMER, CORE_NORMAL })
 	@ShellMethod(value = "list alarmers")
 	@ShellMethodAvailability("serverContext")
 	public String alarmers() {
@@ -35,6 +39,7 @@ public class AlarmerCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_ALARMER, CORE_NORMAL })
 	@ShellMethod(value = "show alarm history records")
 	@ShellMethodAvailability("serverContext")
 	public String alarmRecords(@ShellOption(value = { "-n", "--name" }, help = "alarmer name") String name) {
@@ -44,6 +49,7 @@ public class AlarmerCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_ALARMER, CORE_NORMAL })
 	@ShellMethod(value = "trace alarm event")
 	@ShellMethodAvailability("serverContext")
 	public String alarmTrace(@ShellOption(value = { "-i", "--id" }, help = "event id") String id) {
@@ -53,6 +59,7 @@ public class AlarmerCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_ALARMER, CORE_NORMAL })
 	@ShellMethod(value = "list alarm markers")
 	@ShellMethodAvailability("serverContext")
 	public String alarmMarkers() {
@@ -61,6 +68,7 @@ public class AlarmerCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_ALARMER, CORE_NORMAL })
 	@ShellMethod(value = "list alarm silencers")
 	@ShellMethodAvailability("serverContext")
 	public String alarmSilencers() {
@@ -69,6 +77,7 @@ public class AlarmerCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_ALARMER, CORE_NORMAL })
 	@ShellMethod(value = "list alarm inhibitors")
 	@ShellMethodAvailability("serverContext")
 	public String alarmInhibitors() {

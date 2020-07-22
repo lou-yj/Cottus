@@ -2,6 +2,8 @@ package com.louyj.rhttptunnel.client.cmd.server;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_CLIENT;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.shell.standard.ShellOption;
 
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.client.ClientDetector;
+import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.cmd.worker.ControlCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -33,6 +36,7 @@ public class ServerCommand extends BaseCommand {
 	@Autowired
 	private ControlCommand workerManageCommand;
 
+	@CommandGroups({ CORE_CLIENT, CORE_NORMAL })
 	@ShellMethod(value = "Connect to servers")
 	@ShellMethodAvailability("clientContext")
 	public String connect(@ShellOption(value = { "-s",
@@ -61,6 +65,7 @@ public class ServerCommand extends BaseCommand {
 		return resp;
 	}
 
+	@CommandGroups({ CORE_CLIENT, CORE_NORMAL })
 	@ShellMethod(value = "Disconnect from servers")
 	@ShellMethodAvailability("serverContext")
 	public String disconnect() {
@@ -78,6 +83,7 @@ public class ServerCommand extends BaseCommand {
 		return null;
 	}
 
+	@CommandGroups({ CORE_CLIENT, CORE_NORMAL })
 	@ShellMethod(value = "list servers")
 	@ShellMethodAvailability("serverContext")
 	public String servers() {

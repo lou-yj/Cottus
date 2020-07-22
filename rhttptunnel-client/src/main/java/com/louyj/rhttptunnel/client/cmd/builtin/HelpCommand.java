@@ -1,5 +1,7 @@
 package com.louyj.rhttptunnel.client.cmd.builtin;
 
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_SYSTEM;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toCollection;
@@ -36,6 +38,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
+import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 
 /**
@@ -90,6 +93,7 @@ public class HelpCommand extends BaseCommand implements org.springframework.shel
 		this.messageInterpolator = validatorFactory.getMessageInterpolator();
 	}
 
+	@CommandGroups({ CORE_SYSTEM, CORE_NORMAL })
 	@ShellMethod(value = "Display help about available commands.", prefix = "-")
 	public CharSequence help(
 			@ShellOption(defaultValue = ShellOption.NULL, valueProvider = CommandValueProvider.class, value = { "-C",

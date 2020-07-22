@@ -2,6 +2,9 @@ package com.louyj.rhttptunnel.client.cmd.automate;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_REPO_MGR;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_REPO;
 
 import java.util.Scanner;
 
@@ -10,6 +13,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
 
+import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -27,17 +31,19 @@ import com.louyj.rhttptunnel.model.message.repo.RepoUpdateMessage;
 @ShellComponent
 public class RepoCommand extends BaseCommand {
 
+	@CommandGroups({ CORE_REPO, CORE_ADMIN })
 	@ShellMethod(value = "show repository infomation")
-	@ShellMethodAvailability("serverAdminContext")
+	@ShellMethodAvailability("serverContext")
 	public String repoInfo() {
 		RepoShowMessage message = new RepoShowMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_REPO_MGR, CORE_ADMIN })
 	@SuppressWarnings("resource")
 	@ShellMethod(value = "set repository infomation")
-	@ShellMethodAvailability("serverAdminContext")
+	@ShellMethodAvailability("serverContext")
 	public String repoSet() {
 		Scanner scanner = new Scanner(System.in);
 		String url = null;
@@ -102,8 +108,9 @@ public class RepoCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
+	@CommandGroups({ CORE_REPO_MGR, CORE_ADMIN })
 	@ShellMethod(value = "Update repository files at server side")
-	@ShellMethodAvailability("serverAdminContext")
+	@ShellMethodAvailability("serverContext")
 	public String repoUpdate() {
 		RepoUpdateMessage message = new RepoUpdateMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
