@@ -18,6 +18,7 @@ import com.louyj.rhttptunnel.model.bean.User;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.user.UserAddMessage;
 import com.louyj.rhttptunnel.model.message.user.UserDelMessage;
+import com.louyj.rhttptunnel.model.message.user.UserGrantMessage;
 import com.louyj.rhttptunnel.model.message.user.UserListMessage;
 
 /**
@@ -53,6 +54,23 @@ public class UserCommand extends BaseCommand {
 		user.setPassword(password);
 		user.setGroups(Sets.newHashSet(groups.split(",")));
 		UserAddMessage message = new UserAddMessage(CLIENT);
+		message.setUser(user);
+		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
+		return messagePoller.pollExchangeMessage(response);
+	}
+
+	@CommandGroups({ CORE_USER_MGR, CORE_ADMIN })
+	@ShellMethod(value = "grant user permissions")
+	@ShellMethodAvailability("serverContext")
+	public String userGrant(@ShellOption(value = { "-n", "--name" }, help = "user name") String userName,
+			@ShellOption(value = { "-g", "--group" }, help = "groups", defaultValue = "CORE_NORMAL") String groups) {
+		if (!(StringUtils.isNoneBlank(userName))) {
+			return "User name is invalidate";
+		}
+		User user = new User();
+		user.setName(userName);
+		user.setGroups(Sets.newHashSet(groups.split(",")));
+		UserGrantMessage message = new UserGrantMessage(CLIENT);
 		message.setUser(user);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
