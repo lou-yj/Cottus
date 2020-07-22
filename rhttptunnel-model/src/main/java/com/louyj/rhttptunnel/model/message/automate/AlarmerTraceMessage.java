@@ -15,6 +15,8 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
  */
 public class AlarmerTraceMessage extends BaseMessage {
 
+	private String uuid;
+
 	private AlarmTrace alarmTrace;
 
 	@JsonCreator
@@ -33,6 +35,14 @@ public class AlarmerTraceMessage extends BaseMessage {
 
 	public void setAlarmTrace(AlarmTrace alarmTrace) {
 		this.alarmTrace = alarmTrace;
+	}
+
+	public String getUuid() {
+		return uuid;
+	}
+
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
 	}
 
 }

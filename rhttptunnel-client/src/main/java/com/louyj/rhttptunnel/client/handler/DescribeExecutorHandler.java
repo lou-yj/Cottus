@@ -9,7 +9,7 @@ import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorDetailMessage;
+import com.louyj.rhttptunnel.model.message.automate.DescribeExecutorMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
@@ -20,19 +20,19 @@ import com.louyj.rhttptunnel.model.util.JsonUtils;
  *
  */
 @Component
-public class ExecutorDetailHandler implements IMessageHandler {
+public class DescribeExecutorHandler implements IMessageHandler {
 
 	@Autowired
 	protected ClientSession session;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ExecutorDetailMessage.class;
+		return DescribeExecutorMessage.class;
 	}
 
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
-		ExecutorDetailMessage itemsMessage = (ExecutorDetailMessage) message;
+		DescribeExecutorMessage itemsMessage = (DescribeExecutorMessage) message;
 		Executor executor = itemsMessage.getExecutor();
 		if (executor == null) {
 			writer.println("No executor found");

@@ -7,8 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
-import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
-import com.louyj.rhttptunnel.model.message.repo.RepoShowMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoDescribeMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
@@ -22,14 +21,14 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  *
  */
 @Component
-public class RepoShowHandler implements IClientMessageHandler {
+public class RepoDescribeHandler implements IClientMessageHandler {
 
 	@Autowired
 	private AutomateManager automateManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return RepoShowMessage.class;
+		return RepoDescribeMessage.class;
 	}
 
 	@Override
@@ -40,7 +39,7 @@ public class RepoShowHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		RepoSetMessage repoSetMessage = new RepoSetMessage(ClientInfo.SERVER, message.getExchangeId());
+		RepoDescribeMessage repoSetMessage = new RepoDescribeMessage(ClientInfo.SERVER, message.getExchangeId());
 		repoSetMessage.setRepoConfig(automateManager.getRepoConfig());
 		return repoSetMessage;
 	}

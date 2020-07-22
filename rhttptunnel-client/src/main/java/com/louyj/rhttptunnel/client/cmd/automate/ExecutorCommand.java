@@ -14,8 +14,8 @@ import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.DescribeExecutorMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorLogShowMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorRecordsListMessage;
+import com.louyj.rhttptunnel.model.message.automate.ExecutorLogMessage;
+import com.louyj.rhttptunnel.model.message.automate.ExecutorRecordsMessage;
 import com.louyj.rhttptunnel.model.message.automate.ListExecutorsMessage;
 import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 
@@ -53,7 +53,7 @@ public class ExecutorCommand extends BaseCommand {
 	@ShellMethodAvailability("serverContext")
 	public String executorRecords(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name,
 			@ShellOption(value = { "-t", "--task" }, help = "task") String task) {
-		ExecutorRecordsListMessage message = new ExecutorRecordsListMessage(CLIENT);
+		ExecutorRecordsMessage message = new ExecutorRecordsMessage(CLIENT);
 		message.setTaskType(TaskType.EXECUTOR);
 		message.setExecutor(name);
 		message.setTask(task);
@@ -67,7 +67,7 @@ public class ExecutorCommand extends BaseCommand {
 	public String executorLogs(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name,
 			@ShellOption(value = { "-t", "--task" }, help = "task") String task,
 			@ShellOption(value = { "-i", "--id" }, help = "schedule id") String id) {
-		ExecutorLogShowMessage message = new ExecutorLogShowMessage(CLIENT);
+		ExecutorLogMessage message = new ExecutorLogMessage(CLIENT);
 		message.setTaskType(TaskType.EXECUTOR);
 		message.setExecutor(name);
 		message.setTask(task);

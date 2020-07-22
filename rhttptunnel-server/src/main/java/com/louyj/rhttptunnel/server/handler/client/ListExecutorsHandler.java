@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorItemsMessage;
 import com.louyj.rhttptunnel.model.message.automate.ListExecutorsMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
@@ -43,7 +42,7 @@ public class ListExecutorsHandler implements IClientMessageHandler {
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		List<Executor> executors = automateManager.getExecutors();
-		ExecutorItemsMessage itemsMessage = new ExecutorItemsMessage(SERVER, message.getExchangeId());
+		ListExecutorsMessage itemsMessage = new ListExecutorsMessage(SERVER, message.getExchangeId());
 		itemsMessage.setExecutors(executors);
 		return itemsMessage;
 	}

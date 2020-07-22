@@ -7,10 +7,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.louyj.rhttptunnel.model.bean.automate.ExecutorLog;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorLogMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorLogShowMessage;
+import com.louyj.rhttptunnel.model.message.automate.AlarmInhibitorsMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
@@ -24,14 +22,14 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  *
  */
 @Component
-public class ExecutorLogShowHandler implements IClientMessageHandler {
+public class AlarmInhibitorsHandler implements IClientMessageHandler {
 
 	@Autowired
 	private AutomateManager automateManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ExecutorLogShowMessage.class;
+		return AlarmInhibitorsMessage.class;
 	}
 
 	@Override
@@ -42,14 +40,9 @@ public class ExecutorLogShowHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		ExecutorLogShowMessage logMessage = (ExecutorLogShowMessage) message;
-		String executor = logMessage.getExecutor();
-		String task = logMessage.getTask();
-		List<ExecutorLog> executorLogs = automateManager.searchAuditLogs(logMessage.getTaskType(), executor, task,
-				logMessage.getScheduleId());
-		ExecutorLogMessage executorLogMessage = new ExecutorLogMessage(SERVER, message.getExchangeId());
-		executorLogMessage.setLogs(executorLogs);
-		return executorLogMessage;
+		AlarmInhibitorsMessage itemsMessage = new AlarmInhibitorsMessage(SERVER, message.getExchangeId());
+		itemsMessage.setInhibitors(automateManager.getAlarmInhibitors());
+		return itemsMessage;
 	}
 
 }

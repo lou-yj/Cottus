@@ -1,8 +1,6 @@
-package com.louyj.rhttptunnel.server.auth;
+package com.louyj.rhttptunnel.model.bean;
 
 import java.util.Set;
-
-import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 /**
  *
@@ -13,13 +11,10 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField;
  */
 public class Group {
 
-	@QuerySqlField(index = true)
 	private String name;
 
-	@QuerySqlField
 	private Set<String> groups;
 
-	@QuerySqlField
 	private Set<String> commands;
 
 	public String getName() {

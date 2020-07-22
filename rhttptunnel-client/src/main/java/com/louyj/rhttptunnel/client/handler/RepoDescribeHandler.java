@@ -8,7 +8,7 @@ import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoDescribeMessage;
 
 /**
  *
@@ -18,16 +18,16 @@ import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
  *
  */
 @Component
-public class RepoSetHandler implements IMessageHandler {
+public class RepoDescribeHandler implements IMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return RepoSetMessage.class;
+		return RepoDescribeMessage.class;
 	}
 
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
-		RepoSetMessage repoSetMessage = (RepoSetMessage) message;
+		RepoDescribeMessage repoSetMessage = (RepoDescribeMessage) message;
 		RepoConfig repoConfig = repoSetMessage.getRepoConfig();
 		if (repoConfig == null) {
 			LogUtils.printMessage("Repository Not Set", writer);

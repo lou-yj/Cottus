@@ -7,10 +7,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.louyj.rhttptunnel.model.bean.automate.Handler;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.DescribeHandlerMessage;
-import com.louyj.rhttptunnel.server.automation.AutomateManager;
+import com.louyj.rhttptunnel.model.message.user.UserListMessage;
+import com.louyj.rhttptunnel.server.auth.UserPermissionManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
 import com.louyj.rhttptunnel.server.session.WorkerSession;
@@ -23,14 +22,14 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  *
  */
 @Component
-public class DescribeHandlerHandler implements IClientMessageHandler {
+public class UserListHandler implements IClientMessageHandler {
 
 	@Autowired
-	private AutomateManager automateManager;
+	private UserPermissionManager userPermissionManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return DescribeHandlerMessage.class;
+		return UserListMessage.class;
 	}
 
 	@Override
@@ -41,11 +40,9 @@ public class DescribeHandlerHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		DescribeHandlerMessage describeMessage = (DescribeHandlerMessage) message;
-		Handler handler = automateManager.getHandler(describeMessage.getName());
-		DescribeHandlerMessage detailMessage = new DescribeHandlerMessage(SERVER, message.getExchangeId());
-		detailMessage.setHandler(handler);
-		return detailMessage;
+		UserListMessage itemsMessage = new UserListMessage(SERVER, message.getExchangeId());
+		itemsMessage.setUsers(userPermissionManager.users());
+		return itemsMessage;
 	}
 
 }

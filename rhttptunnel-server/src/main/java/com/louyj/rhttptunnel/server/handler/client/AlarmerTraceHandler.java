@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.bean.automate.AlarmTrace;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.AlarmerTraceListMessage;
 import com.louyj.rhttptunnel.model.message.automate.AlarmerTraceMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
@@ -31,7 +30,7 @@ public class AlarmerTraceHandler implements IClientMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return AlarmerTraceListMessage.class;
+		return AlarmerTraceMessage.class;
 	}
 
 	@Override
@@ -42,7 +41,7 @@ public class AlarmerTraceHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		AlarmerTraceListMessage listMessage = (AlarmerTraceListMessage) message;
+		AlarmerTraceMessage listMessage = (AlarmerTraceMessage) message;
 		String uuid = listMessage.getUuid();
 		AlarmTrace alarmTrace = automateManager.getAlarmService().findAlarmTrace(uuid);
 		AlarmerTraceMessage traceMessage = new AlarmerTraceMessage(SERVER, message.getExchangeId());

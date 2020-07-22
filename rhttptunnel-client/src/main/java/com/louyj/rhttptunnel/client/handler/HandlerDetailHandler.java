@@ -9,7 +9,7 @@ import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.bean.automate.Handler;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.HandlerDetailMessage;
+import com.louyj.rhttptunnel.model.message.automate.DescribeHandlerMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
@@ -27,12 +27,12 @@ public class HandlerDetailHandler implements IMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return HandlerDetailMessage.class;
+		return DescribeHandlerMessage.class;
 	}
 
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
-		HandlerDetailMessage itemsMessage = (HandlerDetailMessage) message;
+		DescribeHandlerMessage itemsMessage = (DescribeHandlerMessage) message;
 		Handler executor = itemsMessage.getHandler();
 		if (executor == null) {
 			writer.println("No handler found");

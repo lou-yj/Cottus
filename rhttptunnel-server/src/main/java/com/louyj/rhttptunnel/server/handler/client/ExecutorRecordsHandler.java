@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.bean.automate.ExecutorTaskRecord;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorRecordsListMessage;
 import com.louyj.rhttptunnel.model.message.automate.ExecutorRecordsMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
@@ -31,7 +30,7 @@ public class ExecutorRecordsHandler implements IClientMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ExecutorRecordsListMessage.class;
+		return ExecutorRecordsMessage.class;
 	}
 
 	@Override
@@ -42,7 +41,7 @@ public class ExecutorRecordsHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		ExecutorRecordsListMessage listMessage = (ExecutorRecordsListMessage) message;
+		ExecutorRecordsMessage listMessage = (ExecutorRecordsMessage) message;
 		String executor = listMessage.getExecutor();
 		String task = listMessage.getTask();
 		List<ExecutorTaskRecord> auditRecords = automateManager.searchAuditRecords(listMessage.getTaskType(), executor,

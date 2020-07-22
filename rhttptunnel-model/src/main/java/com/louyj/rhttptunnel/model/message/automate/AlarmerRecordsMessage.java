@@ -17,6 +17,8 @@ import com.louyj.rhttptunnel.model.message.ClientInfo;
  */
 public class AlarmerRecordsMessage extends BaseMessage {
 
+	private String name;
+
 	private List<AlarmTriggeredRecord> records;
 
 	@JsonCreator
@@ -35,6 +37,14 @@ public class AlarmerRecordsMessage extends BaseMessage {
 
 	public void setRecords(List<AlarmTriggeredRecord> records) {
 		this.records = records;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

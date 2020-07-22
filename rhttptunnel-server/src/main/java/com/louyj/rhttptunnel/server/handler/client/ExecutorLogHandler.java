@@ -7,9 +7,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.louyj.rhttptunnel.model.bean.automate.ExecutorLog;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.AlarmMarkersMessage;
-import com.louyj.rhttptunnel.model.message.automate.ListAlarmMarkerMessage;
+import com.louyj.rhttptunnel.model.message.automate.ExecutorLogMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
@@ -23,14 +23,14 @@ import com.louyj.rhttptunnel.server.session.WorkerSession;
  *
  */
 @Component
-public class ListAlarmMarkersHandler implements IClientMessageHandler {
+public class ExecutorLogHandler implements IClientMessageHandler {
 
 	@Autowired
 	private AutomateManager automateManager;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ListAlarmMarkerMessage.class;
+		return ExecutorLogMessage.class;
 	}
 
 	@Override
@@ -41,9 +41,14 @@ public class ListAlarmMarkersHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		AlarmMarkersMessage itemsMessage = new AlarmMarkersMessage(SERVER, message.getExchangeId());
-		itemsMessage.setMarkers(automateManager.getAlarmMarkers());
-		return itemsMessage;
+		ExecutorLogMessage logMessage = (ExecutorLogMessage) message;
+		String executor = logMessage.getExecutor();
+		String task = logMessage.getTask();
+		List<ExecutorLog> executorLogs = automateManager.searchAuditLogs(logMessage.getTaskType(), executor, task,
+				logMessage.getScheduleId());
+		ExecutorLogMessage executorLogMessage = new ExecutorLogMessage(SERVER, message.getExchangeId());
+		executorLogMessage.setLogs(executorLogs);
+		return executorLogMessage;
 	}
 
 }

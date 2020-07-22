@@ -19,7 +19,7 @@ import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorItemsMessage;
+import com.louyj.rhttptunnel.model.message.automate.ListExecutorsMessage;
 
 /**
  *
@@ -29,7 +29,7 @@ import com.louyj.rhttptunnel.model.message.automate.ExecutorItemsMessage;
  *
  */
 @Component
-public class ExecutorItemsHandler implements IMessageHandler {
+public class ListExecutorsHandler implements IMessageHandler {
 
 	@Autowired
 	protected ClientSession session;
@@ -40,12 +40,12 @@ public class ExecutorItemsHandler implements IMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return ExecutorItemsMessage.class;
+		return ListExecutorsMessage.class;
 	}
 
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
-		ExecutorItemsMessage itemsMessage = (ExecutorItemsMessage) message;
+		ListExecutorsMessage itemsMessage = (ListExecutorsMessage) message;
 		List<Executor> executors = itemsMessage.getExecutors();
 		Object[][] data = new Object[executors.size() + 1][];
 		data[0] = new Object[] { "NAME", "SCHEDULE", "EXECUTE MODE", "TASKS", "UPDATE TIME" };

@@ -1,6 +1,7 @@
 package com.louyj.rhttptunnel.client.handler;
 
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,6 +35,10 @@ public interface IMessageHandler {
 
 	default String formatTime(Long time) {
 		return new DateTime(time).toString("yyyy-MM-dd HH:mm:ss");
+	}
+
+	default String formatCollection(Collection<String> items) {
+		return StringUtils.join(items, "\n");
 	}
 
 }

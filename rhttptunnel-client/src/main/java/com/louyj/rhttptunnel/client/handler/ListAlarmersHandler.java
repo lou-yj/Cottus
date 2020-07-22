@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientSession;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
-import com.louyj.rhttptunnel.model.bean.automate.Handler;
+import com.louyj.rhttptunnel.model.bean.automate.Alarmer;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.HandlerItemsMessage;
+import com.louyj.rhttptunnel.model.message.automate.ListAlarmersMessage;
 
 /**
  *
@@ -27,7 +27,7 @@ import com.louyj.rhttptunnel.model.message.automate.HandlerItemsMessage;
  *
  */
 @Component
-public class HandlerItemsHandler implements IMessageHandler {
+public class ListAlarmersHandler implements IMessageHandler {
 
 	@Autowired
 	protected ClientSession session;
@@ -38,28 +38,26 @@ public class HandlerItemsHandler implements IMessageHandler {
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return HandlerItemsMessage.class;
+		return ListAlarmersMessage.class;
 	}
 
 	@Override
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
-		HandlerItemsMessage itemsMessage = (HandlerItemsMessage) message;
-		List<Handler> handlers = itemsMessage.getHandlers();
-		Object[][] data = new Object[handlers.size() + 1][];
-		data[0] = new Object[] { "NAME", "LANGUAGE", "MATCHED", "EXECUTE TARGETS", "ACTION WAIT COUNT",
-				"ACTION AGGR TIME", "ORDER", "PREVENT HANDLERS" };
+		ListAlarmersMessage itemsMessage = (ListAlarmersMessage) message;
+		List<Alarmer> alarmers = itemsMessage.getAlarmers();
+		Object[][] data = new Object[alarmers.size() + 1][];
+		data[0] = new Object[] { "NAME", "EXPRESSION", "GROUP KEYS" };
 		int index = 1;
-		for (Handler handler : handlers) {
-			data[index++] = new Object[] { handler.getName(), handler.getLanguage(), formatMap(handler.getMatched()),
-					formatMap(handler.getTargets()), handler.getActionWaitCount(), handler.getActionAggrTime(),
-					handler.getOrder(), StringUtils.join(handler.getPreventHandlers(), "\n") };
+		for (Alarmer alarmer : alarmers) {
+			data[index++] = new Object[] { alarmer.getName(), alarmer.getExpression(),
+					StringUtils.join(alarmer.getGroupKeys(), ",") };
 		}
 		TableModel model = new ArrayTableModel(data);
 		TableBuilder tableBuilder = new TableBuilder(model);
 		tableBuilder.addHeaderBorder(BorderStyle.fancy_double);
 		tableBuilder.addFullBorder(BorderStyle.fancy_light);
 		writer.println(tableBuilder.build().render(terminal.getWidth()));
-		writer.println("Found " + handlers.size() + " handlers");
+		writer.println("Found " + alarmers.size() + " alarmers");
 		throw new EndOfMessageException();
 	}
 

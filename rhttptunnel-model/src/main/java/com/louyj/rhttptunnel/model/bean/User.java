@@ -1,8 +1,6 @@
-package com.louyj.rhttptunnel.server.auth;
+package com.louyj.rhttptunnel.model.bean;
 
 import java.util.Set;
-
-import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 import com.google.common.collect.Sets;
 
@@ -15,13 +13,10 @@ import com.google.common.collect.Sets;
  */
 public class User {
 
-	@QuerySqlField(index = true)
 	private String name;
 
-	@QuerySqlField
 	private String password;
 
-	@QuerySqlField
 	private Set<String> groups = Sets.newHashSet();
 
 	public String getName() {

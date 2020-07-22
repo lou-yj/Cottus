@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.bean.Group;
 import com.louyj.rhttptunnel.model.bean.Permission;
+import com.louyj.rhttptunnel.model.bean.User;
 import com.louyj.rhttptunnel.server.IgniteRegistry;
 
 /**
@@ -31,8 +33,7 @@ public class UserPermissionManager {
 
 	@PostConstruct
 	public void init() {
-		userPermissionCache = igniteRegistry.getOrCreateCache("userPermissionCache", String.class, User.class,
-				String.class, Group.class);
+		userPermissionCache = igniteRegistry.getOrCreateCache("userPermissionCache");
 	}
 
 	public Permission verify(String user, String password) {

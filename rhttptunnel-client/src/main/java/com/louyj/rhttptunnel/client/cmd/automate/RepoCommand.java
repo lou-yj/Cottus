@@ -18,7 +18,7 @@ import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
-import com.louyj.rhttptunnel.model.message.repo.RepoShowMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoDescribeMessage;
 import com.louyj.rhttptunnel.model.message.repo.RepoUpdateMessage;
 
 /**
@@ -35,7 +35,7 @@ public class RepoCommand extends BaseCommand {
 	@ShellMethod(value = "show repository infomation")
 	@ShellMethodAvailability("serverContext")
 	public String repoInfo() {
-		RepoShowMessage message = new RepoShowMessage(CLIENT);
+		RepoDescribeMessage message = new RepoDescribeMessage(CLIENT);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 		return messagePoller.pollExchangeMessage(response);
 	}

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import com.louyj.rhttptunnel.model.bean.automate.Executor;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.automate.DescribeExecutorMessage;
-import com.louyj.rhttptunnel.model.message.automate.ExecutorDetailMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.session.ClientSession;
@@ -44,7 +43,7 @@ public class DescribeExecutorHandler implements IClientMessageHandler {
 			throws Exception {
 		DescribeExecutorMessage describeExecutorMessage = (DescribeExecutorMessage) message;
 		Executor executor = automateManager.getExecutor(describeExecutorMessage.getName());
-		ExecutorDetailMessage detailMessage = new ExecutorDetailMessage(SERVER, message.getExchangeId());
+		DescribeExecutorMessage detailMessage = new DescribeExecutorMessage(SERVER, message.getExchangeId());
 		detailMessage.setExecutor(executor);
 		return detailMessage;
 	}

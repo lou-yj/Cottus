@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.automate.AlarmerItemsMessage;
 import com.louyj.rhttptunnel.model.message.automate.ListAlarmersMessage;
 import com.louyj.rhttptunnel.server.automation.AutomateManager;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
@@ -41,7 +40,7 @@ public class ListAlarmersHandler implements IClientMessageHandler {
 	@Override
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
-		AlarmerItemsMessage itemsMessage = new AlarmerItemsMessage(SERVER, message.getExchangeId());
+		ListAlarmersMessage itemsMessage = new ListAlarmersMessage(SERVER, message.getExchangeId());
 		itemsMessage.setAlarmers(automateManager.getAlarmers());
 		return itemsMessage;
 	}
