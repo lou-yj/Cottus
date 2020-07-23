@@ -18,6 +18,7 @@ import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.message.SecurityMessage;
 import com.louyj.rhttptunnel.model.message.ServerEventLongPullMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
 import com.louyj.rhttptunnel.model.util.RsaUtils;
@@ -51,10 +52,17 @@ public class ServerEventListener extends Thread implements InitializingBean {
 
 			RegistryMessage registryMessage = new RegistryMessage(ClientDetector.CLIENT);
 			registryMessage.setRegistryClient(ClientDetector.CLIENT);
-			registryMessage.setPublicKey(stringKeyPair.getRight());
 			BaseMessage message = messageExchanger.jsonPost(WORKER_EXCHANGE, registryMessage);
 			if ((message instanceof RegistryMessage) == false) {
 				logger.warn("Registry failed with response {}", JsonUtils.gson().toJson(message));
+				throw new RuntimeException("Registry failed");
+			}
+			MessageUtils.handle(message);
+			SecurityMessage securityMessage = new SecurityMessage(ClientDetector.CLIENT);
+			securityMessage.setPublicKey(stringKeyPair.getRight());
+			message = messageExchanger.jsonPost(WORKER_EXCHANGE, securityMessage);
+			if ((message instanceof RegistryMessage) == false) {
+				logger.warn("Security exchange failed with response {}", JsonUtils.gson().toJson(message));
 				throw new RuntimeException("Registry failed");
 			}
 			MessageUtils.handle(message);

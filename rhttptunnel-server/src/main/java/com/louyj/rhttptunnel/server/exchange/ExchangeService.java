@@ -111,30 +111,28 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	public byte[] client(@RequestBody byte[] data, @RequestHeader(MESSAGE_TYPE) String messageType,
 			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
 			HttpServletResponse httpResponse) throws Exception {
-		ClientSession clientSession = clientManager.sessionByCid(clientId);
-		BaseMessage request = deserializer(data, messageType, enctyptType, clientSession.getAesKey());
+		String aesKey = clientManager.aesKey(clientId);
+		BaseMessage request = deserializer(data, messageType, enctyptType, aesKey);
 		BaseMessage response = client(request);
 		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
 			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
 		}
-		clientSession = clientManager.sessionByCid(clientId);
-		return serializer(httpResponse, response, clientSession.getPublicKey(), clientSession.getAesKey());
+		return serializer(httpResponse, response, clientManager.publicKey(clientId), clientManager.aesKey(clientId));
 	}
 
 	@PostMapping(value = "worker", consumes = APPLICATION_OCTET_STREAM_VALUE, produces = APPLICATION_OCTET_STREAM_VALUE)
 	public byte[] worker(@RequestBody byte[] data, @RequestHeader(MESSAGE_TYPE) String messageType,
 			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
 			HttpServletResponse httpResponse) throws Exception {
-		WorkerSession workerSession = workerManager.session(clientId);
-		BaseMessage request = deserializer(data, messageType, enctyptType, workerSession.getAesKey());
+		String aesKey = workerManager.aesKey(clientId);
+		BaseMessage request = deserializer(data, messageType, enctyptType, aesKey);
 		BaseMessage response = worker(request);
 		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
 			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
 		}
-		workerSession = workerManager.session(clientId);
-		return serializer(httpResponse, response, workerSession.getPublicKey(), workerSession.getAesKey());
+		return serializer(httpResponse, response, workerManager.publicKey(clientId), workerManager.aesKey(clientId));
 	}
 
 	public BaseMessage client(BaseMessage message) throws Exception {

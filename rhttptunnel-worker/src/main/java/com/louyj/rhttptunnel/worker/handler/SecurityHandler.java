@@ -2,16 +2,14 @@ package com.louyj.rhttptunnel.worker.handler;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.RegistryMessage;
-import com.louyj.rhttptunnel.worker.ClientDetector;
+import com.louyj.rhttptunnel.model.message.SecurityMessage;
+import com.louyj.rhttptunnel.model.util.RsaUtils;
 
 /**
  *
@@ -21,25 +19,21 @@ import com.louyj.rhttptunnel.worker.ClientDetector;
  *
  */
 @Component
-public class RegistryHandler implements IMessageHandler {
-
-	private Logger logger = LoggerFactory.getLogger(getClass());
+public class SecurityHandler implements IMessageHandler {
 
 	@Autowired
 	private MessageExchanger messageExchanger;
 
 	@Override
 	public Class<? extends BaseMessage> supportType() {
-		return RegistryMessage.class;
+		return SecurityMessage.class;
 	}
 
 	@Override
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
-		RegistryMessage registryMessage = (RegistryMessage) message;
-		ClientDetector.CLIENT.setUuid(registryMessage.getRegistryClient().identify());
-		logger.info("Client identfy {}", ClientDetector.CLIENT.identify());
-		messageExchanger.setServerAddresses(registryMessage.getServers());
-		logger.info("Server addresses {}", registryMessage.getServers());
+		SecurityMessage securityMessage = (SecurityMessage) message;
+		messageExchanger.setAesKey(securityMessage.getAesKey());
+		messageExchanger.setPublicKey(RsaUtils.loadKey(securityMessage.getPublicKey()));
 		return Lists.newArrayList();
 	}
 

@@ -1,5 +1,11 @@
 package com.louyj.rhttptunnel.client.annotation;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import com.louyj.rhttptunnel.model.message.consts.CommandGroupType;
 
 /**
@@ -9,6 +15,9 @@ import com.louyj.rhttptunnel.model.message.consts.CommandGroupType;
  * @author Louyj
  *
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Documented
 public @interface CommandGroups {
 
 	CommandGroupType[] value();

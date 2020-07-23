@@ -18,10 +18,6 @@ public class RegistryMessage extends BaseMessage {
 
 	private List<String> servers;
 
-	private String publicKey;
-
-	private String aesKey;
-
 	@JsonCreator
 	public RegistryMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
@@ -30,22 +26,6 @@ public class RegistryMessage extends BaseMessage {
 	public RegistryMessage(ClientInfo client, String exchangeId) {
 		super(client);
 		setExchangeId(exchangeId);
-	}
-
-	public String getPublicKey() {
-		return publicKey;
-	}
-
-	public void setPublicKey(String publicKey) {
-		this.publicKey = publicKey;
-	}
-
-	public String getAesKey() {
-		return aesKey;
-	}
-
-	public void setAesKey(String aesKey) {
-		this.aesKey = aesKey;
 	}
 
 	public ClientInfo getRegistryClient() {

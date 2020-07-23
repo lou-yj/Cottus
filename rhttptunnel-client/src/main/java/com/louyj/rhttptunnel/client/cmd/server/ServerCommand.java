@@ -28,6 +28,7 @@ import com.louyj.rhttptunnel.model.message.ConnectMessage;
 import com.louyj.rhttptunnel.model.message.ExitMessage;
 import com.louyj.rhttptunnel.model.message.ListServersMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.message.SecurityMessage;
 import com.louyj.rhttptunnel.model.util.RsaUtils;
 
 /**
@@ -61,9 +62,15 @@ public class ServerCommand extends BaseCommand {
 			Pair<String, String> stringKeyPair = RsaUtils.stringKeyPair(keyPair);
 			RegistryMessage registryMessage = new RegistryMessage(CLIENT);
 			registryMessage.setRegistryClient(CLIENT);
-			registryMessage.setPublicKey(stringKeyPair.getRight());
 			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, registryMessage);
 			String resp = messagePoller.pollExchangeMessage(response);
+			if (StringUtils.isNotBlank(resp)) {
+				return null;
+			}
+			SecurityMessage securityMessage = new SecurityMessage(ClientDetector.CLIENT);
+			securityMessage.setPublicKey(stringKeyPair.getRight());
+			response = messageExchanger.jsonPost(CLIENT_EXCHANGE, securityMessage);
+			resp = messagePoller.pollExchangeMessage(response);
 			if (StringUtils.isNotBlank(resp)) {
 				return null;
 			}

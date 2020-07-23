@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.server.session;
 
+import java.security.Key;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -84,6 +85,22 @@ public class ClientSessionManager {
 			return null;
 		}
 		return clientCache.get(clientId);
+	}
+
+	public String aesKey(String clientId) {
+		ClientSession clientSession = sessionByCid(clientId);
+		if (clientSession == null) {
+			return null;
+		}
+		return clientSession.getAesKey();
+	}
+
+	public Key publicKey(String clientId) {
+		ClientSession clientSession = sessionByCid(clientId);
+		if (clientSession == null) {
+			return null;
+		}
+		return clientSession.getPublicKey();
 	}
 
 	public ClientSession sessionByEid(String exchangeId) {

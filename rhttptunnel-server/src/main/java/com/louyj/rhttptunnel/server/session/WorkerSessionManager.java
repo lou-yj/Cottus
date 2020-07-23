@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.server.session;
 
 import static com.louyj.rhttptunnel.model.message.consts.NotifyEventType.CLIENTS_CHANGED;
 
+import java.security.Key;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +167,22 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 			return null;
 		}
 		return workerCache.get(clientId);
+	}
+
+	public String aesKey(String clientId) {
+		WorkerSession workerSession = session(clientId);
+		if (workerSession == null) {
+			return null;
+		}
+		return workerSession.getAesKey();
+	}
+
+	public Key publicKey(String clientId) {
+		WorkerSession workerSession = session(clientId);
+		if (workerSession == null) {
+			return null;
+		}
+		return workerSession.getPublicKey();
 	}
 
 	public List<WorkerSession> sessions(List<String> clientIds) {
