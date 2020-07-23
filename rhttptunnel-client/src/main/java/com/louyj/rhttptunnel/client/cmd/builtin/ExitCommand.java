@@ -1,7 +1,7 @@
 package com.louyj.rhttptunnel.client.cmd.builtin;
 
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ALLOW_ALL;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_SYSTEM;
 
 import org.springframework.shell.standard.ShellComponent;
@@ -24,7 +24,7 @@ import com.louyj.rhttptunnel.model.message.ExitMessage;
 @ShellComponent
 public class ExitCommand extends BaseCommand implements Quit.Command {
 
-	@CommandGroups({ CORE_SYSTEM, CORE_NORMAL })
+	@CommandGroups({ CORE_SYSTEM, CORE_ALLOW_ALL })
 	@ShellMethod(value = "Exit the shell.", key = { "quit", "exit" })
 	@ShellMethodAvailability("notWorkerContext")
 	public void quit() {

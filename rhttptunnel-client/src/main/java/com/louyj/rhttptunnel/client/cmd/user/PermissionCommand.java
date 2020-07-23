@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.client.cmd.user;
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_SUPER_ADMIN;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_UNDEFINED;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -58,11 +59,13 @@ public class PermissionCommand extends BaseCommand implements ApplicationContext
 					Set<String> groups = Sets.newHashSet();
 					CommandGroups cgroups = method.getAnnotation(CommandGroups.class);
 					if (cgroups == null) {
-						groups.add("CORE_UNDEFINED");
+						groups.add(CORE_UNDEFINED.name());
 					} else {
 						CommandGroupType[] groupTypes = cgroups.value();
 						for (CommandGroupType type : groupTypes) {
-							groups.add(type.name());
+							Set<String> groupWithParents = Sets.newHashSet();
+							groupWithParent(groupWithParents, type);
+							groups.addAll(groupWithParents);
 						}
 					}
 					for (String group : groups) {
@@ -84,8 +87,22 @@ public class PermissionCommand extends BaseCommand implements ApplicationContext
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	private String cmdName(String methodName) {
-		return methodName;
+	private void groupWithParent(Set<String> groups, CommandGroupType type) {
+		if (type == null) {
+			return;
+		}
+		groups.add(type.name());
+		Set<CommandGroupType> parents = type.getParents();
+		if (parents != null) {
+			for (CommandGroupType parent : parents) {
+				groupWithParent(groups, parent);
+			}
+		}
+	}
+
+	private static String cmdName(String methodName) {
+		String replaced = methodName.replaceAll("([A-Z])", "-$1");
+		return replaced.toLowerCase();
 	}
 
 }

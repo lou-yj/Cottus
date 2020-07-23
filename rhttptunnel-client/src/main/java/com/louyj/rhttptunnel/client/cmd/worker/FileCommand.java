@@ -2,7 +2,6 @@ package com.louyj.rhttptunnel.client.cmd.worker;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_WORKERFS;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -52,7 +51,7 @@ public class FileCommand extends BaseCommand {
 	@Value("${transfer.data.maxsize:1048576}")
 	private int transferMaxSize;
 
-	@CommandGroups({ CORE_WORKERFS, CORE_NORMAL })
+	@CommandGroups({ CORE_WORKERFS })
 	@ShellMethod(value = "get file from worker")
 	@ShellMethodAvailability("workerContext")
 	public String get(@ShellOption(value = { "-f", "--file" }, help = "file path") String path, @ShellOption(value = {
@@ -62,7 +61,7 @@ public class FileCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_WORKERFS, CORE_NORMAL })
+	@CommandGroups({ CORE_WORKERFS })
 	@ShellMethod(value = "send file to worker")
 	@ShellMethodAvailability("workerContext")
 	public String send(@ShellOption(value = { "-f", "-s", "--file", "--source" }, help = "file path") String path,
@@ -123,7 +122,7 @@ public class FileCommand extends BaseCommand {
 		}
 	}
 
-	@CommandGroups({ CORE_WORKERFS, CORE_NORMAL })
+	@CommandGroups({ CORE_WORKERFS })
 	@ShellMethod(value = "remove files")
 	@ShellMethodAvailability("workerContext")
 	public String rm(@ShellOption(value = { "-p", "--path" }, help = "file path") String path,
@@ -139,7 +138,7 @@ public class FileCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_WORKERFS, CORE_NORMAL })
+	@CommandGroups({ CORE_WORKERFS })
 	@ShellMethod(value = "print work directory")
 	@ShellMethodAvailability("workerContext")
 	public String pwd() {
@@ -153,7 +152,7 @@ public class FileCommand extends BaseCommand {
 		return pwd;
 	}
 
-	@CommandGroups({ CORE_WORKERFS, CORE_NORMAL })
+	@CommandGroups({ CORE_WORKERFS })
 	@ShellMethod(value = "list files")
 	@ShellMethodAvailability("workerContext")
 	public String ls(@ShellOption(value = { "-f", "--file" }, help = "file path", defaultValue = "") String path) {
@@ -163,7 +162,7 @@ public class FileCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_WORKERFS, CORE_NORMAL })
+	@CommandGroups({ CORE_WORKERFS })
 	@ShellMethod(value = "change directory")
 	@ShellMethodAvailability("workerContext")
 	public String cd(@ShellOption(value = { "-d", "--directory" }, help = "change to directory") String path) {
@@ -176,7 +175,7 @@ public class FileCommand extends BaseCommand {
 		return session.getCwd();
 	}
 
-	@CommandGroups({ CORE_WORKERFS, CORE_NORMAL })
+	@CommandGroups({ CORE_WORKERFS })
 	@ShellMethod(value = "execute script file")
 	@ShellMethodAvailability("workerContext")
 	public String exec(@ShellOption(value = { "-f", "--file" }, help = "file path") String path, @ShellOption(value = {

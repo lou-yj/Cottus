@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.server.session;
 
+import java.security.Key;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -22,6 +23,30 @@ public class WorkerSession {
 	private String workerId;
 
 	private Set<String> clientIds = Sets.newHashSet();
+
+	private String aesKey;
+
+	private Key publicKey;
+
+	public String getAesKey() {
+		return aesKey;
+	}
+
+	public void setAesKey(String aesKey) {
+		this.aesKey = aesKey;
+	}
+
+	public Key getPublicKey() {
+		return publicKey;
+	}
+
+	public void setPublicKey(Key publicKey) {
+		this.publicKey = publicKey;
+	}
+
+	public Set<String> getClientIds() {
+		return clientIds;
+	}
 
 	public WorkerSession(String clientId) {
 		super();

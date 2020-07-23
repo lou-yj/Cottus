@@ -1,5 +1,6 @@
 package com.louyj.rhttptunnel.server.session;
 
+import java.security.Key;
 import java.util.List;
 import java.util.Set;
 
@@ -27,6 +28,26 @@ public class ClientSession {
 	private Set<String> exchangeIds = Sets.newHashSet();
 
 	private String userName;
+
+	private String aesKey;
+
+	private Key publicKey;
+
+	public String getAesKey() {
+		return aesKey;
+	}
+
+	public void setAesKey(String aesKey) {
+		this.aesKey = aesKey;
+	}
+
+	public Key getPublicKey() {
+		return publicKey;
+	}
+
+	public void setPublicKey(Key publicKey) {
+		this.publicKey = publicKey;
+	}
 
 	public String getUserName() {
 		return userName;

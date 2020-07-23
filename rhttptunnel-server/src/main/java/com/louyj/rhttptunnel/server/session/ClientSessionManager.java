@@ -60,7 +60,7 @@ public class ClientSessionManager {
 		return igniteRegistry.queue("client:" + clientId, 100);
 	}
 
-	public boolean update(String clientId, String exchangeId) {
+	public ClientSession update(String clientId, String exchangeId) {
 		ClientSession session = clientCache.get(clientId);
 		if (session == null) {
 			session = new ClientSession(clientId);
@@ -69,7 +69,7 @@ public class ClientSessionManager {
 		session.getExchangeIds().add(exchangeId);
 		clientCache.put(clientId, session);
 		exchangeCache.put(exchangeId, clientId);
-		return true;
+		return session;
 	}
 
 	public void update(ClientSession clientSession) {

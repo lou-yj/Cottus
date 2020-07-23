@@ -11,6 +11,7 @@ import org.springframework.shell.SpringShellAutoConfiguration;
 import org.springframework.shell.result.ResultHandlerConfig;
 
 import com.louyj.rhttptunnel.client.ClientSession;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
  *
@@ -26,10 +27,12 @@ public class CustomSpringShellConfiguration extends SpringShellAutoConfiguration
 
 	@Autowired
 	private ClientSession clientSession;
+	@Autowired
+	private MessageExchanger messageExchanger;
 
 	@Bean
 	public Shell shell(@Qualifier("main") ResultHandler resultHandler) {
-		return new CustomShell(resultHandler, clientSession);
+		return new CustomShell(resultHandler, clientSession, messageExchanger);
 	}
 
 }

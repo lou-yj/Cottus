@@ -1,6 +1,6 @@
 package com.louyj.rhttptunnel.client.cmd.builtin;
 
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ALLOW_ALL;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_SYSTEM;
 
 import org.jline.terminal.Terminal;
@@ -28,7 +28,7 @@ public class ClearCommand extends BaseCommand implements Clear.Command {
 	@Lazy
 	private Terminal terminal;
 
-	@CommandGroups({ CORE_SYSTEM, CORE_NORMAL })
+	@CommandGroups({ CORE_SYSTEM, CORE_ALLOW_ALL })
 	@ShellMethod("Clear the shell screen.")
 	public void clear() {
 		terminal.puts(InfoCmp.Capability.clear_screen);

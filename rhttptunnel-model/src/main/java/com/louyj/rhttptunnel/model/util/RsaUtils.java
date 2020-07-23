@@ -2,7 +2,6 @@ package com.louyj.rhttptunnel.model.util;
 
 import static com.google.common.base.Charsets.UTF_8;
 
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -12,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
@@ -45,6 +45,13 @@ public class RsaUtils {
 		Key pub = kp.getPublic();
 		Key pvt = kp.getPrivate();
 		return Pair.of(pvt, pub);
+	}
+
+	public static Key loadKey(String rsaKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		byte[] privateKeyBytes = Base64.decodeBase64(rsaKey);
+		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		return keyFactory.generatePrivate(keySpec);
 	}
 
 	public static Pair<String, String> stringKeyPair(Pair<Key, Key> pair) {
@@ -83,16 +90,16 @@ public class RsaUtils {
 		}
 	}
 
-	public static byte[] encrypt(String data, Key publicKey) throws Exception {
+	public static byte[] encrypt(byte[] data, Key publicKey) throws Exception {
 		Cipher encrypt = Cipher.getInstance(CIPHER_ALGORITHM);
 		encrypt.init(Cipher.ENCRYPT_MODE, publicKey);
-		return encrypt.doFinal(data.getBytes(StandardCharsets.UTF_8));
+		return encrypt.doFinal(data);
 	}
 
-	public static String decrypt(byte[] bs, Key privateKey) throws Exception {
+	public static byte[] decrypt(byte[] bs, Key privateKey) throws Exception {
 		Cipher decrypt = Cipher.getInstance(CIPHER_ALGORITHM);
 		decrypt.init(Cipher.DECRYPT_MODE, privateKey);
-		return new String(decrypt.doFinal(bs), StandardCharsets.UTF_8);
+		return decrypt.doFinal(bs);
 	}
 
 	public static String baseEncode(byte[] bs) {
@@ -101,16 +108,6 @@ public class RsaUtils {
 
 	public static byte[] base64Decode(String data) {
 		return Base64.decodeBase64(data);
-	}
-
-	public static void main(String[] args) throws Exception {
-		Pair<Key, Key> pair = genKeyPair();
-		Key privateKey = pair.getLeft();
-		Key publicKey = pair.getRight();
-		String msg = "xxx";
-		byte[] encrypt2 = encrypt(msg, publicKey);
-		String decrypt = decrypt(encrypt2, privateKey);
-		System.out.println(decrypt);
 	}
 
 }

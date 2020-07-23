@@ -3,7 +3,6 @@ package com.louyj.rhttptunnel.client.cmd.worker;
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.client.util.LogUtils.printMessage;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_WORKER_MGR;
 
 import java.util.Scanner;
@@ -38,7 +37,7 @@ import com.louyj.rhttptunnel.model.message.shell.ShellStartMessage;
 @ShellCommandGroup("Worker FileSystem Commands")
 public class ShellCommand extends BaseCommand {
 
-	@CommandGroups({ CORE_WORKER_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_WORKER_MGR })
 	@SuppressWarnings("resource")
 	@ShellMethod(value = "Enter into interactive shell mode")
 	@ShellMethodAvailability("workerAdminContext")

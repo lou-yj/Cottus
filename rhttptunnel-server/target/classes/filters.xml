@@ -22,7 +22,7 @@
          http://code.alibabatech.com/schema/dubbo 
          http://code.alibabatech.com/schema/dubbo/dubbo.xsd" >
 	
-	<!--order 从-9000开始, WebMvcAutoConfiguration -->
+	<!--order 从-9000开始, WebMvcAutoConfiguration 
 	<bean id="encodingAndCachedFilter" class="com.louyj.rhttptunnel.server.filter.HttpContentCachedFilter"/>
 	<bean class="org.springframework.boot.web.servlet.FilterRegistrationBean">
 		<property name="filter" ref="encodingAndCachedFilter"/>
@@ -47,5 +47,6 @@
 		<property name="name" value="exceptionCatchFilter"/>
 		<property name="order" value="-999"/>
 	</bean>
+	-->
 	
 </beans>

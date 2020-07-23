@@ -10,6 +10,7 @@ import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.util.RsaUtils;
 
 /**
  *
@@ -34,6 +35,8 @@ public class RegistryHandler implements IMessageHandler {
 		RegistryMessage registryMessage = (RegistryMessage) message;
 		ClientDetector.CLIENT.setUuid(registryMessage.getRegistryClient().identify());
 		messageExchanger.setServerAddresses(registryMessage.getServers());
+		messageExchanger.setAesKey(registryMessage.getAesKey());
+		messageExchanger.setPublicKey(RsaUtils.loadKey(registryMessage.getPublicKey()));
 		throw new EndOfMessageException();
 	}
 

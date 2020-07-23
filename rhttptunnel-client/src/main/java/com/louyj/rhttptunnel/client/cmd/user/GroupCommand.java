@@ -2,7 +2,6 @@ package com.louyj.rhttptunnel.client.cmd.user;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_USER_MGR;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +29,7 @@ import com.louyj.rhttptunnel.model.message.user.GroupUpsertMessage;
 @ShellComponent
 public class GroupCommand extends BaseCommand {
 
-	@CommandGroups({ CORE_USER_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_USER_MGR })
 	@ShellMethod(value = "List groups")
 	@ShellMethodAvailability("serverContext")
 	public String groupList() {
@@ -39,7 +38,7 @@ public class GroupCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_USER_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_USER_MGR })
 	@ShellMethod(value = "add or update group")
 	@ShellMethodAvailability("serverContext")
 	public String groupUpsert(@ShellOption(value = { "-n", "--name" }, help = "group name") String groupName,
@@ -58,7 +57,7 @@ public class GroupCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_USER_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_USER_MGR })
 	@ShellMethod(value = "delete group")
 	@ShellMethodAvailability("serverContext")
 	public String groupDel(@ShellOption(value = { "-n", "--name" }, help = "group name") String groupName) {

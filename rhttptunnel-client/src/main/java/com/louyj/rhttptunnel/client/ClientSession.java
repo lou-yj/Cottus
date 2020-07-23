@@ -13,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.bean.Permission;
 import com.louyj.rhttptunnel.model.bean.RoleType;
 import com.louyj.rhttptunnel.model.bean.WorkerInfo;
+import com.louyj.rhttptunnel.model.http.ExchangeContext;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 
 /**
@@ -41,12 +42,29 @@ public class ClientSession {
 
 	private boolean debug = true;
 
+	private ExchangeContext exchangeContext;
+
+	public ExchangeContext getExchangeContext() {
+		return exchangeContext;
+	}
+
+	public void setExchangeContext(ExchangeContext exchangeContext) {
+		this.exchangeContext = exchangeContext;
+	}
+
 	public Permission getPermission() {
 		return permission;
 	}
 
 	public void setPermission(Permission permission) {
 		this.permission = permission;
+	}
+
+	public boolean hasPermission(String command) {
+		if (permission == null) {
+			return false;
+		}
+		return permission.getCommands().contains(command);
 	}
 
 	public ClientInfo getSelectedWorker(String clientId) {

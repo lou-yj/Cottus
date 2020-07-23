@@ -2,10 +2,8 @@ package com.louyj.rhttptunnel.client.cmd.worker;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_CONFIG_MGR;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_CONFIG;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_CONFIG_MGR;
 
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
@@ -31,7 +29,7 @@ import com.louyj.rhttptunnel.model.message.config.ConfigSetMessage;
 @ShellCommandGroup("Worker Config Commands")
 public class ConfigCommand extends BaseCommand {
 
-	@CommandGroups({ CORE_CONFIG, CORE_NORMAL })
+	@CommandGroups({ CORE_CONFIG })
 	@ShellMethod(value = "List config from server or worker")
 	@ShellMethodAvailability("workerContext")
 	public String configList() {
@@ -41,7 +39,7 @@ public class ConfigCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_CONFIG, CORE_NORMAL })
+	@CommandGroups({ CORE_CONFIG })
 	@ShellMethod(value = "Get config from server or worker")
 	@ShellMethodAvailability("workerContext")
 	public String configGet(
@@ -52,7 +50,7 @@ public class ConfigCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_CONFIG_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_CONFIG_MGR })
 	@ShellMethod(value = "Set config to server or worker")
 	@ShellMethodAvailability("workerContext")
 	public String configSet(@ShellOption(value = { "-k", "--key" }, help = "config key") String key,

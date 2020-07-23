@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.util.RsaUtils;
 import com.louyj.rhttptunnel.worker.ClientDetector;
 
 /**
@@ -39,6 +40,8 @@ public class RegistryHandler implements IMessageHandler {
 		ClientDetector.CLIENT.setUuid(registryMessage.getRegistryClient().identify());
 		logger.info("Client identfy {}", ClientDetector.CLIENT.identify());
 		messageExchanger.setServerAddresses(registryMessage.getServers());
+		messageExchanger.setAesKey(registryMessage.getAesKey());
+		messageExchanger.setPublicKey(RsaUtils.loadKey(registryMessage.getPublicKey()));
 		logger.info("Server addresses {}", registryMessage.getServers());
 		return Lists.newArrayList();
 	}

@@ -2,9 +2,7 @@ package com.louyj.rhttptunnel.client.cmd.automate;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_REPO_MGR;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_REPO;
 
 import java.util.Scanner;
 
@@ -17,8 +15,8 @@ import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.model.bean.automate.RepoConfig;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
-import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
 import com.louyj.rhttptunnel.model.message.repo.RepoDescribeMessage;
+import com.louyj.rhttptunnel.model.message.repo.RepoSetMessage;
 import com.louyj.rhttptunnel.model.message.repo.RepoUpdateMessage;
 
 /**
@@ -31,7 +29,7 @@ import com.louyj.rhttptunnel.model.message.repo.RepoUpdateMessage;
 @ShellComponent
 public class RepoCommand extends BaseCommand {
 
-	@CommandGroups({ CORE_REPO, CORE_ADMIN })
+	@CommandGroups({ CORE_REPO_MGR })
 	@ShellMethod(value = "show repository infomation")
 	@ShellMethodAvailability("serverContext")
 	public String repoInfo() {
@@ -40,7 +38,7 @@ public class RepoCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_REPO_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_REPO_MGR })
 	@SuppressWarnings("resource")
 	@ShellMethod(value = "set repository infomation")
 	@ShellMethodAvailability("serverContext")
@@ -108,7 +106,7 @@ public class RepoCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_REPO_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_REPO_MGR })
 	@ShellMethod(value = "Update repository files at server side")
 	@ShellMethodAvailability("serverContext")
 	public String repoUpdate() {

@@ -1,13 +1,21 @@
 package com.louyj.rhttptunnel.server.exchange;
 
-import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.CLIENT_ID;
+import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.ENCRYPT_TYPE;
+import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.MESSAGE_TYPE;
+import static org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -17,6 +25,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,7 +40,11 @@ import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ClientInfo;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.consts.CustomHeaders;
+import com.louyj.rhttptunnel.model.message.consts.EncryptType;
+import com.louyj.rhttptunnel.model.util.AESEncryptUtils;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
+import com.louyj.rhttptunnel.model.util.RsaUtils;
 import com.louyj.rhttptunnel.server.ServerRegistry;
 import com.louyj.rhttptunnel.server.handler.IClientMessageHandler;
 import com.louyj.rhttptunnel.server.handler.IWorkerMessageHandler;
@@ -94,26 +107,34 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		executorService = Executors.newFixedThreadPool(20);
 	}
 
-	@PostMapping(value = "client", consumes = TEXT_PLAIN_VALUE, produces = TEXT_PLAIN_VALUE)
-	public String client(@RequestBody String data) throws Exception {
-		BaseMessage request = deserializer(data);
+	@PostMapping(value = "client", consumes = APPLICATION_OCTET_STREAM_VALUE, produces = APPLICATION_OCTET_STREAM_VALUE)
+	public byte[] client(@RequestBody byte[] data, @RequestHeader(MESSAGE_TYPE) String messageType,
+			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
+			HttpServletResponse httpResponse) throws Exception {
+		ClientSession clientSession = clientManager.sessionByCid(clientId);
+		BaseMessage request = deserializer(data, messageType, enctyptType, clientSession.getAesKey());
 		BaseMessage response = client(request);
 		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
 			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
 		}
-		return serializer(response);
+		clientSession = clientManager.sessionByCid(clientId);
+		return serializer(httpResponse, response, clientSession.getPublicKey(), clientSession.getAesKey());
 	}
 
-	@PostMapping(value = "worker", consumes = TEXT_PLAIN_VALUE, produces = TEXT_PLAIN_VALUE)
-	public String worker(@RequestBody String data) throws Exception {
-		BaseMessage request = deserializer(data);
+	@PostMapping(value = "worker", consumes = APPLICATION_OCTET_STREAM_VALUE, produces = APPLICATION_OCTET_STREAM_VALUE)
+	public byte[] worker(@RequestBody byte[] data, @RequestHeader(MESSAGE_TYPE) String messageType,
+			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
+			HttpServletResponse httpResponse) throws Exception {
+		WorkerSession workerSession = workerManager.session(clientId);
+		BaseMessage request = deserializer(data, messageType, enctyptType, workerSession.getAesKey());
 		BaseMessage response = worker(request);
 		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
 			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
 		}
-		return serializer(response);
+		workerSession = workerManager.session(clientId);
+		return serializer(httpResponse, response, workerSession.getPublicKey(), workerSession.getAesKey());
 	}
 
 	public BaseMessage client(BaseMessage message) throws Exception {
@@ -126,9 +147,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			return message;
 		}
 		String clientId = message.getClientId();
-		clientManager.update(clientId, message.getExchangeId());
-
-		ClientSession clientSession = clientManager.sessionByCid(clientId);
+		ClientSession clientSession = clientManager.update(clientId, message.getExchangeId());
 		List<WorkerSession> workerSessions = null;
 		if (CollectionUtils.isNotEmpty(message.getToWorkers())) {
 			workerSessions = workerManager.sessions(message.getToWorkers());
@@ -180,9 +199,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			return message;
 		}
 		String clientId = message.getClientId();
-		workerManager.update(clientId);
 
-		WorkerSession workerSession = workerManager.session(clientId);
+		WorkerSession workerSession = workerManager.update(clientId);
 		ClientSession clientSession = clientManager.sessionByEid(message.getExchangeId());
 
 		IWorkerMessageHandler handler = workerHandlers.get(type);
@@ -201,12 +219,50 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 
 	}
 
-	private BaseMessage deserializer(String data) throws Exception {
-		return jackson.readValue(data, BaseMessage.class);
+	private BaseMessage deserializer(byte[] data, String messageType, String enctyptType, String aesKey)
+			throws Exception {
+		if (StringUtils.isNotBlank(enctyptType)) {
+			switch (EncryptType.of(enctyptType)) {
+			case RSA:
+				data = RsaUtils.decrypt(data, serverRegistry.getPrivateKey());
+				break;
+			case AES:
+				data = AESEncryptUtils.decrypt(data, aesKey);
+				break;
+			case NONE:
+				break;
+			default:
+				break;
+			}
+		}
+		return (BaseMessage) jackson.readValue(data, Class.forName(messageType));
 	}
 
-	private String serializer(BaseMessage message) throws Exception {
-		return jackson.writeValueAsString(message);
+	private byte[] serializer(HttpServletResponse httpResponse, BaseMessage message, Key publicKey, String aesKey)
+			throws Exception {
+		httpResponse.setHeader(CustomHeaders.MESSAGE_TYPE, message.getClass().getName());
+		String json = jackson.writeValueAsString(message);
+		byte[] data = json.getBytes(StandardCharsets.UTF_8);
+		EncryptType encryptType = EncryptType.NONE;
+		if (aesKey != null) {
+			encryptType = EncryptType.AES;
+		} else if (publicKey != null) {
+			encryptType = EncryptType.RSA;
+		}
+		switch (encryptType) {
+		case RSA:
+			data = RsaUtils.encrypt(data, publicKey);
+			httpResponse.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.RSA.name());
+			break;
+		case AES:
+			data = AESEncryptUtils.encrypt(data, aesKey);
+			httpResponse.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.AES.name());
+			break;
+		default:
+			httpResponse.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.NONE.name());
+			break;
+		}
+		return data;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

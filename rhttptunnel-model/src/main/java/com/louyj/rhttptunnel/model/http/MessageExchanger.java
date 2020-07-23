@@ -2,17 +2,20 @@ package com.louyj.rhttptunnel.model.http;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static com.louyj.rhttptunnel.model.message.consts.RejectReason.CLIENT_ERROR;
-import static com.louyj.rhttptunnel.model.util.AESEncryptUtils.defaultKey;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -21,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -29,7 +33,7 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -43,12 +47,14 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import com.google.common.net.MediaType;
 import com.louyj.rhttptunnel.model.config.IConfigListener;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RejectMessage;
+import com.louyj.rhttptunnel.model.message.consts.CustomHeaders;
+import com.louyj.rhttptunnel.model.message.consts.EncryptType;
 import com.louyj.rhttptunnel.model.util.AESEncryptUtils;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
+import com.louyj.rhttptunnel.model.util.RsaUtils;
 
 /**
  *
@@ -88,6 +94,35 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 
 	private boolean verbose = false;
 
+	private ThreadLocal<ExchangeContext> exchangeContext = new ThreadLocal<>();
+	private Key privateKey;
+	private Key publicKey;
+	private String aesKey;
+
+	public String getAesKey() {
+		return aesKey;
+	}
+
+	public void setAesKey(String aesKey) {
+		this.aesKey = aesKey;
+	}
+
+	public Key getPrivateKey() {
+		return privateKey;
+	}
+
+	public void setPrivateKey(Key privateKey) {
+		this.privateKey = privateKey;
+	}
+
+	public Key getPublicKey() {
+		return publicKey;
+	}
+
+	public void setPublicKey(Key publicKey) {
+		this.publicKey = publicKey;
+	}
+
 	@Value("${bootstrap.servers:}")
 	public void setBootstrapAddress(String serverAddress) {
 		this.bootstrapServers = Lists.newArrayList(serverAddress.split(","));
@@ -100,6 +135,10 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 
 	public boolean isServerConnected() {
 		return CollectionUtils.isNotEmpty(serverAddresses);
+	}
+
+	public ThreadLocal<ExchangeContext> getExchangeContext() {
+		return exchangeContext;
 	}
 
 	@Override
@@ -151,25 +190,73 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 				throw new RuntimeException("No server available");
 			}
 			String serverAddress = serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()));
-			String data = jackson.writeValueAsString(message);
+			String reqJson = jackson.writeValueAsString(message);
 			if (verbose) {
-				logger.info("Send message {}", data);
+				logger.info("Send message {}", reqJson);
 			}
-			data = AESEncryptUtils.encrypt(data, defaultKey);
-			HttpEntity httpEntity = new StringEntity(data, UTF_8);
+			byte[] reqData = reqJson.getBytes(StandardCharsets.UTF_8);
 			HttpPost httpPost = new HttpPost(serverAddress + endpoint);
 			httpPost.setConfig(requestConfig);
-			httpPost.setEntity(httpEntity);
-			httpPost.setHeader(CONTENT_TYPE, MediaType.PLAIN_TEXT_UTF_8.toString());
+			httpPost.setHeader(CONTENT_TYPE, "application/octet-stream");
+			httpPost.setHeader(CustomHeaders.MESSAGE_TYPE, message.getClass().getName());
+			ExchangeContext exchangeContext = this.exchangeContext.get();
+			if (exchangeContext != null) {
+				httpPost.setHeader(CustomHeaders.CLIENT_ID, exchangeContext.getClientId());
+				Map<String, String> extraHeaderMap = exchangeContext.httpHeaders();
+				if (extraHeaderMap != null) {
+					for (Entry<String, String> entry : extraHeaderMap.entrySet()) {
+						httpPost.setHeader(entry.getKey(), entry.getValue());
+					}
+				}
+				EncryptType encryptType = EncryptType.NONE;
+				if (aesKey != null) {
+					encryptType = EncryptType.AES;
+				} else if (publicKey != null) {
+					encryptType = EncryptType.RSA;
+				}
+				switch (encryptType) {
+				case RSA:
+					reqData = RsaUtils.encrypt(reqData, publicKey);
+					httpPost.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.RSA.name());
+					break;
+				case AES:
+					reqData = AESEncryptUtils.encrypt(reqData, aesKey);
+					httpPost.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.AES.name());
+				default:
+					httpPost.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.NONE.name());
+					break;
+				}
+			}
+			httpPost.setEntity(new ByteArrayEntity(reqData));
 			CloseableHttpResponse response = httpclient.execute(httpPost);
 			try {
 				HttpEntity entity = response.getEntity();
-				String json = EntityUtils.toString(entity, UTF_8);
-				json = AESEncryptUtils.decrypt(json, defaultKey);
-				if (verbose) {
-					logger.info("Receive response {}", json);
+				byte[] respData = EntityUtils.toByteArray(entity);
+				Header encryptHeader = response.getFirstHeader(CustomHeaders.ENCRYPT_TYPE);
+				if (encryptHeader == null) {
+					throw new IllegalArgumentException("Bad Response, Missing Encrypt Type");
 				}
-				return jackson.readValue(json, BaseMessage.class);
+				switch (EncryptType.of(encryptHeader.getValue())) {
+				case RSA:
+					respData = RsaUtils.decrypt(respData, privateKey);
+					break;
+				case AES:
+					respData = AESEncryptUtils.decrypt(respData, aesKey);
+					break;
+				case NONE:
+					break;
+				default:
+					break;
+				}
+				String respJson = new String(respData, UTF_8);
+				Header msgType = response.getFirstHeader(CustomHeaders.MESSAGE_TYPE);
+				if (msgType == null) {
+					throw new IllegalArgumentException("Bad Response, Missing Message Type");
+				}
+				if (verbose) {
+					logger.info("Receive response {}", respJson);
+				}
+				return (BaseMessage) jackson.readValue(respJson, Class.forName(msgType.getValue()));
 			} finally {
 				response.close();
 			}

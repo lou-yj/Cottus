@@ -1,6 +1,5 @@
 package com.louyj.rhttptunnel.client.cmd.builtin;
 
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_SYSTEM_MGR;
 
 import java.io.File;
@@ -35,7 +34,7 @@ public class ScriptCommand extends BaseCommand implements Script.Command {
 	@Autowired
 	private Parser parser;
 
-	@CommandGroups({ CORE_SYSTEM_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_SYSTEM_MGR })
 	@ShellMethod(value = "Read and execute commands from a file.")
 	@ShellMethodAvailability("workerContext")
 	public void script(File file) throws IOException {

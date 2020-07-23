@@ -2,7 +2,6 @@ package com.louyj.rhttptunnel.client.cmd.worker;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ADMIN;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_WORKER_MGR;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -31,7 +30,7 @@ import com.louyj.rhttptunnel.model.message.label.UpdateLabelMessage;
 @ShellCommandGroup("Worker Manage Commands")
 public class LabelCommand extends BaseCommand {
 
-	@CommandGroups({ CORE_WORKER_MGR, CORE_ADMIN })
+	@CommandGroups({ CORE_WORKER_MGR })
 	@ShellMethod(value = "update worker labels")
 	@ShellMethodAvailability("workerAdminContext")
 	public String labelSet(@ShellOption(value = { "-l", "--labels" }, help = "labels to be update") String labelStr) {

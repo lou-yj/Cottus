@@ -26,7 +26,12 @@ import org.springframework.shell.Shell;
 import org.springframework.shell.Utils;
 import org.springframework.util.ReflectionUtils;
 
+import com.louyj.rhttptunnel.client.ClientDetector;
 import com.louyj.rhttptunnel.client.ClientSession;
+import com.louyj.rhttptunnel.client.annotation.CommandGroups;
+import com.louyj.rhttptunnel.client.exception.NoPermissionException;
+import com.louyj.rhttptunnel.model.http.ExchangeContext;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 
 /**
  *
@@ -41,11 +46,13 @@ public class CustomShell extends Shell {
 	private final ResultHandler syncHandler;
 	private Validator validatorx;
 	private ClientSession clientSession;
+	private MessageExchanger messageExchanger;
 
-	public CustomShell(ResultHandler resultHandler, ClientSession clientSession) {
+	public CustomShell(ResultHandler resultHandler, ClientSession clientSession, MessageExchanger messageExchanger) {
 		super(resultHandler);
 		this.syncHandler = resultHandler;
 		this.clientSession = clientSession;
+		this.messageExchanger = messageExchanger;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -87,10 +94,10 @@ public class CustomShell extends Shell {
 			if (availability.isAvailable()) {
 				List<String> wordsForArgs = wordsForArguments(command, words);
 				Method method = methodTarget.getMethod();
-				checkPermission(method, command);
 				try {
 					Object[] args = resolveArgs(method, wordsForArgs);
 					validateArgs(args, methodTarget);
+					checkPermission(methodTarget.getBean().getClass(), method, command, args);
 					return ReflectionUtils.invokeMethod(method, methodTarget.getBean(), args);
 				} catch (Exception e) {
 					return e;
@@ -103,8 +110,21 @@ public class CustomShell extends Shell {
 		}
 	}
 
-	public void checkPermission(Method method, String command) {
-//		System.out.println(String.format("command %s method %s", command, method.getName()));
+	public void checkPermission(Class<?> clazz, Method method, String command, Object[] args) {
+		ExchangeContext exchangeContext = new ExchangeContext();
+		exchangeContext.setClientId(ClientDetector.CLIENT.identify());
+		exchangeContext.setCommand(command);
+		exchangeContext.setClassName(clazz.getName());
+		exchangeContext.setMethodName(method.getName());
+		exchangeContext.setArgs(args);
+		CommandGroups commandGroups = method.getAnnotation(CommandGroups.class);
+		if (commandGroups != null)
+			exchangeContext.setCommandGroups(commandGroups.value());
+		clientSession.setExchangeContext(exchangeContext);
+		messageExchanger.getExchangeContext().set(exchangeContext);
+		if (exchangeContext.isAllowAll() == false && clientSession.hasPermission(command) == false) {
+			throw new NoPermissionException();
+		}
 	}
 
 	private boolean noInput(Input input) {

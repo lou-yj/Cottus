@@ -145,13 +145,14 @@ public class WorkerSessionManager implements IWorkerClientFilter {
 		return workerInfos;
 	}
 
-	public void update(String clientId) {
+	public WorkerSession update(String clientId) {
 		WorkerSession session = workerCache.get(clientId);
 		if (session == null) {
 			session = new WorkerSession(clientId);
 		}
 		session.setLastTime(System.currentTimeMillis());
 		workerCache.put(clientId, session);
+		return session;
 	}
 
 	public Collection<WorkerSession> workers() {

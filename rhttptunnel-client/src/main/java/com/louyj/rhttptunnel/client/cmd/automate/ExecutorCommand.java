@@ -3,7 +3,6 @@ package com.louyj.rhttptunnel.client.cmd.automate;
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_EXECUTOR;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
 
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -29,7 +28,7 @@ import com.louyj.rhttptunnel.model.message.server.TaskScheduleMessage.TaskType;
 @ShellComponent
 public class ExecutorCommand extends BaseCommand {
 
-	@CommandGroups({ CORE_EXECUTOR, CORE_NORMAL })
+	@CommandGroups({ CORE_EXECUTOR })
 	@ShellMethod(value = "list executors")
 	@ShellMethodAvailability("serverContext")
 	public String executors() {
@@ -38,7 +37,7 @@ public class ExecutorCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_EXECUTOR, CORE_NORMAL })
+	@CommandGroups({ CORE_EXECUTOR })
 	@ShellMethod(value = "show executor details")
 	@ShellMethodAvailability("serverContext")
 	public String executorDescribe(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name) {
@@ -48,7 +47,7 @@ public class ExecutorCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_EXECUTOR, CORE_NORMAL })
+	@CommandGroups({ CORE_EXECUTOR })
 	@ShellMethod(value = "show executor task execute history record")
 	@ShellMethodAvailability("serverContext")
 	public String executorRecords(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name,
@@ -61,7 +60,7 @@ public class ExecutorCommand extends BaseCommand {
 		return messagePoller.pollExchangeMessage(response);
 	}
 
-	@CommandGroups({ CORE_EXECUTOR, CORE_NORMAL })
+	@CommandGroups({ CORE_EXECUTOR })
 	@ShellMethod(value = "show executor task execute log")
 	@ShellMethodAvailability("serverContext")
 	public String executorLogs(@ShellOption(value = { "-n", "--name" }, help = "executor name") String name,

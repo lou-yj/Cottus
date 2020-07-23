@@ -1,7 +1,6 @@
 package com.louyj.rhttptunnel.model.util;
 
 import static com.google.common.base.Charsets.UTF_8;
-import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
 import java.security.Key;
 import java.security.MessageDigest;
@@ -12,7 +11,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 
 /**
@@ -38,7 +36,7 @@ public class AESEncryptUtils {
 		return hex.substring(8, 24);
 	}
 
-	public static String encrypt(String content, String key) throws Exception {
+	public static byte[] encrypt(byte[] content, String key) throws Exception {
 		if (content == null) {
 			return null;
 		}
@@ -48,10 +46,10 @@ public class AESEncryptUtils {
 		Key k = toKey(key.getBytes());
 		Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
 		cipher.init(Cipher.ENCRYPT_MODE, k, ivspec);
-		return encodeBase64String(cipher.doFinal(content.getBytes(UTF_8)));
+		return cipher.doFinal(content);
 	}
 
-	public static String decrypt(String content, String key) throws Exception {
+	public static byte[] decrypt(byte[] content, String key) throws Exception {
 		if (content == null) {
 			return null;
 		}
@@ -59,10 +57,9 @@ public class AESEncryptUtils {
 		byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		IvParameterSpec ivspec = new IvParameterSpec(iv);
 		Key k = toKey(key.getBytes());
-		byte[] bs = Base64.decodeBase64(content);
 		Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
 		cipher.init(Cipher.DECRYPT_MODE, k, ivspec);
-		return new String(cipher.doFinal(bs), UTF_8);
+		return cipher.doFinal(content);
 	}
 
 }

@@ -2,8 +2,11 @@ package com.louyj.rhttptunnel.client.cmd.server;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_ALLOW_ALL;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_CLIENT;
-import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_NORMAL;
+
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +20,15 @@ import com.louyj.rhttptunnel.client.ClientDetector;
 import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
 import com.louyj.rhttptunnel.client.cmd.worker.ControlCommand;
+import com.louyj.rhttptunnel.client.util.LogUtils;
+import com.louyj.rhttptunnel.model.bean.Pair;
+import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
 import com.louyj.rhttptunnel.model.message.ExitMessage;
 import com.louyj.rhttptunnel.model.message.ListServersMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.util.RsaUtils;
 
 /**
  *
@@ -36,22 +43,32 @@ public class ServerCommand extends BaseCommand {
 	@Autowired
 	private ControlCommand workerManageCommand;
 
-	@CommandGroups({ CORE_CLIENT, CORE_NORMAL })
+	@Autowired
+	private MessageExchanger messageExchanger;
+
+	@CommandGroups({ CORE_CLIENT, CORE_ALLOW_ALL })
 	@ShellMethod(value = "Connect to servers")
 	@ShellMethodAvailability("clientContext")
 	public String connect(@ShellOption(value = { "-s",
 			"--server" }, help = "bootstrap server address", defaultValue = "http://localhost:18080") String address,
 			@ShellOption(value = { "-u", "--user" }, help = "user name") String userName,
-			@ShellOption(value = { "-p", "--password" }, help = "password") String password) {
+			@ShellOption(value = { "-p", "--password" }, help = "password") String password)
+			throws NoSuchAlgorithmException {
 		messageExchanger.setBootstrapAddress(address);
 		{
+			LogUtils.printMessage("Exchange security information with servers", System.out);
+			Pair<Key, Key> keyPair = RsaUtils.genKeyPair();
+			Pair<String, String> stringKeyPair = RsaUtils.stringKeyPair(keyPair);
 			RegistryMessage registryMessage = new RegistryMessage(CLIENT);
 			registryMessage.setRegistryClient(CLIENT);
+			registryMessage.setPublicKey(stringKeyPair.getRight());
 			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, registryMessage);
 			String resp = messagePoller.pollExchangeMessage(response);
 			if (StringUtils.isNotBlank(resp)) {
 				return null;
 			}
+			messageExchanger.setPrivateKey(keyPair.getLeft());
+			LogUtils.printMessage("Security connection established", System.out);
 		}
 		ConnectMessage connectMessage = new ConnectMessage(CLIENT);
 		connectMessage.setUser(userName);
@@ -65,7 +82,7 @@ public class ServerCommand extends BaseCommand {
 		return resp;
 	}
 
-	@CommandGroups({ CORE_CLIENT, CORE_NORMAL })
+	@CommandGroups({ CORE_CLIENT, CORE_ALLOW_ALL })
 	@ShellMethod(value = "Disconnect from servers")
 	@ShellMethodAvailability("serverContext")
 	public String disconnect() {
@@ -83,7 +100,7 @@ public class ServerCommand extends BaseCommand {
 		return null;
 	}
 
-	@CommandGroups({ CORE_CLIENT, CORE_NORMAL })
+	@CommandGroups({ CORE_CLIENT })
 	@ShellMethod(value = "list servers")
 	@ShellMethodAvailability("serverContext")
 	public String servers() {
