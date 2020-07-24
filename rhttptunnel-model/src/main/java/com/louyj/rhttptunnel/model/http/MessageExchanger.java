@@ -180,8 +180,6 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 			logger.info(String.format("Server %s commucation failed, try another",
 					serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()))));
 		}
-		System.out.println("[" + CLIENT_ERROR.reason() + "] All servers not available");
-		System.exit(0);
 		return RejectMessage.creason(message.getClientId(), message.getExchangeId(),
 				"[" + CLIENT_ERROR.reason() + "] All servers not available");
 	}
