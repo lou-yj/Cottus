@@ -8,6 +8,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.louyj.rhttptunnel.model.http.ExchangeContext;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ServerEventLongPullMessage;
@@ -42,7 +43,15 @@ public class ServerEventListener extends Thread implements InitializingBean {
 				} catch (InterruptedException e) {
 				}
 				continue;
+			} else {
+				break;
 			}
+		}
+		ExchangeContext exchangeContext = new ExchangeContext();
+		exchangeContext.setClientId(ClientDetector.CLIENT.identify());
+		exchangeContext.setCommand("heartbeat");
+		messageExchanger.getExchangeContext().set(exchangeContext);
+		while (this.isInterrupted() == false) {
 			try {
 				if (messageExchanger.isServerConnected()) {
 					ServerEventLongPullMessage message = new ServerEventLongPullMessage(ClientDetector.CLIENT);

@@ -12,8 +12,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class SecurityMessage extends BaseMessage {
 
-	private String publicKey;
-
 	private String aesKey;
 
 	@JsonCreator
@@ -24,14 +22,6 @@ public class SecurityMessage extends BaseMessage {
 	public SecurityMessage(ClientInfo client, String exchangeId) {
 		super(client);
 		setExchangeId(exchangeId);
-	}
-
-	public String getPublicKey() {
-		return publicKey;
-	}
-
-	public void setPublicKey(String publicKey) {
-		this.publicKey = publicKey;
 	}
 
 	public String getAesKey() {

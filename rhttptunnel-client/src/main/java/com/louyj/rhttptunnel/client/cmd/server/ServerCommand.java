@@ -28,6 +28,7 @@ import com.louyj.rhttptunnel.model.message.ConnectMessage;
 import com.louyj.rhttptunnel.model.message.ExitMessage;
 import com.louyj.rhttptunnel.model.message.ListServersMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.message.RsaExchangeMessage;
 import com.louyj.rhttptunnel.model.message.SecurityMessage;
 import com.louyj.rhttptunnel.model.util.RsaUtils;
 
@@ -67,14 +68,20 @@ public class ServerCommand extends BaseCommand {
 			if (StringUtils.isNotBlank(resp)) {
 				return null;
 			}
-			SecurityMessage securityMessage = new SecurityMessage(ClientDetector.CLIENT);
-			securityMessage.setPublicKey(stringKeyPair.getRight());
-			response = messageExchanger.jsonPost(CLIENT_EXCHANGE, securityMessage);
+			RsaExchangeMessage rsaExchangeMessage = new RsaExchangeMessage(CLIENT);
+			rsaExchangeMessage.setPublicKey(stringKeyPair.getRight());
+			response = messageExchanger.jsonPost(CLIENT_EXCHANGE, rsaExchangeMessage);
 			resp = messagePoller.pollExchangeMessage(response);
 			if (StringUtils.isNotBlank(resp)) {
 				return null;
 			}
 			messageExchanger.setPrivateKey(keyPair.getLeft());
+			SecurityMessage securityMessage = new SecurityMessage(ClientDetector.CLIENT);
+			response = messageExchanger.jsonPost(CLIENT_EXCHANGE, securityMessage);
+			resp = messagePoller.pollExchangeMessage(response);
+			if (StringUtils.isNotBlank(resp)) {
+				return null;
+			}
 			LogUtils.printMessage("Security connection established", System.out);
 		}
 		ConnectMessage connectMessage = new ConnectMessage(CLIENT);

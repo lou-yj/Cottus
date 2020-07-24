@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.louyj.rhttptunnel.model.http.ExchangeContext;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
@@ -39,6 +40,10 @@ public class RegistryHandler implements IMessageHandler {
 		ClientDetector.CLIENT.setUuid(registryMessage.getRegistryClient().identify());
 		logger.info("Client identfy {}", ClientDetector.CLIENT.identify());
 		messageExchanger.setServerAddresses(registryMessage.getServers());
+		ThreadLocal<ExchangeContext> exchangeContext = messageExchanger.getExchangeContext();
+		if (exchangeContext != null) {
+			exchangeContext.get().setClientId(registryMessage.getRegistryClient().identify());
+		}
 		logger.info("Server addresses {}", registryMessage.getServers());
 		return Lists.newArrayList();
 	}

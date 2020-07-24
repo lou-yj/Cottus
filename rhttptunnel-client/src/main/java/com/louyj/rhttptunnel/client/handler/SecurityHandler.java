@@ -9,7 +9,6 @@ import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.SecurityMessage;
-import com.louyj.rhttptunnel.model.util.RsaUtils;
 
 /**
  *
@@ -33,7 +32,6 @@ public class SecurityHandler implements IMessageHandler {
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		SecurityMessage registryMessage = (SecurityMessage) message;
 		messageExchanger.setAesKey(registryMessage.getAesKey());
-		messageExchanger.setPublicKey(RsaUtils.loadKey(registryMessage.getPublicKey()));
 		throw new EndOfMessageException();
 	}
 

@@ -32,7 +32,6 @@ import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.exception.NoPermissionException;
 import com.louyj.rhttptunnel.model.http.ExchangeContext;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
-import com.louyj.rhttptunnel.model.util.JsonUtils;
 
 /**
  *
@@ -121,7 +120,6 @@ public class CustomShell extends Shell {
 		CommandGroups commandGroups = method.getAnnotation(CommandGroups.class);
 		if (commandGroups != null)
 			exchangeContext.setCommandGroups(commandGroups.value());
-		System.out.println(JsonUtils.gson().toJson(exchangeContext));
 		clientSession.setExchangeContext(exchangeContext);
 		messageExchanger.getExchangeContext().set(exchangeContext);
 		if (exchangeContext.isAllowAll() == false && clientSession.hasPermission(command) == false) {

@@ -75,7 +75,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 	private static final String HTTP_MAX_PER_ROUTE = "http.maxPerRoute";
 	private static final String HTTP_VERBOSE = "http.verbose";
 
-	private ObjectMapper jackson = JsonUtils.jacksonWithType();
+	private ObjectMapper jackson = JsonUtils.jackson();
 	private List<String> bootstrapServers = Lists.newArrayList();
 	private List<String> serverAddresses = Lists.newArrayList();
 	private int currentServerIndex = 0;
@@ -92,7 +92,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 	@Value("${http.maxPerRoute:50}")
 	private int maxPerRoute;
 
-	private boolean verbose = false;
+	private boolean verbose = true;
 
 	private ThreadLocal<ExchangeContext> exchangeContext = new ThreadLocal<>();
 	private Key privateKey;
@@ -134,7 +134,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 	}
 
 	public boolean isServerConnected() {
-		return CollectionUtils.isNotEmpty(serverAddresses);
+		return CollectionUtils.size(serverAddresses) > 0;
 	}
 
 	public ThreadLocal<ExchangeContext> getExchangeContext() {
@@ -222,6 +222,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 				case AES:
 					reqData = AESEncryptUtils.encrypt(reqData, aesKey);
 					httpPost.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.AES.name());
+					break;
 				default:
 					httpPost.setHeader(CustomHeaders.ENCRYPT_TYPE, EncryptType.NONE.name());
 					break;
@@ -234,6 +235,9 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 				byte[] respData = EntityUtils.toByteArray(entity);
 				Header encryptHeader = response.getFirstHeader(CustomHeaders.ENCRYPT_TYPE);
 				if (encryptHeader == null) {
+					for (Header header : response.getAllHeaders()) {
+						System.out.println(header.getName() + ": " + header.getValue());
+					}
 					throw new IllegalArgumentException("Bad Response, Missing Encrypt Type");
 				}
 				switch (EncryptType.of(encryptHeader.getValue())) {

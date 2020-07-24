@@ -15,9 +15,11 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.louyj.rhttptunnel.model.bean.Pair;
+import com.louyj.rhttptunnel.model.http.ExchangeContext;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
+import com.louyj.rhttptunnel.model.message.RsaExchangeMessage;
 import com.louyj.rhttptunnel.model.message.SecurityMessage;
 import com.louyj.rhttptunnel.model.message.ServerEventLongPullMessage;
 import com.louyj.rhttptunnel.model.util.JsonUtils;
@@ -47,6 +49,11 @@ public class ServerEventListener extends Thread implements InitializingBean {
 	@Override
 	public void run() {
 		try {
+			ExchangeContext exchangeContext = new ExchangeContext();
+			exchangeContext.setClientId(ClientDetector.CLIENT.identify());
+			exchangeContext.setCommand("heartbeat");
+			messageExchanger.getExchangeContext().set(exchangeContext);
+
 			Pair<Key, Key> keyPair = RsaUtils.genKeyPair();
 			Pair<String, String> stringKeyPair = RsaUtils.stringKeyPair(keyPair);
 
@@ -58,12 +65,19 @@ public class ServerEventListener extends Thread implements InitializingBean {
 				throw new RuntimeException("Registry failed");
 			}
 			MessageUtils.handle(message);
+			RsaExchangeMessage rsaExchangeMessage = new RsaExchangeMessage(ClientDetector.CLIENT);
+			rsaExchangeMessage.setPublicKey(stringKeyPair.getRight());
+			message = messageExchanger.jsonPost(WORKER_EXCHANGE, rsaExchangeMessage);
+			if ((message instanceof RegistryMessage) == false) {
+				logger.warn("Rsa exchange failed with response {}", JsonUtils.gson().toJson(message));
+				throw new RuntimeException("Security exchange failed");
+			}
+			MessageUtils.handle(message);
 			SecurityMessage securityMessage = new SecurityMessage(ClientDetector.CLIENT);
-			securityMessage.setPublicKey(stringKeyPair.getRight());
 			message = messageExchanger.jsonPost(WORKER_EXCHANGE, securityMessage);
 			if ((message instanceof RegistryMessage) == false) {
 				logger.warn("Security exchange failed with response {}", JsonUtils.gson().toJson(message));
-				throw new RuntimeException("Registry failed");
+				throw new RuntimeException("Security exchange failed");
 			}
 			MessageUtils.handle(message);
 			messageExchanger.setPrivateKey(keyPair.getLeft());

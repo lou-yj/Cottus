@@ -10,6 +10,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -40,18 +41,29 @@ public class RsaUtils {
 
 	public static Pair<Key, Key> genKeyPair() throws NoSuchAlgorithmException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-		keyGen.initialize(2048);
+		keyGen.initialize(2048, new SecureRandom());
 		KeyPair kp = keyGen.genKeyPair();
 		Key pub = kp.getPublic();
 		Key pvt = kp.getPrivate();
 		return Pair.of(pvt, pub);
 	}
 
-	public static Key loadKey(String rsaKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+	public static Key loadPrivateKey(String rsaKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
 		byte[] privateKeyBytes = Base64.decodeBase64(rsaKey);
 		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		return keyFactory.generatePrivate(keySpec);
+	}
+
+	public static Key loadPublicKey(String rsaKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		byte[] publicKeyBytes = Base64.decodeBase64(rsaKey);
+		X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		return keyFactory.generatePublic(keySpec);
+	}
+
+	public static String formatKey(Key rsaKey) {
+		return Base64.encodeBase64String(rsaKey.getEncoded());
 	}
 
 	public static Pair<String, String> stringKeyPair(Pair<Key, Key> pair) {

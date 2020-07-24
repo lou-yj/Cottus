@@ -9,7 +9,6 @@ import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.SecurityMessage;
-import com.louyj.rhttptunnel.model.util.RsaUtils;
 
 /**
  *
@@ -33,7 +32,6 @@ public class SecurityHandler implements IMessageHandler {
 	public List<BaseMessage> handle(BaseMessage message) throws Exception {
 		SecurityMessage securityMessage = (SecurityMessage) message;
 		messageExchanger.setAesKey(securityMessage.getAesKey());
-		messageExchanger.setPublicKey(RsaUtils.loadKey(securityMessage.getPublicKey()));
 		return Lists.newArrayList();
 	}
 

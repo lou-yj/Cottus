@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.server.exchange;
 import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.CLIENT_ID;
 import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.ENCRYPT_TYPE;
 import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.MESSAGE_TYPE;
+import static com.louyj.rhttptunnel.model.message.consts.RejectReason.INTERNEL_SERVER_ERROR;
 import static org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
 import java.nio.charset.StandardCharsets;
@@ -73,8 +74,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	private ClientSessionManager clientManager;
 	@Autowired
 	private WorkerSessionManager workerManager;
-	@Autowired
-	private ObjectMapper jackson;
+//	@Autowired
+//	private ObjectMapper jackson;
 	@Autowired
 	private ClientInfoManager clientInfoManager;
 	@Autowired
@@ -112,13 +113,23 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
 			HttpServletResponse httpResponse) throws Exception {
 		String aesKey = clientManager.aesKey(clientId);
-		BaseMessage request = deserializer(data, messageType, enctyptType, aesKey);
-		BaseMessage response = client(request);
-		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
-				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
-			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
+		Key publicKey = clientManager.publicKey(clientId);
+		EncryptType respEncryptType = encryptType(publicKey, aesKey);
+		try {
+			BaseMessage request = deserializer(data, messageType, enctyptType, aesKey);
+			BaseMessage response = client(request);
+			if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
+					&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
+				logger.info("{}\n{}\n{}", logSummary(request, response, enctyptType, respEncryptType.name()),
+						logMessage(request), logMessage(response));
+			}
+			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
+		} catch (Exception e) {
+			logger.error("Catched Exception: client id {} encrypt type {} message type {}", clientId, enctyptType,
+					messageType, e);
+			RejectMessage response = RejectMessage.sreason("", INTERNEL_SERVER_ERROR.reason());
+			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
 		}
-		return serializer(httpResponse, response, clientManager.publicKey(clientId), clientManager.aesKey(clientId));
 	}
 
 	@PostMapping(value = "worker", consumes = APPLICATION_OCTET_STREAM_VALUE, produces = APPLICATION_OCTET_STREAM_VALUE)
@@ -126,13 +137,24 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
 			HttpServletResponse httpResponse) throws Exception {
 		String aesKey = workerManager.aesKey(clientId);
-		BaseMessage request = deserializer(data, messageType, enctyptType, aesKey);
-		BaseMessage response = worker(request);
-		if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
-				&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
-			logger.info("{}\n{}\n{}", logSummary(request, response), logMessage(request), logMessage(response));
+		Key publicKey = workerManager.publicKey(clientId);
+		EncryptType respEncryptType = encryptType(publicKey, aesKey);
+		try {
+			BaseMessage request = deserializer(data, messageType, enctyptType, aesKey);
+			BaseMessage response = worker(request);
+			if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
+					&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
+				logger.info("{}\n{}\n{}", logSummary(request, response, enctyptType, respEncryptType.name()),
+						logMessage(request), logMessage(response));
+			}
+			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
+
+		} catch (Exception e) {
+			logger.error("Catched Exception: client id {} encrypt type {} message type {}", clientId, enctyptType,
+					messageType, e);
+			RejectMessage response = RejectMessage.sreason("", INTERNEL_SERVER_ERROR.reason());
+			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
 		}
-		return serializer(httpResponse, response, workerManager.publicKey(clientId), workerManager.aesKey(clientId));
 	}
 
 	public BaseMessage client(BaseMessage message) throws Exception {
@@ -233,20 +255,15 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 				break;
 			}
 		}
-		return (BaseMessage) jackson.readValue(data, Class.forName(messageType));
+		return (BaseMessage) normalJackson.readValue(new String(data, StandardCharsets.UTF_8),
+				Class.forName(messageType));
 	}
 
-	private byte[] serializer(HttpServletResponse httpResponse, BaseMessage message, Key publicKey, String aesKey)
-			throws Exception {
+	private byte[] serializer(HttpServletResponse httpResponse, BaseMessage message, Key publicKey, String aesKey,
+			EncryptType encryptType) throws Exception {
 		httpResponse.setHeader(CustomHeaders.MESSAGE_TYPE, message.getClass().getName());
-		String json = jackson.writeValueAsString(message);
+		String json = normalJackson.writeValueAsString(message);
 		byte[] data = json.getBytes(StandardCharsets.UTF_8);
-		EncryptType encryptType = EncryptType.NONE;
-		if (aesKey != null) {
-			encryptType = EncryptType.AES;
-		} else if (publicKey != null) {
-			encryptType = EncryptType.RSA;
-		}
 		switch (encryptType) {
 		case RSA:
 			data = RsaUtils.encrypt(data, publicKey);
@@ -261,6 +278,16 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			break;
 		}
 		return data;
+	}
+
+	private EncryptType encryptType(Key publicKey, String aesKey) {
+		EncryptType encryptType = EncryptType.NONE;
+		if (aesKey != null) {
+			encryptType = EncryptType.AES;
+		} else if (publicKey != null) {
+			encryptType = EncryptType.RSA;
+		}
+		return encryptType;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -281,13 +308,15 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		return String.format("[%s] %s", msg.getClass().getSimpleName(), normalJackson.writeValueAsString(map));
 	}
 
-	private String logSummary(BaseMessage request, BaseMessage response) {
+	private String logSummary(BaseMessage request, BaseMessage response, String reqEnctyptType,
+			String respEnctyptType) {
 		if (request instanceof RegistryMessage) {
 			return "Registry Message";
 		}
 		ClientInfo fromClient = clientInfoManager.findClientInfo(request.getClientId());
 		ClientInfo toClient = clientInfoManager.findClientInfo(response.getClientId());
-		return String.format("%s->%s eid %s", clientHost(fromClient), clientHost(toClient), request.getExchangeId());
+		return String.format("%s->%s [%s->%s] eid %s", clientHost(fromClient), clientHost(toClient), reqEnctyptType,
+				respEnctyptType, request.getExchangeId());
 	}
 
 	private String clientHost(ClientInfo clientInfo) {

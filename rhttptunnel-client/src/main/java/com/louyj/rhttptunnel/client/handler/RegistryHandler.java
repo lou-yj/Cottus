@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientDetector;
 import com.louyj.rhttptunnel.client.exception.EndOfMessageException;
+import com.louyj.rhttptunnel.model.http.ExchangeContext;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
@@ -34,6 +35,10 @@ public class RegistryHandler implements IMessageHandler {
 		RegistryMessage registryMessage = (RegistryMessage) message;
 		ClientDetector.CLIENT.setUuid(registryMessage.getRegistryClient().identify());
 		messageExchanger.setServerAddresses(registryMessage.getServers());
+		ThreadLocal<ExchangeContext> exchangeContext = messageExchanger.getExchangeContext();
+		if (exchangeContext != null) {
+			exchangeContext.get().setClientId(registryMessage.getRegistryClient().identify());
+		}
 		throw new EndOfMessageException();
 	}
 
