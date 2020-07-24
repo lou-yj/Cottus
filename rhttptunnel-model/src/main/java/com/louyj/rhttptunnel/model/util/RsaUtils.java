@@ -19,6 +19,7 @@ import java.security.spec.X509EncodedKeySpec;
 import javax.crypto.Cipher;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +42,17 @@ public class RsaUtils {
 
 	public static Pair<Key, Key> genKeyPair() throws NoSuchAlgorithmException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-		keyGen.initialize(2048, new SecureRandom());
+		keyGen.initialize(2048, new SecureRandom(RandomStringUtils.random(10, true, true).getBytes(UTF_8)));
 		KeyPair kp = keyGen.genKeyPair();
 		Key pub = kp.getPublic();
 		Key pvt = kp.getPrivate();
 		return Pair.of(pvt, pub);
+	}
+
+	public static void main(String[] args) throws NoSuchAlgorithmException {
+		Pair<Key, Key> genKeyPair = genKeyPair();
+		Pair<String, String> stringKeyPair = stringKeyPair(genKeyPair);
+		System.out.println(stringKeyPair.getLeft());
 	}
 
 	public static Key loadPrivateKey(String rsaKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
