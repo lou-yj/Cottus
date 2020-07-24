@@ -4,6 +4,7 @@ import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -56,7 +57,13 @@ public class ServerEventListener extends Thread implements InitializingBean {
 				if (messageExchanger.isServerConnected()) {
 					ServerEventLongPullMessage message = new ServerEventLongPullMessage(ClientDetector.CLIENT);
 					BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
-					messagePoller.pollExchangeMessage(response);
+					String polled = messagePoller.pollExchangeMessage(response);
+					if (StringUtils.isNotBlank(polled)) {
+						try {
+							TimeUnit.SECONDS.sleep(5);
+						} catch (InterruptedException ex) {
+						}
+					}
 				}
 			} catch (Exception e) {
 				try {

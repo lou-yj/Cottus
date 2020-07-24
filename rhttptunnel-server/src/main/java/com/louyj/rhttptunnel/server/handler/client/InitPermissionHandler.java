@@ -46,7 +46,7 @@ public class InitPermissionHandler implements IClientMessageHandler {
 		for (Entry<String, Set<String>> entry : initMessage.getCommandGroups().entrySet()) {
 			Group group = new Group();
 			group.setName(entry.getKey());
-			group.setGroups(entry.getValue());
+			group.setCommands(entry.getValue());
 			userPermissionManager.upsertGroup(group);
 		}
 		return AckMessage.sack(message.getExchangeId());

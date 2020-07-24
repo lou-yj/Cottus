@@ -50,6 +50,9 @@ public class AESEncryptUtils {
 	}
 
 	public static byte[] decrypt(byte[] content, String key) throws Exception {
+		if (key == null) {
+			throw new IllegalArgumentException("Key is empty");
+		}
 		if (content == null) {
 			return null;
 		}

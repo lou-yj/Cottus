@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.message.consts.CommandGroupType;
+import com.louyj.rhttptunnel.model.message.consts.CustomHeaders;
 
 /**
  *
@@ -43,9 +44,18 @@ public class ExchangeContext {
 		return false;
 	}
 
+	public boolean isSuperAdminCommand() {
+		for (CommandGroupType cgt : commandGroups) {
+			if (cgt.equals(CommandGroupType.CORE_SUPER_ADMIN)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public Map<String, String> httpHeaders() {
 		Map<String, String> headers = Maps.newHashMap();
-		headers.put("X-Command", command);
+		headers.put(CustomHeaders.COMMAND, command);
 		return headers;
 	}
 

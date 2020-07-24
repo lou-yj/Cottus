@@ -7,6 +7,8 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ignite.IgniteCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +28,8 @@ import com.louyj.rhttptunnel.server.IgniteRegistry;
 @Component
 public class UserPermissionManager {
 
+	private Logger logger = LoggerFactory.getLogger(getClass());
+
 	@Autowired
 	private IgniteRegistry igniteRegistry;
 
@@ -41,6 +45,7 @@ public class UserPermissionManager {
 		if (userInfo == null) {
 			return null;
 		}
+		logger.info("User {} groups {}", userInfo.getName(), userInfo.getGroups());
 		if (StringUtils.equals(password, userInfo.getPassword())) {
 			return permission(userInfo);
 		}
@@ -56,6 +61,9 @@ public class UserPermissionManager {
 		Set<String> groups = user.getGroups();
 		for (String groupId : groups) {
 			Group group = (Group) userPermissionCache.get("group:" + groupId);
+			if (group == null) {
+				logger.warn("Group {} not found.", groupId);
+			}
 			permission(permission, group);
 		}
 		return permission;

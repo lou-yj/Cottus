@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.client.cmd.user;
 
 import static com.louyj.rhttptunnel.client.ClientDetector.CLIENT;
 import static com.louyj.rhttptunnel.model.http.Endpoints.CLIENT_EXCHANGE;
+import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_SUPER_ADMIN;
 import static com.louyj.rhttptunnel.model.message.consts.CommandGroupType.CORE_USER_MGR;
 
 import org.apache.commons.lang3.StringUtils;
@@ -69,6 +70,7 @@ public class UserCommand extends BaseCommand {
 		User user = new User();
 		user.setName(userName);
 		user.setGroups(Sets.newHashSet(groups.split(",")));
+		user.getGroups().remove(CORE_SUPER_ADMIN.name());
 		UserGrantMessage message = new UserGrantMessage(CLIENT);
 		message.setUser(user);
 		BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);

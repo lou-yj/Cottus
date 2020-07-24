@@ -1,6 +1,7 @@
 package com.louyj.rhttptunnel.server.exchange;
 
 import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.CLIENT_ID;
+import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.COMMAND;
 import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.ENCRYPT_TYPE;
 import static com.louyj.rhttptunnel.model.message.consts.CustomHeaders.MESSAGE_TYPE;
 import static com.louyj.rhttptunnel.model.message.consts.RejectReason.INTERNEL_SERVER_ERROR;
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.louyj.rhttptunnel.model.annotation.NoLogFields;
 import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
+import com.louyj.rhttptunnel.model.annotation.NoPermissionCheck;
 import com.louyj.rhttptunnel.model.message.AckMessage;
 import com.louyj.rhttptunnel.model.message.AsyncExecAckMessage;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
@@ -111,10 +113,16 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	@PostMapping(value = "client", consumes = APPLICATION_OCTET_STREAM_VALUE, produces = APPLICATION_OCTET_STREAM_VALUE)
 	public byte[] client(@RequestBody byte[] data, @RequestHeader(MESSAGE_TYPE) String messageType,
 			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
-			HttpServletResponse httpResponse) throws Exception {
+			@RequestHeader(COMMAND) String command, HttpServletResponse httpResponse) throws Exception {
 		String aesKey = clientManager.aesKey(clientId);
 		Key publicKey = clientManager.publicKey(clientId);
 		EncryptType respEncryptType = encryptType(publicKey, aesKey);
+		if (checkClientPermission(clientId, messageType, command) == false) {
+			logger.warn("Permission Deny: client id {} encrypt type {} message type {} command {}", clientId,
+					enctyptType, messageType, command);
+			RejectMessage response = RejectMessage.sreason("", "Permission Deny");
+			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
+		}
 		try {
 			BaseMessage request = deserializer(data, messageType, enctyptType, aesKey);
 			BaseMessage response = client(request);
@@ -125,8 +133,8 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			}
 			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
 		} catch (Exception e) {
-			logger.error("Catched Exception: client id {} encrypt type {} message type {}", clientId, enctyptType,
-					messageType, e);
+			logger.error("Catched Exception: client id {} encrypt type {} message type {} command {}", clientId,
+					enctyptType, messageType, command, e);
 			RejectMessage response = RejectMessage.sreason("", INTERNEL_SERVER_ERROR.reason());
 			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
 		}
@@ -324,6 +332,31 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			return clientInfo.getHost();
 		}
 		return "EXPIRED";
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private boolean checkClientPermission(String clientId, String messageType, String command)
+			throws ClassNotFoundException {
+		Class clazz = Class.forName(messageType);
+		if (clazz.isAnnotationPresent(NoPermissionCheck.class)) {
+			return true;
+		}
+		ClientSession clientSession = clientManager.sessionByCid(clientId);
+		if (clientSession == null) {
+			logger.info("Client session not found, permission denied");
+			return false;
+		}
+		if (clientSession.isSuperAdmin()) {
+			return true;
+		}
+		if (clientSession.getPermission() == null) {
+			return false;
+		}
+		if (clientSession.getPermission().getCommands().contains(command)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 }

@@ -2,6 +2,7 @@ package com.louyj.rhttptunnel.model.message;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.annotation.NoPermissionCheck;
 
 /**
  *
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
+@NoPermissionCheck
 public class RsaExchangeMessage extends BaseMessage {
 
 	private String publicKey;

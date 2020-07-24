@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.louyj.rhttptunnel.model.bean.Permission;
 
 /**
  *
@@ -29,11 +30,21 @@ public class ClientSession {
 
 	private String userName;
 
+	private Permission permission;
+
+	private boolean superAdmin = false;
+
 	private String aesKey;
 
 	private Key publicKey;
 
-	private boolean superAdmin = false;
+	public Permission getPermission() {
+		return permission;
+	}
+
+	public void setPermission(Permission permission) {
+		this.permission = permission;
+	}
 
 	public boolean isSuperAdmin() {
 		return superAdmin;

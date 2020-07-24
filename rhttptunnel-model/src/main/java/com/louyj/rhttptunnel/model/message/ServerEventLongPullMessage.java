@@ -3,6 +3,7 @@ package com.louyj.rhttptunnel.model.message;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
+import com.louyj.rhttptunnel.model.annotation.NoPermissionCheck;
 
 /**
  *
@@ -12,6 +13,7 @@ import com.louyj.rhttptunnel.model.annotation.NoLogMessage;
  *
  */
 @NoLogMessage
+@NoPermissionCheck
 public class ServerEventLongPullMessage extends BaseMessage {
 
 	@JsonCreator

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.louyj.rhttptunnel.model.annotation.NoPermissionCheck;
 
 /**
  *
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Louyj
  *
  */
+@NoPermissionCheck
 public class RegistryMessage extends BaseMessage {
 
 	private ClientInfo registryClient;

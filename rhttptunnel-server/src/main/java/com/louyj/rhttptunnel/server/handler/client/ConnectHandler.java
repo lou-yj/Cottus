@@ -65,6 +65,7 @@ public class ConnectHandler implements IClientMessageHandler {
 					roleMessage.setPermission(new Permission());
 					roleMessage.setSuperAdmin(true);
 					clientSession.setSuperAdmin(true);
+					clientSession.setUserName(connectMessage.getUser());
 					return roleMessage;
 				} else {
 					logger.warn("Decrypt cid not matched, excpet {} actual {}", message.getClientId(), cid);
@@ -74,6 +75,9 @@ public class ConnectHandler implements IClientMessageHandler {
 				if (permission != null) {
 					RoleMessage roleMessage = new RoleMessage(SERVER, message.getExchangeId());
 					roleMessage.setPermission(permission);
+					clientSession.setSuperAdmin(false);
+					clientSession.setUserName(connectMessage.getUser());
+					clientSession.setPermission(permission);
 					return roleMessage;
 				}
 			}

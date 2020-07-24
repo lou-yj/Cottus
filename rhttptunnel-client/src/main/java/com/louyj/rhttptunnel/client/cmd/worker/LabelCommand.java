@@ -32,7 +32,7 @@ public class LabelCommand extends BaseCommand {
 
 	@CommandGroups({ CORE_WORKER_MGR })
 	@ShellMethod(value = "update worker labels")
-	@ShellMethodAvailability("workerAdminContext")
+	@ShellMethodAvailability("workerContext")
 	public String labelSet(@ShellOption(value = { "-l", "--labels" }, help = "labels to be update") String labelStr) {
 		String[] labelKvs = labelStr.split("\\s*,\\s*");
 		UpdateLabelMessage message = new UpdateLabelMessage(CLIENT);

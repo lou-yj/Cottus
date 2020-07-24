@@ -19,7 +19,6 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
-import com.google.common.collect.Lists;
 import com.louyj.rhttptunnel.client.ClientDetector;
 import com.louyj.rhttptunnel.client.annotation.CommandGroups;
 import com.louyj.rhttptunnel.client.cmd.BaseCommand;
@@ -29,7 +28,6 @@ import com.louyj.rhttptunnel.model.bean.Pair;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.ConnectMessage;
-import com.louyj.rhttptunnel.model.message.ExitMessage;
 import com.louyj.rhttptunnel.model.message.ListServersMessage;
 import com.louyj.rhttptunnel.model.message.RegistryMessage;
 import com.louyj.rhttptunnel.model.message.RsaExchangeMessage;
@@ -118,24 +116,6 @@ public class ServerCommand extends BaseCommand {
 			resp = workerManageCommand.discover("");
 		}
 		return resp;
-	}
-
-	@CommandGroups({ CORE_CLIENT, CORE_ALLOW_ALL })
-	@ShellMethod(value = "Disconnect from servers")
-	@ShellMethodAvailability("serverContext")
-	public String disconnect() {
-		if (messageExchanger.isServerConnected()) {
-			ExitMessage message = new ExitMessage(ClientDetector.CLIENT);
-			BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
-			messagePoller.pollExchangeMessage(response);
-		}
-		session.setServerConnected(false);
-		session.setWorkerConnected(false);
-		session.setCwd("/");
-		session.setSelectedWorkers(null);
-		session.setDiscoverWorkerText(null);
-		session.setDiscoverWorkers(Lists.newArrayList());
-		return null;
 	}
 
 	@CommandGroups({ CORE_CLIENT })

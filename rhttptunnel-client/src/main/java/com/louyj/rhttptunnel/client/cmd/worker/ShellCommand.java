@@ -40,7 +40,7 @@ public class ShellCommand extends BaseCommand {
 	@CommandGroups({ CORE_WORKER_MGR })
 	@SuppressWarnings("resource")
 	@ShellMethod(value = "Enter into interactive shell mode")
-	@ShellMethodAvailability("workerAdminContext")
+	@ShellMethodAvailability("workerContext")
 	public String shell() throws Exception {
 		System.out.println("OPERATION WILL NOT CONTROLED BY SERVER!!!");
 		System.out.println("ANYTHING AT YOUR OWN RISK!!!");

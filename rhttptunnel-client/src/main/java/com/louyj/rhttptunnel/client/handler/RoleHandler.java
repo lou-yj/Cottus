@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.louyj.rhttptunnel.client.ClientSession;
+import com.louyj.rhttptunnel.client.util.LogUtils;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.auth.RoleMessage;
 
@@ -32,6 +33,9 @@ public class RoleHandler implements IMessageHandler {
 		RoleMessage roleMessage = (RoleMessage) message;
 		clientSession.setPermission(roleMessage.getPermission());
 		clientSession.setSuperAdmin(roleMessage.isSuperAdmin());
+		if (roleMessage.isSuperAdmin()) {
+			LogUtils.printMessage("You are SuperAdmin", writer);
+		}
 	}
 
 }

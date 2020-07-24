@@ -46,21 +46,23 @@ public class UserAddHandler implements IClientMessageHandler {
 	public BaseMessage handle(List<WorkerSession> workerSessions, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		UserAddMessage userAddMessage = (UserAddMessage) message;
-		String currentUserName = clientSession.getUserName();
-		User currentUser = userPermissionManager.userById(currentUserName);
-		if (currentUser == null) {
-			return RejectMessage.sreason(message.getExchangeId(), "Operation has no permission");
-		}
 		User addUser = userAddMessage.getUser();
+		if (clientSession.isSuperAdmin() == false) {
+			String currentUserName = clientSession.getUserName();
+			User currentUser = userPermissionManager.userById(currentUserName);
+			if (currentUser == null) {
+				return RejectMessage.sreason(message.getExchangeId(), "Operation has no permission");
+			}
+			Permission permission = userPermissionManager.permission(currentUser);
+			Permission permission2 = userPermissionManager.permission(addUser);
+			Collection<String> subtract = CollectionUtils.subtract(permission2.getCommands(), permission.getCommands());
+			if (CollectionUtils.isNotEmpty(subtract)) {
+				return RejectMessage.sreason(message.getExchangeId(), String
+						.format("You don't have permission to grant %s commands", StringUtils.join(subtract, ",")));
+			}
+		}
 		if (userPermissionManager.userExists(addUser.getName())) {
 			return RejectMessage.sreason(message.getExchangeId(), "User already exists");
-		}
-		Permission permission = userPermissionManager.permission(currentUser);
-		Permission permission2 = userPermissionManager.permission(addUser);
-		Collection<String> subtract = CollectionUtils.subtract(permission2.getCommands(), permission.getCommands());
-		if (CollectionUtils.isNotEmpty(subtract)) {
-			return RejectMessage.sreason(message.getExchangeId(),
-					String.format("You don't have permission to grant %s commands", StringUtils.join(subtract, ",")));
 		}
 		userPermissionManager.upsertUser(userAddMessage.getUser());
 		return AckMessage.sack(message.getExchangeId());
