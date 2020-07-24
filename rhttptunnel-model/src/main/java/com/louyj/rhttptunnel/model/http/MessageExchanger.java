@@ -194,7 +194,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 			String serverAddress = serverAddresses.get(Math.abs(currentServerIndex % serverAddresses.size()));
 			String reqJson = jackson.writeValueAsString(message);
 			if (verbose) {
-				logger.info("Send message {}", reqJson);
+				logger.info("Send message [{}] {}", message.getClass().getSimpleName(), reqJson);
 			}
 			byte[] reqData = reqJson.getBytes(StandardCharsets.UTF_8);
 			HttpPost httpPost = new HttpPost(serverAddress + endpoint);
@@ -257,7 +257,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 					throw new IllegalArgumentException("Bad Response, Missing Message Type");
 				}
 				if (verbose) {
-					logger.info("Receive response {}", respJson);
+					logger.info("Receive response [{}] {}", Class.forName(msgType.getValue()).getSimpleName());
 				}
 				return (BaseMessage) jackson.readValue(respJson, Class.forName(msgType.getValue()));
 			} finally {

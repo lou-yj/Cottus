@@ -54,10 +54,13 @@ public class IgniteEventListener implements IgnitePredicate<Event> {
 				CacheEvent event = (CacheEvent) rawEvent;
 				if (StringUtils.equals(ClientSessionManager.CLIENT_CACHE, event.cacheName())) {
 					String clientId = event.key();
-					clientSessionManager.clientExit(clientId, (ClientSession) event.oldValue());
+					ClientSession sessionOld = (ClientSession) event.oldValue();
+					logger.info("Client {} expired", clientId);
+					clientSessionManager.clientExit(clientId, sessionOld);
 					clientSessionManager.getQueue(clientId).close();
 					workerSessionManager.onClientRemove(clientId);
 				} else if (StringUtils.equals(WorkerSessionManager.CLIENT_CACHE, event.cacheName())) {
+					logger.info("worker {} expired", (String) event.key());
 					WorkerSession session = (WorkerSession) event.oldValue();
 					for (String clientId : session.allClientIds()) {
 						workerSessionManager.getQueue(session, clientId).close();
