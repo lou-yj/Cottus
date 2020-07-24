@@ -42,6 +42,16 @@ public class ClientSession {
 
 	private boolean debug = true;
 
+	private boolean superAdmin;
+
+	public boolean isSuperAdmin() {
+		return superAdmin;
+	}
+
+	public void setSuperAdmin(boolean superAdmin) {
+		this.superAdmin = superAdmin;
+	}
+
 	private ExchangeContext exchangeContext;
 
 	public ExchangeContext getExchangeContext() {

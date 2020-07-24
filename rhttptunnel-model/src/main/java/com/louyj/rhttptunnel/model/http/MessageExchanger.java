@@ -92,7 +92,7 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 	@Value("${http.maxPerRoute:50}")
 	private int maxPerRoute;
 
-	private boolean verbose = true;
+	private boolean verbose = false;
 
 	private ThreadLocal<ExchangeContext> exchangeContext = new ThreadLocal<>();
 	private Key privateKey;

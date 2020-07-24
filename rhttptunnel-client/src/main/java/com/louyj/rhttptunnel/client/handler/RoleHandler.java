@@ -31,6 +31,7 @@ public class RoleHandler implements IMessageHandler {
 	public void handle(BaseMessage message, PrintStream writer) throws Exception {
 		RoleMessage roleMessage = (RoleMessage) message;
 		clientSession.setPermission(roleMessage.getPermission());
+		clientSession.setSuperAdmin(roleMessage.isSuperAdmin());
 	}
 
 }

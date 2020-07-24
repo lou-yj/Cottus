@@ -16,6 +16,8 @@ public class ConnectMessage extends BaseMessage {
 
 	private String password;
 
+	private boolean superAdmin;
+
 	@JsonCreator
 	public ConnectMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
@@ -40,6 +42,14 @@ public class ConnectMessage extends BaseMessage {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public boolean isSuperAdmin() {
+		return superAdmin;
+	}
+
+	public void setSuperAdmin(boolean superAdmin) {
+		this.superAdmin = superAdmin;
 	}
 
 }

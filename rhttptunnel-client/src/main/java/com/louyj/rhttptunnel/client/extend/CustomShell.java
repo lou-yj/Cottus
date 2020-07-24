@@ -122,7 +122,8 @@ public class CustomShell extends Shell {
 			exchangeContext.setCommandGroups(commandGroups.value());
 		clientSession.setExchangeContext(exchangeContext);
 		messageExchanger.getExchangeContext().set(exchangeContext);
-		if (exchangeContext.isAllowAll() == false && clientSession.hasPermission(command) == false) {
+		if (clientSession.isSuperAdmin() == false && exchangeContext.isAllowAll() == false
+				&& clientSession.hasPermission(command) == false) {
 			throw new NoPermissionException();
 		}
 	}

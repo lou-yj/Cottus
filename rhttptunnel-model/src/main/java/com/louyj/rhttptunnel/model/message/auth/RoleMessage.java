@@ -17,6 +17,8 @@ public class RoleMessage extends BaseMessage {
 
 	private Permission permission;
 
+	private boolean superAdmin;
+
 	@JsonCreator
 	public RoleMessage(@JsonProperty("client") ClientInfo client) {
 		super(client);
@@ -33,6 +35,14 @@ public class RoleMessage extends BaseMessage {
 
 	public void setPermission(Permission permission) {
 		this.permission = permission;
+	}
+
+	public boolean isSuperAdmin() {
+		return superAdmin;
+	}
+
+	public void setSuperAdmin(boolean superAdmin) {
+		this.superAdmin = superAdmin;
 	}
 
 }

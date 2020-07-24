@@ -33,6 +33,16 @@ public class ClientSession {
 
 	private Key publicKey;
 
+	private boolean superAdmin = false;
+
+	public boolean isSuperAdmin() {
+		return superAdmin;
+	}
+
+	public void setSuperAdmin(boolean superAdmin) {
+		this.superAdmin = superAdmin;
+	}
+
 	public String getAesKey() {
 		return aesKey;
 	}
