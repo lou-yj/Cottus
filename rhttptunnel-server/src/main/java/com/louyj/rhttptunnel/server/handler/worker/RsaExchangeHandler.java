@@ -34,7 +34,7 @@ public class RsaExchangeHandler implements IWorkerMessageHandler {
 	public BaseMessage handle(WorkerSession workerSession, ClientSession clientSession, BaseMessage message)
 			throws Exception {
 		RsaExchangeMessage securityMessage = (RsaExchangeMessage) message;
-		clientSession.setPublicKey(RsaUtils.loadPublicKey(securityMessage.getPublicKey()));
+		workerSession.setPublicKey(RsaUtils.loadPublicKey(securityMessage.getPublicKey()));
 		securityMessage = JsonUtils.cloneObject(JsonUtils.jackson(), securityMessage);
 		securityMessage.setPublicKey(RsaUtils.formatKey(serverRegistry.getPublicKey()));
 		return securityMessage;

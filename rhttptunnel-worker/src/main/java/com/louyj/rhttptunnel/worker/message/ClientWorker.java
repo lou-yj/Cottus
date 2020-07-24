@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.louyj.rhttptunnel.model.http.ExchangeContext;
 import com.louyj.rhttptunnel.model.http.MessageExchanger;
 import com.louyj.rhttptunnel.model.message.BaseMessage;
 import com.louyj.rhttptunnel.model.message.LongPullMessage;
@@ -43,6 +44,10 @@ public class ClientWorker extends Thread {
 	@Override
 	public void run() {
 		logger.info("Start worker thread response for client {}", clientId);
+		ExchangeContext exchangeContext = new ExchangeContext();
+		exchangeContext.setClientId(ClientDetector.CLIENT.identify());
+		exchangeContext.setCommand("heartbeat");
+		messageExchanger.getExchangeContext().set(exchangeContext);
 		while (!shouldBreak) {
 			try {
 				doRun();

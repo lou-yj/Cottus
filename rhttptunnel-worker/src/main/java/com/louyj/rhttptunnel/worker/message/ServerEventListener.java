@@ -68,19 +68,19 @@ public class ServerEventListener extends Thread implements InitializingBean {
 			RsaExchangeMessage rsaExchangeMessage = new RsaExchangeMessage(ClientDetector.CLIENT);
 			rsaExchangeMessage.setPublicKey(stringKeyPair.getRight());
 			message = messageExchanger.jsonPost(WORKER_EXCHANGE, rsaExchangeMessage);
-			if ((message instanceof RegistryMessage) == false) {
+			if ((message instanceof RsaExchangeMessage) == false) {
 				logger.warn("Rsa exchange failed with response {}", JsonUtils.gson().toJson(message));
 				throw new RuntimeException("Security exchange failed");
 			}
 			MessageUtils.handle(message);
+			messageExchanger.setPrivateKey(keyPair.getLeft());
 			SecurityMessage securityMessage = new SecurityMessage(ClientDetector.CLIENT);
 			message = messageExchanger.jsonPost(WORKER_EXCHANGE, securityMessage);
-			if ((message instanceof RegistryMessage) == false) {
+			if ((message instanceof SecurityMessage) == false) {
 				logger.warn("Security exchange failed with response {}", JsonUtils.gson().toJson(message));
 				throw new RuntimeException("Security exchange failed");
 			}
 			MessageUtils.handle(message);
-			messageExchanger.setPrivateKey(keyPair.getLeft());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

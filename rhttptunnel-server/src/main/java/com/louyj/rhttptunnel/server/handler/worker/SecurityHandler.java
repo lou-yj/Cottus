@@ -30,7 +30,7 @@ public class SecurityHandler implements IWorkerMessageHandler {
 			throws Exception {
 		SecurityMessage securityMessage = (SecurityMessage) message;
 		String aesKey = RandomStringUtils.random(10, true, true);
-		clientSession.setAesKey(aesKey);
+		workerSession.setAesKey(aesKey);
 		securityMessage = JsonUtils.cloneObject(JsonUtils.jackson(), securityMessage);
 		securityMessage.setAesKey(aesKey);
 		return securityMessage;

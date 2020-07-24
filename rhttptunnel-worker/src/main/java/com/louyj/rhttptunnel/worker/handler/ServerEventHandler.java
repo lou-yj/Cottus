@@ -1,7 +1,6 @@
 package com.louyj.rhttptunnel.worker.handler;
 
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,7 +38,7 @@ public class ServerEventHandler implements IMessageHandler {
 		if (eventMessage.getType() != null) {
 			switch (eventMessage.getType()) {
 			case CLIENTS_CHANGED:
-				threadManager.ensureThreads((Set<String>) eventMessage.getEvent());
+				threadManager.ensureThreads((List<String>) eventMessage.getEvent());
 				break;
 			case SERVERS_CHANGED:
 				messageExchanger.setServerAddresses((List<String>) eventMessage.getEvent());

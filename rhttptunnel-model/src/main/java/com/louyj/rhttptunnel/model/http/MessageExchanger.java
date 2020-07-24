@@ -237,9 +237,6 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 				byte[] respData = EntityUtils.toByteArray(entity);
 				Header encryptHeader = response.getFirstHeader(CustomHeaders.ENCRYPT_TYPE);
 				if (encryptHeader == null) {
-					for (Header header : response.getAllHeaders()) {
-						System.out.println(header.getName() + ": " + header.getValue());
-					}
 					throw new IllegalArgumentException("Bad Response, Missing Encrypt Type");
 				}
 				switch (EncryptType.of(encryptHeader.getValue())) {

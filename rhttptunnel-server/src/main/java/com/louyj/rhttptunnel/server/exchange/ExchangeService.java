@@ -128,7 +128,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			BaseMessage response = client(request);
 			if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 					&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
-				logger.info("{}\n{}\n{}", logSummary(request, response, enctyptType, respEncryptType.name()),
+				logger.info("{}\n{}\n{}", logSummary(request, response, enctyptType, respEncryptType.name(), command),
 						logMessage(request), logMessage(response));
 			}
 			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
@@ -143,7 +143,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 	@PostMapping(value = "worker", consumes = APPLICATION_OCTET_STREAM_VALUE, produces = APPLICATION_OCTET_STREAM_VALUE)
 	public byte[] worker(@RequestBody byte[] data, @RequestHeader(MESSAGE_TYPE) String messageType,
 			@RequestHeader(ENCRYPT_TYPE) String enctyptType, @RequestHeader(CLIENT_ID) String clientId,
-			HttpServletResponse httpResponse) throws Exception {
+			@RequestHeader(COMMAND) String command, HttpServletResponse httpResponse) throws Exception {
 		String aesKey = workerManager.aesKey(clientId);
 		Key publicKey = workerManager.publicKey(clientId);
 		EncryptType respEncryptType = encryptType(publicKey, aesKey);
@@ -152,7 +152,7 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 			BaseMessage response = worker(request);
 			if (request.getClass().isAnnotationPresent(NoLogMessage.class) == false
 					&& response.getClass().isAnnotationPresent(NoLogMessage.class) == false) {
-				logger.info("{}\n{}\n{}", logSummary(request, response, enctyptType, respEncryptType.name()),
+				logger.info("{}\n{}\n{}", logSummary(request, response, enctyptType, respEncryptType.name(), command),
 						logMessage(request), logMessage(response));
 			}
 			return serializer(httpResponse, response, publicKey, aesKey, respEncryptType);
@@ -316,15 +316,15 @@ public class ExchangeService implements ApplicationContextAware, InitializingBea
 		return String.format("[%s] %s", msg.getClass().getSimpleName(), normalJackson.writeValueAsString(map));
 	}
 
-	private String logSummary(BaseMessage request, BaseMessage response, String reqEnctyptType,
-			String respEnctyptType) {
+	private String logSummary(BaseMessage request, BaseMessage response, String reqEnctyptType, String respEnctyptType,
+			String command) {
 		if (request instanceof RegistryMessage) {
 			return "Registry Message";
 		}
 		ClientInfo fromClient = clientInfoManager.findClientInfo(request.getClientId());
 		ClientInfo toClient = clientInfoManager.findClientInfo(response.getClientId());
-		return String.format("%s->%s [%s->%s] eid %s", clientHost(fromClient), clientHost(toClient), reqEnctyptType,
-				respEnctyptType, request.getExchangeId());
+		return String.format("%s->%s [%s->%s] command %s eid %s", clientHost(fromClient), clientHost(toClient),
+				reqEnctyptType, respEnctyptType, command, request.getExchangeId());
 	}
 
 	private String clientHost(ClientInfo clientInfo) {
