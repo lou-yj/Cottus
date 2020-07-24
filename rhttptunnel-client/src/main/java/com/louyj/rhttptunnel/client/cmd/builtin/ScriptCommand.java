@@ -13,7 +13,6 @@ import org.springframework.shell.Shell;
 import org.springframework.shell.jline.FileInputProvider;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.commands.Script;
 
 import com.louyj.rhttptunnel.client.annotation.CommandGroups;
@@ -36,7 +35,6 @@ public class ScriptCommand extends BaseCommand implements Script.Command {
 
 	@CommandGroups({ CORE_SYSTEM_MGR })
 	@ShellMethod(value = "Read and execute commands from a file.")
-	@ShellMethodAvailability("workerContext")
 	public void script(File file) throws IOException {
 		Reader reader = new FileReader(file);
 		try (FileInputProvider inputProvider = new FileInputProvider(reader, parser)) {
