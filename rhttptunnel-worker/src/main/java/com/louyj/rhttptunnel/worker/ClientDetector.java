@@ -1,7 +1,6 @@
 package com.louyj.rhttptunnel.worker;
 
-import java.net.InetAddress;
-
+import com.louyj.rhttptunnel.model.message.ClientInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.louyj.rhttptunnel.model.message.ClientInfo;
+import java.net.InetAddress;
 
 /**
  *

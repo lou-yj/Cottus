@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rhttptunnel-client" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/rhttptunnel-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rhttptunnel-client/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rhttptunnel-model" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/rhttptunnel-model/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rhttptunnel-server" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/rhttptunnel-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/rhttptunnel-server/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rhttptunnel-worker" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/rhttptunnel-worker/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/rhttptunnel-worker/src/main/resources" charset="UTF-8" />
   </component>
