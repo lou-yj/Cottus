@@ -114,6 +114,11 @@ public class ServerCommand extends BaseCommand {
 		if (StringUtils.isBlank(resp)) {
 			session.setServerConnected(true);
 			resp = workerManageCommand.discover("");
+		} else {
+			messageExchanger.setPublicKey(null);
+			messageExchanger.setPrivateKey(null);
+			messageExchanger.setAesKey(null);
+			messageExchanger.setBootstrapAddress("");
 		}
 		return resp;
 	}

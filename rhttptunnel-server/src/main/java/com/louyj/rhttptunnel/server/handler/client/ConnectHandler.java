@@ -84,11 +84,9 @@ public class ConnectHandler implements IClientMessageHandler {
 		} catch (Exception e) {
 			logger.warn("Auth failed", e);
 		}
+		clientSession.setAesKey(null);
+		clientSession.setPublicKey(null);
 		return RejectMessage.sreason(message.getExchangeId(), "Auth failed");
-	}
-
-	public static void main(String[] args) {
-
 	}
 
 }

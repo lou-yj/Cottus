@@ -23,6 +23,7 @@ import javax.net.ssl.SSLContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -125,7 +126,11 @@ public class MessageExchanger implements InitializingBean, DisposableBean, IConf
 
 	@Value("${bootstrap.servers:}")
 	public void setBootstrapAddress(String serverAddress) {
-		this.bootstrapServers = Lists.newArrayList(serverAddress.split(","));
+		if (StringUtils.isBlank(serverAddress)) {
+			this.bootstrapServers = Lists.newArrayList();
+		} else {
+			this.bootstrapServers = Lists.newArrayList(serverAddress.split(","));
+		}
 		this.serverAddresses = this.bootstrapServers;
 	}
 

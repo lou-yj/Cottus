@@ -48,13 +48,14 @@ public class ServerEventListener extends Thread implements InitializingBean {
 				break;
 			}
 		}
-		ExchangeContext exchangeContext = new ExchangeContext();
-		exchangeContext.setClientId(ClientDetector.CLIENT.identify());
-		exchangeContext.setCommand("heartbeat");
-		messageExchanger.getExchangeContext().set(exchangeContext);
 		while (this.isInterrupted() == false) {
 			try {
 				if (messageExchanger.isServerConnected()) {
+					ExchangeContext exchangeContext = new ExchangeContext();
+					exchangeContext.setClientId(ClientDetector.CLIENT.identify());
+					exchangeContext.setCommand("heartbeat");
+					messageExchanger.getExchangeContext().set(exchangeContext);
+
 					ServerEventLongPullMessage message = new ServerEventLongPullMessage(ClientDetector.CLIENT);
 					BaseMessage response = messageExchanger.jsonPost(CLIENT_EXCHANGE, message);
 					String polled = messagePoller.pollExchangeMessage(response);
@@ -63,6 +64,11 @@ public class ServerEventListener extends Thread implements InitializingBean {
 							TimeUnit.SECONDS.sleep(5);
 						} catch (InterruptedException ex) {
 						}
+					}
+				} else {
+					try {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (InterruptedException ex) {
 					}
 				}
 			} catch (Exception e) {
