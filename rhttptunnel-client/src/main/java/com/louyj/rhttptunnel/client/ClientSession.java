@@ -40,7 +40,7 @@ public class ClientSession {
 
 	private String cwd = "/";
 
-	private boolean debug = true;
+	private boolean debug = false;
 
 	private boolean superAdmin;
 
