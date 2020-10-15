@@ -4,16 +4,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.louyj.rhttptunnel</groupId>
-	<artifactId>RHttpTunnel</artifactId>
+	<groupId>com.louyj</groupId>
+	<artifactId>cottus</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.0</version>
 
 	<modules>
-		<module>rhttptunnel-server</module>
-		<module>rhttptunnel-worker</module>
-		<module>rhttptunnel-client</module>
-		<module>rhttptunnel-model</module>
+		<module>cottus-server</module>
+		<module>cottus-worker</module>
+		<module>cottus-terminal</module>
+		<module>cottus-model</module>
 	</modules>
 
 	<properties>

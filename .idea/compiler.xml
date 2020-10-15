@@ -6,18 +6,18 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="rhttptunnel-model" />
-        <module name="rhttptunnel-client" />
-        <module name="rhttptunnel-worker" />
-        <module name="rhttptunnel-server" />
+        <module name="cottus-worker" />
+        <module name="cottus-terminal" />
+        <module name="cottus-model" />
+        <module name="cottus-server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="RHttpTunnel" target="1.8" />
-      <module name="rhttptunnel-client" target="1.8" />
-      <module name="rhttptunnel-model" target="1.8" />
-      <module name="rhttptunnel-server" target="1.8" />
-      <module name="rhttptunnel-worker" target="1.8" />
+      <module name="Cottus" target="1.8" />
+      <module name="cottus-model" target="1.8" />
+      <module name="cottus-server" target="1.8" />
+      <module name="cottus-terminal" target="1.8" />
+      <module name="cottus-worker" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

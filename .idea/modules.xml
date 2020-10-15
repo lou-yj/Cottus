@@ -2,11 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/RHttpTunnel.iml" filepath="$PROJECT_DIR$/RHttpTunnel.iml" />
-      <module fileurl="file://$PROJECT_DIR$/rhttptunnel-client/rhttptunnel-client.iml" filepath="$PROJECT_DIR$/rhttptunnel-client/rhttptunnel-client.iml" />
-      <module fileurl="file://$PROJECT_DIR$/rhttptunnel-model/rhttptunnel-model.iml" filepath="$PROJECT_DIR$/rhttptunnel-model/rhttptunnel-model.iml" />
-      <module fileurl="file://$PROJECT_DIR$/rhttptunnel-server/rhttptunnel-server.iml" filepath="$PROJECT_DIR$/rhttptunnel-server/rhttptunnel-server.iml" />
-      <module fileurl="file://$PROJECT_DIR$/rhttptunnel-worker/rhttptunnel-worker.iml" filepath="$PROJECT_DIR$/rhttptunnel-worker/rhttptunnel-worker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Cottus.iml" filepath="$PROJECT_DIR$/Cottus.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cottus-model/cottus-model.iml" filepath="$PROJECT_DIR$/cottus-model/cottus-model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cottus-server/cottus-server.iml" filepath="$PROJECT_DIR$/cottus-server/cottus-server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cottus-terminal/cottus-terminal.iml" filepath="$PROJECT_DIR$/cottus-terminal/cottus-terminal.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cottus-worker/cottus-worker.iml" filepath="$PROJECT_DIR$/cottus-worker/cottus-worker.iml" />
     </modules>
   </component>
 </project>
