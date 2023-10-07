@@ -8,7 +8,7 @@
 	<artifactId>cottus</artifactId>
 	<packaging>pom</packaging>
 	<version>1.0</version>
-
+	<!-- modules list-->
 	<modules>
 		<module>cottus-server</module>
 		<module>cottus-worker</module>
